@@ -1,0 +1,21 @@
+{
+  "name": "spikes",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.2",
+    "vite": "^8.0.12"
+  },
+  "dependencies": {
+    "@sqlite.org/sqlite-wasm": "^3.53.0-build1",
+    "@vlcn.io/crsqlite-wasm": "^0.16.0",
+    "idb": "^8.0.3",
+    "ofx-js": "^1.1.1"
+  }
+}

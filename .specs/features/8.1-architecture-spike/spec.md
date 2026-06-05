@@ -1,9 +1,7 @@
 # Phase 8.1 — Architecture Spike
 
 **Type:** Research / proof-of-concept (no production code, no UI polish)
-**Status:** Planned
-**Owner:** TBD
-**Target outcome:** Go/no-go decision on every risky technical bet in the v2 stack, with measurable evidence.
+**Status:** Planned → **Complete (2026-06-04)**
 
 ---
 
@@ -131,8 +129,8 @@ A single `spike-report.md` in this folder summarizing each spike's verdict (go /
 
 ## Definition of Done
 
-- [ ] All five spikes executed
-- [ ] `spike-report.md` written with verdicts and evidence
-- [ ] Any stack changes reflected in `.specs/project/PROJECT.md` (Stack section)
-- [ ] AD-004 (or successor) recorded in STATE.md capturing final stack choices
-- [ ] Spike code archived in a `spikes/` folder at repo root (or discarded if not useful as reference)
+- [x] All five spikes executed
+- [x] `spike-report.md` written with verdicts and evidence
+- [x] Any stack changes reflected in `.specs/project/PROJECT.md` (no changes needed)
+- [x] AD-004 recorded in STATE.md capturing final stack choices
+- [x] Spike code archived in a `spikes/` folder at repo root

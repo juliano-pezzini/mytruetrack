@@ -1,7 +1,7 @@
 # Roadmap
 
 **Current Milestone:** Phase 8 — Local-First Foundation
-**Status:** Bootstrapping (Phase 8.1 spike next)
+**Status:** Phase 8.1 complete — Phase 8.2 next
 
 ---
 
@@ -9,16 +9,16 @@
 
 Goal: ship a working local-first PWA with encrypted multi-device sync and feature parity with v1's core (accounts, transactions, categories, statement import, dashboard).
 
-### 8.1 — Architecture Spike (research)
+### 8.1 — Architecture Spike (research) ✅
 
-Validate the riskiest technical bets before committing to the stack.
+Validate the riskiest technical bets before committing to the stack. **All 5 bets validated — see [spike-report.md](../features/8.1-architecture-spike/spike-report.md).**
 
-- [ ] Prototype cr-sqlite end-to-end with two browser instances syncing via a shared blob
-- [ ] Prototype WebAuthn-wrapped encryption key (passphrase + biometric unlock)
-- [ ] Test Google Drive `appDataFolder` upload/download/quota patterns
-- [ ] Vet `ofx-js` (or pick an alternative) against v1 fixture files
-- [ ] Measure SQLite-WASM + cr-sqlite bundle size
-- [ ] Document go/no-go per bet in spec.md
+- [x] Prototype cr-sqlite end-to-end with two browser instances syncing via a shared blob
+- [x] Prototype WebAuthn-wrapped encryption key (passphrase + biometric unlock)
+- [x] Test Google Drive `appDataFolder` upload/download/quota patterns
+- [x] Vet `ofx-js` (or pick an alternative) against v1 fixture files
+- [x] Measure SQLite-WASM + cr-sqlite bundle size
+- [x] Document go/no-go per bet in spike-report.md
 
 ### 8.2 — Domain port (TypeScript services)
 

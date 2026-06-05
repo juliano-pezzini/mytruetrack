@@ -1,7 +1,7 @@
 # Roadmap
 
 **Current Milestone:** Phase 8 — Local-First Foundation
-**Status:** Phase 8.2 complete — Phase 8.3 next
+**Status:** Phase 8.3 complete — Phase 8.4 next
 
 ---
 
@@ -30,12 +30,14 @@ Port v1's domain logic — pure functions, no I/O. **93 tests, 94% coverage.**
 - [x] Auto-categorization service (port v1 Phase 7 logic)
 - [x] Vitest coverage ≥ 80% on services
 
-### 8.3 — Storage layer
+### 8.3 — Storage layer ✅
 
-- [ ] SQLite-WASM schema (mirrors v1 tables: accounts, transactions, categories, tags, account_balances)
-- [ ] cr-sqlite CRDT setup on all tables
-- [ ] Repository pattern over SQL
-- [ ] Migration framework
+SQLite-WASM schema, repository pattern, migration framework. **58 storage tests, 85% branch coverage.**
+
+- [x] SQLite-WASM schema (9 tables: accounts, transactions, categories, tags, transaction_tags, account_balances, auto_category_rules, learned_category_patterns, auto_category_corrections)
+- [x] cr-sqlite CRDT-compatible schema (all NOT NULL columns have DEFAULT values)
+- [x] Repository pattern over SQL (7 repositories returning domain types)
+- [x] Migration framework (versioned, auto-apply on init)
 
 ### 8.4 — Crypto layer
 

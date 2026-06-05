@@ -1,7 +1,7 @@
 # Roadmap
 
 **Current Milestone:** Phase 8 — Local-First Foundation
-**Status:** Phase 8.1 complete — Phase 8.2 next
+**Status:** Phase 8.2 complete — Phase 8.3 next
 
 ---
 
@@ -20,15 +20,15 @@ Validate the riskiest technical bets before committing to the stack. **All 5 bet
 - [x] Measure SQLite-WASM + cr-sqlite bundle size
 - [x] Document go/no-go per bet in spike-report.md
 
-### 8.2 — Domain port (TypeScript services)
+### 8.2 — Domain port (TypeScript services) ✅
 
-Port v1's domain logic — pure functions, no I/O.
+Port v1's domain logic — pure functions, no I/O. **93 tests, 94% coverage.**
 
-- [ ] Money type (integer cents)
-- [ ] Account / Transaction / Category / Tag models
-- [ ] Balance calculation service (with monthly snapshot rule)
-- [ ] Auto-categorization service (port v1 Phase 7 logic)
-- [ ] Vitest coverage ≥ 80% on services
+- [x] Money type (integer cents)
+- [x] Account / Transaction / Category / Tag models
+- [x] Balance calculation service (with monthly snapshot rule)
+- [x] Auto-categorization service (port v1 Phase 7 logic)
+- [x] Vitest coverage ≥ 80% on services
 
 ### 8.3 — Storage layer
 

@@ -1,7 +1,7 @@
 # State
 
 **Last Updated:** 2026-06-04
-**Current Work:** Phase 8.1 Architecture Spike complete — all 5 bets validated. Ready for Phase 8.2 Domain Port.
+**Current Work:** Phase 8.2 Domain Port complete — 93 tests, 94% coverage. Ready for Phase 8.3 Storage Layer.
 
 ---
 

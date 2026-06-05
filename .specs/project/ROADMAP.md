@@ -101,6 +101,8 @@ Passphrase-based encryption pipeline. **35 crypto tests, 100% line coverage on t
 
 ## Future Considerations (post-Phase 8)
 
+- Bulk select + delete/edit for CRUD screens (accounts, transactions, categories, tags)
+- Dashboard account balance graph: horizontal bar per account showing past 3 months + 1 month projected
 - OneDrive provider
 - Dropbox provider
 - Multi-currency with exchange rates

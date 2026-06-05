@@ -1,7 +1,7 @@
 # Phase 8.5 — Sync Layer Tasks
 
 **Spec**: `.specs/features/8.5-sync-layer/spec.md`
-**Status**: Draft
+**Status**: Done
 
 ---
 

@@ -1,7 +1,7 @@
 # Roadmap
 
 **Current Milestone:** Phase 8 — Local-First Foundation
-**Status:** Phase 8.4 complete — Phase 8.5 next
+**Status:** Phase 8.6 complete — Phase 8.7 next
 
 ---
 
@@ -49,18 +49,25 @@ Passphrase-based encryption pipeline. **35 crypto tests, 100% line coverage on t
 - [x] Encrypt/decrypt blob primitives (AES-GCM, random IV)
 - [x] Recovery sheet generator (printable HTML, checksum verification)
 
-### 8.5 — Sync layer + Google Drive provider
+### 8.5 — Sync layer + Google Drive provider ✅
 
-- [ ] Abstract `CloudProvider` interface
-- [ ] Sync engine (push local CRDT changes; pull remote; merge)
-- [ ] Google Drive provider (`appDataFolder`)
-- [ ] Conflict-free guarantee verified with two-device test
+24 sync tests. CloudProvider interface, sync engine with encrypt/decrypt, Google Drive + OAuth PKCE (browser-only).
 
-### 8.6 — Web Worker imports
+- [x] Abstract `CloudProvider` interface + mock in-memory provider
+- [x] Sync state persistence (IndexedDB via `idb`)
+- [x] Sync engine (export/import snapshots, push/pull with encryption)
+- [x] Google Drive provider (`appDataFolder`)
+- [x] OAuth 2.0 PKCE flow helpers
+- [x] Two-database convergence test verified
 
-- [ ] OFX import worker
-- [ ] XLSX import worker
-- [ ] Progress reporting to UI
+### 8.6 — Web Worker imports ✅
+
+29 import tests. OFX parser (bank + credit card), XLSX parser (configurable columns), import service with dedup.
+
+- [x] OFX parser (ofx-js: SGML + XML, bank + credit card statements)
+- [x] XLSX parser (xlsx library, configurable column mapping, sign-based type inference)
+- [x] Import service (validation, dedup by externalId, batch insert)
+- [x] Shared types (ParsedTransaction, ParsedStatement, ImportResult)
 
 ### 8.7 — UI port
 

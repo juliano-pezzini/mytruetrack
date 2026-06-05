@@ -7,7 +7,7 @@ export default defineConfig({
     include: ['src/**/*.test.ts'],
     coverage: {
       provider: 'v8',
-      include: ['src/domain/**', 'src/storage/**'],
+      include: ['src/domain/**', 'src/storage/**', 'src/crypto/**'],
       thresholds: {
         lines: 80,
         functions: 80,

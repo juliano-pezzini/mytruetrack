@@ -1,7 +1,7 @@
 # Roadmap
 
 **Current Milestone:** Phase 8 — Local-First Foundation
-**Status:** Phase 8.3 complete — Phase 8.4 next
+**Status:** Phase 8.4 complete — Phase 8.5 next
 
 ---
 
@@ -39,13 +39,15 @@ SQLite-WASM schema, repository pattern, migration framework. **58 storage tests,
 - [x] Repository pattern over SQL (7 repositories returning domain types)
 - [x] Migration framework (versioned, auto-apply on init)
 
-### 8.4 — Crypto layer
+### 8.4 — Crypto layer ✅
 
-- [ ] Passphrase → key derivation (PBKDF2 or Argon2)
-- [ ] Non-extractable Web Crypto wrap key in IndexedDB
-- [ ] WebAuthn biometric unlock flow
-- [ ] Encrypt/decrypt blob primitives (AES-GCM)
-- [ ] Recovery sheet generator (printable / downloadable)
+Passphrase-based encryption pipeline. **35 crypto tests, 100% line coverage on testable modules.**
+
+- [x] Passphrase → key derivation (PBKDF2, 600k iterations)
+- [x] Non-extractable Web Crypto wrap key in IndexedDB (via `idb`)
+- [x] WebAuthn biometric unlock flow (typed, browser-only)
+- [x] Encrypt/decrypt blob primitives (AES-GCM, random IV)
+- [x] Recovery sheet generator (printable HTML, checksum verification)
 
 ### 8.5 — Sync layer + Google Drive provider
 

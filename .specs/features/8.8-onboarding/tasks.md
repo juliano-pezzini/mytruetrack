@@ -1,7 +1,7 @@
 # Phase 8.8 — Onboarding Flow Tasks
 
 **Spec**: `.specs/features/8.8-onboarding/spec.md`  
-**Status**: Draft
+**Status**: Done
 
 ---
 

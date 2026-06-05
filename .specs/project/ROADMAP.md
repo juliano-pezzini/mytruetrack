@@ -1,7 +1,7 @@
 # Roadmap
 
 **Current Milestone:** Phase 8 — Local-First Foundation
-**Status:** Phase 8.7 complete — Phase 8.8 next
+**Status:** Phase 8.8 complete — Phase 8.9 next
 
 ---
 
@@ -82,10 +82,16 @@ React UI with all core pages, responsive sidebar, data hooks. 68 modules, builds
 - [x] Dashboard (net worth, account cards, monthly summary, recent transactions)
 - [x] Settings page (statement import with preview, placeholder sections)
 
-### 8.8 — Onboarding flow
+### 8.8 — Onboarding flow ✅
 
-- [ ] Welcome → passphrase creation → biometric enrollment → recovery sheet → cloud connection → done
-- [ ] Restore flow (passphrase + cloud → decrypt → import)
+VaultProvider gate, optional passphrase, setup wizard, unlock page. 6 vault tests.
+
+- [x] VaultProvider + VaultContext (status: loading/needs-setup/needs-unlock/ready, mode: encrypted/local-only)
+- [x] VaultGate component (renders SetupWizard, UnlockPage, or main app)
+- [x] SetupWizard: Welcome → Choice (passphrase or skip) → Create Passphrase → Recovery Sheet → Biometric → Done
+- [x] UnlockPage: passphrase input, biometric button, vault reset
+- [x] PassphraseInput (show/hide toggle) + StrengthMeter components
+- [x] useVault hook
 
 ### 8.9 — WebDAV provider
 

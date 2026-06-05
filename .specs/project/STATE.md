@@ -1,7 +1,7 @@
 # State
 
 **Last Updated:** 2026-06-05
-**Current Work:** Phase 8.7 UI Port complete — all 9 tasks done. 245 tests, 26 files, all passing. Ready for Phase 8.8 Onboarding Flow.
+**Current Work:** Phase 8.8 Onboarding Flow complete — VaultProvider, SetupWizard (optional passphrase), UnlockPage, VaultGate. 251 tests, 27 files, all passing. Ready for Phase 8.9 WebDAV Provider.
 
 ---
 

@@ -1,21 +1,55 @@
-import type { Database } from './database.ts';
+import initSqlJs from 'sql.js';
+import type { Database, SqlValue, Row } from './database.ts';
 import { runMigrations } from './migrations/runner.ts';
 import { allMigrations } from './migrations/index.ts';
-import { createTestDatabase } from './test-helpers.ts';
 
-export type InitDatabaseOptions = {
-  /** When true, use in-memory sql.js (for tests). Default: true. */
-  inMemory?: boolean;
-};
+const isBrowser = typeof window !== 'undefined';
 
 /**
  * Initialize the database: open a connection, run pending migrations, return the handle.
  *
- * For now, only supports in-memory sql.js (test/dev). Production cr-sqlite initialization
- * will be added in Phase 8.5 when the sync layer needs it.
+ * Uses sql.js in both browser and Node.js (tests). In the browser, the WASM file
+ * is served from public/sql-wasm.wasm. Production cr-sqlite initialization will
+ * replace this when CRDT sync is wired up.
  */
-export async function initDatabase(_options?: InitDatabaseOptions): Promise<Database> {
-  const db = await createTestDatabase();
+export async function initDatabase(): Promise<Database> {
+  const SQL = await initSqlJs(
+    isBrowser ? { locateFile: (file: string) => `/${file}` } : undefined,
+  );
+  const raw = new SQL.Database();
+
+  const db: Database = {
+    exec(sql: string, params?: SqlValue[]): void {
+      raw.run(sql, params as Parameters<typeof raw.run>[1]);
+    },
+
+    execA(sql: string, params?: SqlValue[]): SqlValue[][] {
+      const stmt = raw.prepare(sql);
+      if (params) stmt.bind(params as Parameters<typeof stmt.bind>[0]);
+      const rows: SqlValue[][] = [];
+      while (stmt.step()) {
+        rows.push(stmt.get() as SqlValue[]);
+      }
+      stmt.free();
+      return rows;
+    },
+
+    execO(sql: string, params?: SqlValue[]): Row[] {
+      const stmt = raw.prepare(sql);
+      if (params) stmt.bind(params as Parameters<typeof stmt.bind>[0]);
+      const rows: Row[] = [];
+      while (stmt.step()) {
+        rows.push(stmt.getAsObject() as Row);
+      }
+      stmt.free();
+      return rows;
+    },
+
+    close(): void {
+      raw.close();
+    },
+  };
+
   runMigrations(db, allMigrations);
   return db;
 }

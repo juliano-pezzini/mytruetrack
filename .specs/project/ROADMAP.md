@@ -1,7 +1,7 @@
 # Roadmap
 
 **Current Milestone:** Phase 8 — Local-First Foundation
-**Status:** Phase 8.6 complete — Phase 8.7 next
+**Status:** Phase 8.7 complete — Phase 8.8 next
 
 ---
 
@@ -69,15 +69,18 @@ Passphrase-based encryption pipeline. **35 crypto tests, 100% line coverage on t
 - [x] Import service (validation, dedup by externalId, batch insert)
 - [x] Shared types (ParsedTransaction, ParsedStatement, ImportResult)
 
-### 8.7 — UI port
+### 8.7 — UI port ✅
 
-- [ ] React Router setup
-- [ ] Layout + nav port from v1
-- [ ] Accounts screen
-- [ ] Transactions screen
-- [ ] Categories / Tags screen
-- [ ] Dashboard with monthly charts
-- [ ] Settings screen
+React UI with all core pages, responsive sidebar, data hooks. 68 modules, builds clean.
+
+- [x] React Router setup + Layout shell (sidebar + header)
+- [x] Database context provider + useDatabase hook
+- [x] Data hooks (useAccounts, useTransactions, useCategories, useTags, useAccountBalance)
+- [x] Accounts page (CRUD, type filter, balance display)
+- [x] Transactions page (CRUD, month picker, running balance, category assignment)
+- [x] Categories / Tags page (tabbed, parent-child tree, color swatches)
+- [x] Dashboard (net worth, account cards, monthly summary, recent transactions)
+- [x] Settings page (statement import with preview, placeholder sections)
 
 ### 8.8 — Onboarding flow
 

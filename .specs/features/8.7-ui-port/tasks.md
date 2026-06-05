@@ -1,7 +1,7 @@
 # Phase 8.7 — UI Port Tasks
 
 **Spec**: `.specs/features/8.7-ui-port/spec.md`  
-**Status**: Draft
+**Status**: Done
 
 ---
 

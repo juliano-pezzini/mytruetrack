@@ -1,3 +1,11 @@
+import { RouterProvider } from 'react-router-dom';
+import { DatabaseProvider } from './app/database-provider.tsx';
+import { router } from './app/router.tsx';
+
 export function App() {
-  return <h1>mytruetrack</h1>;
+  return (
+    <DatabaseProvider>
+      <RouterProvider router={router} />
+    </DatabaseProvider>
+  );
 }

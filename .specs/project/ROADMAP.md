@@ -114,6 +114,7 @@ Installable PWA with offline support, app icons, service worker.
 - [x] Meta tags: theme-color, apple-mobile-web-app-capable, apple-touch-icon
 - [x] Offline banner: useOnlineStatus hook + OfflineBanner component in Layout
 - [ ] Cross-browser QA (Chrome, Edge, Safari, Firefox)
+- [x] Playwright E2E test suite (46 tests: onboarding, CRUD, dashboard, import, navigation — all passing)
 - [ ] Release v2.0.0
 
 ---

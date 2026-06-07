@@ -85,8 +85,11 @@ export function ImportSection({ initialAccountId, onImportComplete }: ImportSect
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Statement File</label>
+        <label htmlFor="import-file" className="block text-sm font-medium text-gray-700 mb-1">
+          Statement File
+        </label>
         <input
+          id="import-file"
           type="file"
           accept=".ofx,.xlsx"
           onChange={handleFileChange}

@@ -26,10 +26,7 @@ export function Sidebar() {
 
       {/* Overlay */}
       {open && (
-        <div
-          className="lg:hidden fixed inset-0 z-30 bg-black/30"
-          onClick={() => setOpen(false)}
-        />
+        <div className="lg:hidden fixed inset-0 z-30 bg-black/30" onClick={() => setOpen(false)} />
       )}
 
       {/* Sidebar */}

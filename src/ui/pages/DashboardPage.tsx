@@ -23,7 +23,9 @@ function AccountCard({ account }: { account: Account }) {
     <div className="bg-white rounded-lg border border-gray-200 p-4">
       <div className="flex items-center justify-between mb-2">
         <h3 className="font-medium text-gray-900 text-sm">{account.name}</h3>
-        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_BADGES[account.type].className}`}>
+        <span
+          className={`px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_BADGES[account.type].className}`}
+        >
           {TYPE_BADGES[account.type].label}
         </span>
       </div>
@@ -64,9 +66,7 @@ export function DashboardPage() {
     for (const account of accounts) {
       all.push(...repo.getByAccount(account.id));
     }
-    return all
-      .sort((a, b) => b.transactionDate.localeCompare(a.transactionDate))
-      .slice(0, 10);
+    return all.sort((a, b) => b.transactionDate.localeCompare(a.transactionDate)).slice(0, 10);
   }, [accounts, db]);
 
   // Monthly summary: current month income vs expenses
@@ -162,9 +162,13 @@ export function DashboardPage() {
                   <tr key={txn.id} className="hover:bg-gray-50">
                     <td className="px-4 py-2 text-gray-600">{txn.transactionDate}</td>
                     <td className="px-4 py-2 text-gray-900">{txn.description}</td>
-                    <td className="px-4 py-2 text-gray-500">{accountMap.get(txn.accountId) ?? '—'}</td>
+                    <td className="px-4 py-2 text-gray-500">
+                      {accountMap.get(txn.accountId) ?? '—'}
+                    </td>
                     <td className="px-4 py-2 text-right">
-                      <span className={`font-mono tabular-nums ${txn.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
+                      <span
+                        className={`font-mono tabular-nums ${txn.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}
+                      >
                         {txn.type === 'credit' ? '+' : '−'}
                         {(toCents(txn.amount) / 100).toFixed(2)}
                       </span>
@@ -178,9 +182,7 @@ export function DashboardPage() {
       )}
 
       {accounts.length === 0 && (
-        <p className="text-gray-500 text-sm py-8 text-center">
-          Create an account to get started.
-        </p>
+        <p className="text-gray-500 text-sm py-8 text-center">Create an account to get started.</p>
       )}
     </div>
   );

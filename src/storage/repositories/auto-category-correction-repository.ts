@@ -18,7 +18,9 @@ export type AutoCategoryCorrectionRepository = {
   getByTransactionId(transactionId: string): AutoCategoryCorrection[];
 };
 
-export function createAutoCategoryCorrectionRepository(db: Database): AutoCategoryCorrectionRepository {
+export function createAutoCategoryCorrectionRepository(
+  db: Database,
+): AutoCategoryCorrectionRepository {
   return {
     create(correction: AutoCategoryCorrection): AutoCategoryCorrection {
       db.exec(
@@ -40,10 +42,7 @@ export function createAutoCategoryCorrectionRepository(db: Database): AutoCatego
 
     getByTransactionId(transactionId: string): AutoCategoryCorrection[] {
       return db
-        .execO(
-          'SELECT * FROM auto_category_corrections WHERE transaction_id = ?',
-          [transactionId],
-        )
+        .execO('SELECT * FROM auto_category_corrections WHERE transaction_id = ?', [transactionId])
         .map(rowToCorrection);
     },
   };

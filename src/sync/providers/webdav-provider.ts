@@ -8,7 +8,7 @@
 import type { CloudProvider, FileMetadata } from '../cloud-provider.ts';
 
 export type WebDavConfig = {
-  readonly endpoint: string;   // e.g. "https://cloud.example.com/remote.php/dav/files/user/"
+  readonly endpoint: string; // e.g. "https://cloud.example.com/remote.php/dav/files/user/"
   readonly syncFolder: string; // e.g. "mytruetrack/"
   readonly username: string;
   readonly password: string;
@@ -80,7 +80,9 @@ export function createWebDavProvider(config: WebDavConfig): CloudProvider {
       await fetch(folderUrl, {
         method: 'MKCOL',
         headers: authHeaders(config),
-      }).catch(() => { /* ignore */ });
+      }).catch(() => {
+        /* ignore */
+      });
 
       const url = buildUrl(config, filename);
       const response = await fetch(url, {

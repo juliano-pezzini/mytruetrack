@@ -13,9 +13,7 @@ const isBrowser = typeof window !== 'undefined';
  * replace this when CRDT sync is wired up.
  */
 export async function initDatabase(): Promise<Database> {
-  const SQL = await initSqlJs(
-    isBrowser ? { locateFile: (file: string) => `/${file}` } : undefined,
-  );
+  const SQL = await initSqlJs(isBrowser ? { locateFile: (file: string) => `/${file}` } : undefined);
   const raw = new SQL.Database();
 
   const db: Database = {

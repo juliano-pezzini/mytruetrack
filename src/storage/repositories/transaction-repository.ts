@@ -90,10 +90,7 @@ export function createTransactionRepository(db: Database): TransactionRepository
     update(
       id: string,
       changes: Partial<
-        Pick<
-          Transaction,
-          'categoryId' | 'description' | 'transactionDate' | 'settledDate' | 'type'
-        >
+        Pick<Transaction, 'categoryId' | 'description' | 'transactionDate' | 'settledDate' | 'type'>
       >,
     ): Transaction {
       const existing = this.getById(id);
@@ -138,19 +135,19 @@ export function createTransactionRepository(db: Database): TransactionRepository
 
     addTags(transactionId: string, tagIds: readonly string[]): void {
       for (const tagId of tagIds) {
-        db.exec(
-          'INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)',
-          [transactionId, tagId],
-        );
+        db.exec('INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)', [
+          transactionId,
+          tagId,
+        ]);
       }
     },
 
     removeTags(transactionId: string, tagIds: readonly string[]): void {
       for (const tagId of tagIds) {
-        db.exec(
-          'DELETE FROM transaction_tags WHERE transaction_id = ? AND tag_id = ?',
-          [transactionId, tagId],
-        );
+        db.exec('DELETE FROM transaction_tags WHERE transaction_id = ? AND tag_id = ?', [
+          transactionId,
+          tagId,
+        ]);
       }
     },
 

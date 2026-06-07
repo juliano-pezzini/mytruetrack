@@ -1,7 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useDatabase } from '../hooks/useDatabase.ts';
 import { useVault } from '../hooks/useVault.ts';
-import { loadSyncConfig, saveSyncConfig, type SyncConfig, type SyncProviderType } from '../../sync/sync-config.ts';
+import {
+  loadSyncConfig,
+  saveSyncConfig,
+  type SyncConfig,
+  type SyncProviderType,
+} from '../../sync/sync-config.ts';
 import { createWebDavProvider, type WebDavConfig } from '../../sync/providers/webdav-provider.ts';
 import { pushChanges, pullChanges } from '../../sync/sync-engine.ts';
 import { getSyncState, type SyncState } from '../../sync/sync-state.ts';
@@ -151,18 +156,20 @@ export function SyncSection() {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Cloud Provider</label>
         <div className="space-y-2">
-          {([
-            ['none', 'None — local only'],
-            ['webdav', 'WebDAV (Nextcloud, ownCloud, etc.)'],
-            ['google-drive', 'Google Drive'],
-          ] as const).map(([value, label]) => (
+          {(
+            [
+              ['none', 'None — local only'],
+              ['webdav', 'WebDAV (Nextcloud, ownCloud, etc.)'],
+              ['google-drive', 'Google Drive'],
+            ] as const
+          ).map(([value, label]) => (
             <label key={value} className="flex items-center gap-2 text-sm cursor-pointer">
               <input
                 type="radio"
                 name="sync-provider"
                 value={value}
                 checked={provider === (value === 'none' ? null : value)}
-                onChange={() => setProvider(value === 'none' ? null : value as SyncProviderType)}
+                onChange={() => setProvider(value === 'none' ? null : (value as SyncProviderType))}
                 className="text-blue-600"
               />
               {label}
@@ -175,7 +182,10 @@ export function SyncSection() {
       {provider === 'webdav' && (
         <div className="bg-gray-50 rounded-lg p-4 space-y-3">
           <div>
-            <label htmlFor="webdav-endpoint" className="block text-xs font-medium text-gray-600 mb-1">
+            <label
+              htmlFor="webdav-endpoint"
+              className="block text-xs font-medium text-gray-600 mb-1"
+            >
               Server URL
             </label>
             <input
@@ -248,7 +258,9 @@ export function SyncSection() {
           </div>
 
           {testResult && (
-            <p className={`text-sm ${testResult.startsWith('Connection successful') ? 'text-green-600' : 'text-red-600'}`}>
+            <p
+              className={`text-sm ${testResult.startsWith('Connection successful') ? 'text-green-600' : 'text-red-600'}`}
+            >
               {testResult}
             </p>
           )}
@@ -273,9 +285,9 @@ export function SyncSection() {
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
           <p className="text-sm font-medium text-amber-800 mb-2">⚠️ Unencrypted sync</p>
           <p className="text-sm text-amber-700 mb-3">
-            Your data will be synced to the cloud <strong>without encryption</strong>.
-            Anyone with access to your cloud storage can read your financial data.
-            We strongly recommend setting a passphrase first.
+            Your data will be synced to the cloud <strong>without encryption</strong>. Anyone with
+            access to your cloud storage can read your financial data. We strongly recommend setting
+            a passphrase first.
           </p>
           <div className="flex gap-2">
             <button

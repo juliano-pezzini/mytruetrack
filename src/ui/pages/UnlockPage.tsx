@@ -63,7 +63,9 @@ export function UnlockPage() {
       // Biometric only gates access — DEK must still be derived from passphrase.
       // In the current design, biometric is session-scoped: the user must enter
       // the passphrase at least once per session, then biometric can re-verify.
-      setError('Biometric verified, but passphrase is still needed for the first unlock this session.');
+      setError(
+        'Biometric verified, but passphrase is still needed for the first unlock this session.',
+      );
     } catch {
       setError('Biometric verification failed.');
     } finally {
@@ -99,9 +101,7 @@ export function UnlockPage() {
               autoFocus
             />
 
-            {error && (
-              <p className="text-sm text-red-600">{error}</p>
-            )}
+            {error && <p className="text-sm text-red-600">{error}</p>}
 
             <button
               type="button"

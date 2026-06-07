@@ -42,7 +42,9 @@ describe('WebDAV CloudProvider', () => {
 
     // PUT call
     const putCall = fetchMock.mock.calls[1]!;
-    expect(putCall[0]).toBe('https://cloud.example.com/remote.php/dav/files/user/mytruetrack/test.bin');
+    expect(putCall[0]).toBe(
+      'https://cloud.example.com/remote.php/dav/files/user/mytruetrack/test.bin',
+    );
     expect(putCall[1].method).toBe('PUT');
     expect(putCall[1].headers.Authorization).toBe(expectedAuth);
     expect(putCall[1].headers['Content-Type']).toBe('application/octet-stream');

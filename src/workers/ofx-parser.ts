@@ -84,7 +84,7 @@ function extractBalance(ledgerBal: { BALAMT?: string; DTASOF?: string } | undefi
  */
 export async function parseOfx(content: string): Promise<ParsedStatement> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const result = await parseOFX(content) as { OFX: any };
+  const result = (await parseOFX(content)) as { OFX: any };
   const ofx = result.OFX;
 
   // Try bank statement first

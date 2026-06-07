@@ -33,11 +33,15 @@ async function getDb() {
 /** Persist wrapped DEK + salt + iterations. */
 export async function saveKeyData(data: KeyData): Promise<void> {
   const db = await getDb();
-  await db.put(STORE_NAME, {
-    wrappedDek: data.wrappedDek,
-    salt: data.salt,
-    iterations: data.iterations,
-  }, KEY_DATA_KEY);
+  await db.put(
+    STORE_NAME,
+    {
+      wrappedDek: data.wrappedDek,
+      salt: data.salt,
+      iterations: data.iterations,
+    },
+    KEY_DATA_KEY,
+  );
 }
 
 /** Load persisted key data, or null if no vault exists. */

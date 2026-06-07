@@ -57,19 +57,21 @@ export async function exchangeCodeForToken(
   redirectUri: string,
   code: string,
   codeVerifier: string,
+  clientSecret?: string,
 ): Promise<TokenResponse> {
-  const body = new URLSearchParams({
+  const params: Record<string, string> = {
     client_id: clientId,
     redirect_uri: redirectUri,
     code,
     code_verifier: codeVerifier,
     grant_type: 'authorization_code',
-  });
+  };
+  if (clientSecret) params['client_secret'] = clientSecret;
 
   const response = await fetch(TOKEN_ENDPOINT, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body.toString(),
+    body: new URLSearchParams(params).toString(),
   });
 
   if (!response.ok) {
@@ -83,24 +85,24 @@ export async function exchangeCodeForToken(
 /**
  * Exchange a refresh token for a fresh access token via the token endpoint.
  *
- * PKCE public clients (no client secret) may refresh with just the client_id.
- * Google does not return a new refresh_token here, so the caller keeps the
- * existing one.
+ * Google requires the client_secret for Web application clients even on refresh.
  */
 export async function refreshAccessToken(
   clientId: string,
   refreshToken: string,
+  clientSecret?: string,
 ): Promise<TokenResponse> {
-  const body = new URLSearchParams({
+  const params: Record<string, string> = {
     client_id: clientId,
     refresh_token: refreshToken,
     grant_type: 'refresh_token',
-  });
+  };
+  if (clientSecret) params['client_secret'] = clientSecret;
 
   const response = await fetch(TOKEN_ENDPOINT, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body.toString(),
+    body: new URLSearchParams(params).toString(),
   });
 
   if (!response.ok) {

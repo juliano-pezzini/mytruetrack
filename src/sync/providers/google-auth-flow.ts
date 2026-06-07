@@ -34,6 +34,19 @@ export function getClientId(): string {
   return import.meta.env.VITE_GOOGLE_CLIENT_ID ?? '';
 }
 
+/**
+ * Read the configured OAuth client secret (empty string if unset).
+ *
+ * Trade-off: Google's "Web application" OAuth clients require a client_secret
+ * in the token exchange even when using PKCE. For a browser-only app with no
+ * backend this secret will be present in the JS bundle. The blast radius is
+ * limited to the drive.appdata scope (app-private storage only). Self-hosted
+ * deployments should create their own OAuth client.
+ */
+export function getClientSecret(): string {
+  return import.meta.env.VITE_GOOGLE_CLIENT_SECRET ?? '';
+}
+
 /** Whether a client ID is configured at build time. */
 export function isGoogleConfigured(): boolean {
   return getClientId().length > 0;
@@ -74,7 +87,7 @@ export async function connectGoogleDrive(): Promise<GoogleTokens> {
   }
 
   const code = await waitForAuthCode(popup);
-  const response = await exchangeCodeForToken(clientId, redirectUri(), code, verifier);
+  const response = await exchangeCodeForToken(clientId, redirectUri(), code, verifier, getClientSecret() || undefined);
   return toTokens(response, null);
 }
 
@@ -135,6 +148,6 @@ export async function ensureValidGoogleTokens(tokens: GoogleTokens): Promise<Goo
     throw new Error('Google client ID is not configured (set VITE_GOOGLE_CLIENT_ID).');
   }
 
-  const response = await refreshAccessToken(clientId, tokens.refreshToken);
+  const response = await refreshAccessToken(clientId, tokens.refreshToken, getClientSecret() || undefined);
   return toTokens(response, tokens.refreshToken);
 }

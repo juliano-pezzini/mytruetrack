@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useAccounts } from '../hooks/useAccounts.ts';
 import { useAccountBalance } from '../hooks/useAccountBalance.ts';
 import { useDatabase } from '../hooks/useDatabase.ts';
 import { MoneyDisplay } from '../components/MoneyDisplay.tsx';
+import { ImportModal } from '../components/ImportModal.tsx';
 import { createTransactionRepository } from '../../storage/repositories/transaction-repository.ts';
 import { fromCents, add, toCents, subtract } from '../../domain/money.ts';
 import type { Account, AccountType } from '../../domain/account.ts';
@@ -15,7 +16,13 @@ const TYPE_BADGES: Record<AccountType, { label: string; className: string }> = {
   transitional: { label: 'Transitional', className: 'bg-gray-100 text-gray-600' },
 };
 
-function AccountCard({ account }: { account: Account }) {
+function AccountCard({
+  account,
+  onImport,
+}: {
+  account: Account;
+  onImport: (account: Account) => void;
+}) {
   const today = new Date().toISOString().slice(0, 10);
   const { balance } = useAccountBalance(account.id, today);
 
@@ -30,6 +37,18 @@ function AccountCard({ account }: { account: Account }) {
         </span>
       </div>
       <MoneyDisplay amount={balance} className="text-xl" />
+      <div className="mt-3 flex justify-end">
+        <button
+          type="button"
+          onClick={() => onImport(account)}
+          className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 transition-colors"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          Import
+        </button>
+      </div>
     </div>
   );
 }
@@ -37,6 +56,7 @@ function AccountCard({ account }: { account: Account }) {
 export function DashboardPage() {
   const db = useDatabase();
   const { accounts } = useAccounts();
+  const [importTarget, setImportTarget] = useState<Account | null>(null);
 
   // Net worth: sum of all account balances (computed inline since we need all)
   const netWorth = useMemo(() => {
@@ -118,7 +138,7 @@ export function DashboardPage() {
           <h2 className="text-sm font-semibold text-gray-700 mb-3">Accounts</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {accounts.map((a) => (
-              <AccountCard key={a.id} account={a} />
+              <AccountCard key={a.id} account={a} onImport={setImportTarget} />
             ))}
           </div>
         </div>
@@ -183,6 +203,14 @@ export function DashboardPage() {
 
       {accounts.length === 0 && (
         <p className="text-gray-500 text-sm py-8 text-center">Create an account to get started.</p>
+      )}
+
+      {importTarget && (
+        <ImportModal
+          accountId={importTarget.id}
+          accountName={importTarget.name}
+          onClose={() => setImportTarget(null)}
+        />
       )}
     </div>
   );

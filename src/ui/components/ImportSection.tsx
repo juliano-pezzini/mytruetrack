@@ -8,10 +8,15 @@ import type { ParsedTransaction } from '../../workers/types.ts';
 import type { ImportResult } from '../../workers/types.ts';
 import { toCents } from '../../domain/money.ts';
 
-export function ImportSection() {
+type ImportSectionProps = {
+  initialAccountId?: string;
+  onImportComplete?: () => void;
+};
+
+export function ImportSection({ initialAccountId, onImportComplete }: ImportSectionProps = {}) {
   const db = useDatabase();
   const { accounts } = useAccounts();
-  const [accountId, setAccountId] = useState('');
+  const [accountId, setAccountId] = useState(initialAccountId ?? '');
   const [parsed, setParsed] = useState<ParsedTransaction[] | null>(null);
   const [fileName, setFileName] = useState('');
   const [parseError, setParseError] = useState<string | null>(null);
@@ -51,6 +56,7 @@ export function ImportSection() {
       const importResult = importTransactions(db, accountId, parsed);
       setResult(importResult);
       setParsed(null);
+      onImportComplete?.();
     } catch (err) {
       setParseError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -60,6 +66,7 @@ export function ImportSection() {
 
   return (
     <div className="space-y-4">
+      {!initialAccountId && (
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Target Account</label>
         <select
@@ -75,6 +82,7 @@ export function ImportSection() {
           ))}
         </select>
       </div>
+      )}
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Statement File</label>

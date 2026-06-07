@@ -111,8 +111,8 @@ export function SetupWizard() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
             <h2 className="text-xl font-bold text-gray-900 mb-2">Secure your data</h2>
             <p className="text-sm text-gray-500 mb-6">
-              A passphrase encrypts your data and is required for cloud sync. Without it, your data
-              stays only in this browser.
+              A passphrase encrypts your data end-to-end. Without one, your data is stored
+              unencrypted — even in the cloud.
             </p>
 
             <div className="space-y-3">
@@ -128,7 +128,7 @@ export function SetupWizard() {
                 onClick={skipToLocalOnly}
                 className="w-full py-3 px-4 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
               >
-                Skip — I just want to track locally
+                Skip — continue without a passphrase
               </button>
             </div>
 

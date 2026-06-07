@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Connecting to Google Drive…</title>
+  </head>
+  <body>
+    <p>Completing sign-in… you can close this window.</p>
+    <script>
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var message = {
+          source: 'mtt-google-oauth',
+          code: params.get('code') || undefined,
+          error: params.get('error') || undefined,
+        };
+        if (window.opener) {
+          window.opener.postMessage(message, window.location.origin);
+        }
+        window.close();
+      })();
+    </script>
+  </body>
+</html>

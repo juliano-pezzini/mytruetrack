@@ -12,14 +12,23 @@ const CONFIG_KEY = 'active';
 
 export type SyncProviderType = 'google-drive' | 'webdav' | null;
 
+export type GoogleTokens = {
+  readonly accessToken: string;
+  readonly refreshToken: string | null;
+  /** Epoch milliseconds at which the access token expires. */
+  readonly expiresAt: number;
+};
+
 export type SyncConfig = {
   readonly provider: SyncProviderType;
   readonly webdav: WebDavConfig | null;
+  readonly google: GoogleTokens | null;
 };
 
 const DEFAULT_CONFIG: SyncConfig = {
   provider: null,
   webdav: null,
+  google: null,
 };
 
 async function getDb() {
@@ -41,7 +50,13 @@ export async function loadSyncConfig(): Promise<SyncConfig> {
   const db = await getDb();
   const stored = await db.get(STORE_NAME, CONFIG_KEY);
   if (!stored) return DEFAULT_CONFIG;
-  return stored as SyncConfig;
+  const config = stored as Partial<SyncConfig>;
+  // Normalize older records that predate the `google` field.
+  return {
+    provider: config.provider ?? null,
+    webdav: config.webdav ?? null,
+    google: config.google ?? null,
+  };
 }
 
 export async function clearSyncConfig(): Promise<void> {

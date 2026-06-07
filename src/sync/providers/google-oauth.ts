@@ -81,6 +81,37 @@ export async function exchangeCodeForToken(
 }
 
 /**
+ * Exchange a refresh token for a fresh access token via the token endpoint.
+ *
+ * PKCE public clients (no client secret) may refresh with just the client_id.
+ * Google does not return a new refresh_token here, so the caller keeps the
+ * existing one.
+ */
+export async function refreshAccessToken(
+  clientId: string,
+  refreshToken: string,
+): Promise<TokenResponse> {
+  const body = new URLSearchParams({
+    client_id: clientId,
+    refresh_token: refreshToken,
+    grant_type: 'refresh_token',
+  });
+
+  const response = await fetch(TOKEN_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body.toString(),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Token refresh failed: ${response.status} ${text}`);
+  }
+
+  return (await response.json()) as TokenResponse;
+}
+
+/**
  * Parse the authorization callback URL to extract the code parameter.
  * Returns null if no code is present.
  */

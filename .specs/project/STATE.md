@@ -7,6 +7,23 @@
 
 ## Recent Decisions (Last 60 days)
 
+### AD-006: Google Drive OAuth wired into Settings UI (Phase 8.10) (2026-06-07)
+
+**Decision:** Wire the existing Drive `CloudProvider` + OAuth PKCE helpers into the Settings sync
+UI. Connect uses a popup PKCE flow (redirect URI = a static `public/oauth2-callback.html` that
+`postMessage`s the auth code back to the opener). Tokens (`accessToken`, `refreshToken`,
+`expiresAt`) persist in IndexedDB via `SyncConfig.google`; access tokens auto-refresh before use.
+Client ID comes from `VITE_GOOGLE_CLIENT_ID` (PKCE public client — no secret in source).
+
+**Reason:** Closes issue #2 — the Google Drive button showed "Coming soon". The popup flow keeps
+the in-memory SQLite DB and unlocked vault intact (a full-page redirect would discard them).
+
+**Trade-off:** Requires popups to be allowed (mitigated: connect is user-initiated). Real consent-
+screen verification is a deployment concern, not code.
+
+**Impact:** New `src/sync/providers/google-auth-flow.ts`; `SyncConfig` gains a `google` field
+(back-compat normalized on load). Phase 8.9's deferred "8.10" item is now done.
+
 ### AD-005: GitHub Actions PR pipeline — quality, tests, build, SAST (2026-06-07)
 
 **Decision:** Add two workflows triggered on every PR targeting `main`:

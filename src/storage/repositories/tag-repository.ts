@@ -22,11 +22,7 @@ export function createTagRepository(db: Database): TagRepository {
   return {
     create(params: CreateTagParams): Tag {
       const tag = createTag(params);
-      db.exec('INSERT INTO tags (id, name, color) VALUES (?, ?, ?)', [
-        tag.id,
-        tag.name,
-        tag.color,
-      ]);
+      db.exec('INSERT INTO tags (id, name, color) VALUES (?, ?, ?)', [tag.id, tag.name, tag.color]);
       return tag;
     },
 

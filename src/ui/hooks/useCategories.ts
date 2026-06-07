@@ -29,7 +29,10 @@ export function useCategories() {
   );
 
   const update = useCallback(
-    (id: string, changes: Partial<Pick<Category, 'name' | 'type' | 'parentId' | 'description'>>) => {
+    (
+      id: string,
+      changes: Partial<Pick<Category, 'name' | 'type' | 'parentId' | 'description'>>,
+    ) => {
       const repo = createCategoryRepository(db);
       const category = repo.update(id, changes);
       refresh();

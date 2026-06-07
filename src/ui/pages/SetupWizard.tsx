@@ -95,9 +95,7 @@ export function SetupWizard() {
         {step === 'welcome' && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">mytruetrack</h1>
-            <p className="text-gray-500 mb-8">
-              Private, local-first personal finance tracking.
-            </p>
+            <p className="text-gray-500 mb-8">Private, local-first personal finance tracking.</p>
             <button
               type="button"
               onClick={() => setStep('choice')}
@@ -113,8 +111,8 @@ export function SetupWizard() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
             <h2 className="text-xl font-bold text-gray-900 mb-2">Secure your data</h2>
             <p className="text-sm text-gray-500 mb-6">
-              A passphrase encrypts your data and is required for cloud sync.
-              Without it, your data stays only in this browser.
+              A passphrase encrypts your data and is required for cloud sync. Without it, your data
+              stays only in this browser.
             </p>
 
             <div className="space-y-3">
@@ -168,9 +166,7 @@ export function SetupWizard() {
                 placeholder="Enter your passphrase again"
               />
 
-              {error && (
-                <p className="text-sm text-red-600">{error}</p>
-              )}
+              {error && <p className="text-sm text-red-600">{error}</p>}
 
               <button
                 type="button"
@@ -183,7 +179,10 @@ export function SetupWizard() {
 
               <button
                 type="button"
-                onClick={() => { setStep('choice'); setError(null); }}
+                onClick={() => {
+                  setStep('choice');
+                  setError(null);
+                }}
                 className="w-full text-sm text-gray-500 hover:text-gray-700"
               >
                 Back
@@ -197,8 +196,8 @@ export function SetupWizard() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
             <h2 className="text-xl font-bold text-gray-900 mb-1">Save your recovery sheet</h2>
             <p className="text-sm text-gray-500 mb-6">
-              This is your only way to recover your data if you forget your passphrase.
-              Download it and store it somewhere safe.
+              This is your only way to recover your data if you forget your passphrase. Download it
+              and store it somewhere safe.
             </p>
 
             <div className="space-y-4">
@@ -237,14 +236,12 @@ export function SetupWizard() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
             <h2 className="text-xl font-bold text-gray-900 mb-1">Quick unlock</h2>
             <p className="text-sm text-gray-500 mb-6">
-              Use your fingerprint or face to unlock the app quickly, instead of
-              typing your passphrase every time.
+              Use your fingerprint or face to unlock the app quickly, instead of typing your
+              passphrase every time.
             </p>
 
             <div className="space-y-3">
-              {error && (
-                <p className="text-sm text-red-600">{error}</p>
-              )}
+              {error && <p className="text-sm text-red-600">{error}</p>}
 
               <button
                 type="button"
@@ -272,7 +269,8 @@ export function SetupWizard() {
             <div className="text-4xl mb-4">🔒</div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">Your vault is ready</h2>
             <p className="text-sm text-gray-500 mb-6">
-              Your data is encrypted and safe. You&apos;ll need your passphrase to unlock it next time.
+              Your data is encrypted and safe. You&apos;ll need your passphrase to unlock it next
+              time.
             </p>
             <button
               type="button"

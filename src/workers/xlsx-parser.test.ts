@@ -110,9 +110,7 @@ describe('xlsx-parser', () => {
   });
 
   it('returns empty array for sheet with only a header', () => {
-    const data = buildXlsx([
-      ['Date', 'Desc', 'Amount'],
-    ]);
+    const data = buildXlsx([['Date', 'Desc', 'Amount']]);
 
     const result = parseXlsx(data);
     expect(result).toHaveLength(0);

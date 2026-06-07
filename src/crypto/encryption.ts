@@ -60,7 +60,9 @@ export function encodeBlob(blob: EncryptedBlob): Uint8Array {
  */
 export function decodeBlob(packed: Uint8Array): EncryptedBlob {
   if (packed.length < IV_LENGTH + 1) {
-    throw new Error(`Invalid blob: too short (${packed.length} bytes, need at least ${IV_LENGTH + 1})`);
+    throw new Error(
+      `Invalid blob: too short (${packed.length} bytes, need at least ${IV_LENGTH + 1})`,
+    );
   }
   return {
     iv: packed.slice(0, IV_LENGTH),

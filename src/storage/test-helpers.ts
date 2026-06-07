@@ -13,7 +13,10 @@ export async function createTestDatabase(): Promise<Database> {
       raw.run(sql, params as Parameters<typeof raw.run>[1]);
     },
 
-    execA(sql: string, params?: (string | number | null | Uint8Array)[]): (string | number | null | Uint8Array)[][] {
+    execA(
+      sql: string,
+      params?: (string | number | null | Uint8Array)[],
+    ): (string | number | null | Uint8Array)[][] {
       const stmt = raw.prepare(sql);
       if (params) stmt.bind(params as Parameters<typeof stmt.bind>[0]);
       const rows: (string | number | null | Uint8Array)[][] = [];
@@ -24,7 +27,10 @@ export async function createTestDatabase(): Promise<Database> {
       return rows;
     },
 
-    execO(sql: string, params?: (string | number | null | Uint8Array)[]): Record<string, string | number | null | Uint8Array>[] {
+    execO(
+      sql: string,
+      params?: (string | number | null | Uint8Array)[],
+    ): Record<string, string | number | null | Uint8Array>[] {
       const stmt = raw.prepare(sql);
       if (params) stmt.bind(params as Parameters<typeof stmt.bind>[0]);
       const rows: Record<string, string | number | null | Uint8Array>[] = [];

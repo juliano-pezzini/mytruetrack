@@ -28,7 +28,9 @@ export function TransactionForm({
 }: TransactionFormProps) {
   const [amount, setAmount] = useState(initial?.amount ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
-  const [date, setDate] = useState(initial?.transactionDate ?? new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(
+    initial?.transactionDate ?? new Date().toISOString().slice(0, 10),
+  );
   const [type, setType] = useState<TransactionType>(initial?.type ?? 'debit');
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? '');
   const [error, setError] = useState<string | null>(null);
@@ -53,9 +55,7 @@ export function TransactionForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>
-      )}
+      {error && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>

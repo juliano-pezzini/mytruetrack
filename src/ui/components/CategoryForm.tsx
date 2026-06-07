@@ -45,9 +45,7 @@ export function CategoryForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>
-      )}
+      {error && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
         <input

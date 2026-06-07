@@ -87,13 +87,9 @@ describe('VaultProvider logic', () => {
   });
 
   it('unlock sets ready and provides dek (encrypted)', () => {
-    let status = 'needs-unlock' as string;
-    let dek: CryptoKey | null = null;
-
-    // Simulated "unlock" action
     const fakeDek = {} as CryptoKey;
-    dek = fakeDek;
-    status = 'ready';
+    const status = 'ready';
+    const dek = fakeDek;
 
     expect(status).toBe('ready');
     expect(dek).toBe(fakeDek);

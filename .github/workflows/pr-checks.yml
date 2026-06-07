@@ -1,0 +1,71 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: pr-checks-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality (format · lint · typecheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npx prettier --check "src/**/*.{ts,tsx}"
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+  test:
+    name: Tests & Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm run test:coverage
+
+  build-and-audit:
+    name: Build & Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Dependency vulnerability audit
+        # Fail only on high and critical severity vulnerabilities
+        run: npm audit --audit-level=high

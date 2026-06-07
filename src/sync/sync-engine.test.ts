@@ -239,4 +239,44 @@ describe('sync-engine', () => {
       }
     });
   });
+
+  describe('unencrypted sync (null dek)', () => {
+    it('push with null dek uploads plaintext', async () => {
+      db.exec(
+        `INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`,
+        ['acc-1', 'Visible Account', 'bank', 5000],
+      );
+
+      const provider = createMockCloudProvider();
+      await pushChanges(db, provider, null);
+
+      const raw = await provider.download('sync-blob.bin');
+      expect(raw).not.toBeNull();
+
+      // Plaintext — should contain the account name
+      const asText = new TextDecoder().decode(raw!);
+      expect(asText).toContain('Visible Account');
+    });
+
+    it('pull with null dek imports plaintext', async () => {
+      db.exec(
+        `INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`,
+        ['acc-1', 'From Cloud', 'bank', 3000],
+      );
+
+      const provider = createMockCloudProvider();
+      await pushChanges(db, provider, null);
+
+      const db2 = await initDatabase();
+      try {
+        await pullChanges(db2, provider, null);
+
+        const accounts = db2.execO('SELECT * FROM accounts');
+        expect(accounts).toHaveLength(1);
+        expect(accounts[0]!.name).toBe('From Cloud');
+      } finally {
+        db2.close();
+      }
+    });
+  });
 });

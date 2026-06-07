@@ -1,4 +1,5 @@
 import { ImportSection } from '../components/ImportSection.tsx';
+import { SyncSection } from '../components/SyncSection.tsx';
 
 export function SettingsPage() {
   return (
@@ -9,10 +10,10 @@ export function SettingsPage() {
         <ImportSection />
       </section>
 
-      {/* Sync placeholder */}
+      {/* Sync */}
       <section>
-        <h2 className="text-lg font-semibold text-gray-800 mb-2">Sync</h2>
-        <p className="text-sm text-gray-500">Cloud sync — coming soon.</p>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">Cloud Sync</h2>
+        <SyncSection />
       </section>
 
       {/* Security placeholder */}

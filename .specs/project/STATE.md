@@ -1,7 +1,7 @@
 # State
 
-**Last Updated:** 2026-06-05
-**Current Work:** Phase 8.8 Onboarding Flow complete — VaultProvider, SetupWizard (optional passphrase), UnlockPage, VaultGate. 251 tests, 27 files, all passing. Ready for Phase 8.9 WebDAV Provider.
+**Last Updated:** 2026-06-07
+**Current Work:** Phase 8.9 WebDAV + Sync Settings complete — WebDAV provider, sync config persistence, Settings sync UI, optional encryption in sync engine. 266 tests, 29 files, all passing. Ready for Phase 8.10 PWA + Offline Polish.
 
 ---
 

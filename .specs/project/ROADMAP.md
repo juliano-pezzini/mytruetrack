@@ -1,7 +1,7 @@
 # Roadmap
 
 **Current Milestone:** Phase 8 — Local-First Foundation
-**Status:** Phase 8.8 complete — Phase 8.9 next
+**Status:** Phase 8.9 complete — Phase 8.10 next
 
 ---
 
@@ -93,10 +93,15 @@ VaultProvider gate, optional passphrase, setup wizard, unlock page. 6 vault test
 - [x] PassphraseInput (show/hide toggle) + StrengthMeter components
 - [x] useVault hook
 
-### 8.9 — WebDAV provider
+### 8.9 — WebDAV provider + Sync Settings ✅
 
-- [ ] WebDAV `CloudProvider` implementation (covers Nextcloud, ownCloud, generic)
-- [ ] Settings UI for endpoint + credentials
+WebDAV CloudProvider, sync config persistence, Settings sync UI, optional unencrypted sync. 15 new tests.
+
+- [x] Sync engine updated: `pushChanges`/`pullChanges` accept `dek: CryptoKey | null` (plaintext when null)
+- [x] WebDAV CloudProvider (PUT, GET, PROPFIND, DELETE + Basic auth)
+- [x] Sync config persistence (IndexedDB: provider type + WebDAV credentials)
+- [x] Settings sync UI: provider selector, WebDAV config form, test connection, push/pull buttons, unencrypted warning
+- [x] 8 WebDAV provider tests + 5 sync config tests + 2 unencrypted sync engine tests
 
 ### 8.10 — PWA + offline polish
 

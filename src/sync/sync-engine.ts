@@ -72,17 +72,25 @@ export function importDatabaseSnapshot(db: Database, data: Uint8Array): void {
 
 /**
  * Push local database state to the cloud provider.
- * Exports all data, encrypts it, and uploads as a single blob.
+ * Exports all data, optionally encrypts it, and uploads as a single blob.
+ * When dek is null, uploads plaintext (unencrypted sync).
  */
 export async function pushChanges(
   db: Database,
   provider: CloudProvider,
-  dek: CryptoKey,
+  dek: CryptoKey | null,
 ): Promise<void> {
   const plaintext = exportDatabaseSnapshot(db);
-  const blob = await encrypt(dek, plaintext);
-  const packed = encodeBlob(blob);
-  await provider.upload(SYNC_FILENAME, packed);
+
+  let payload: Uint8Array;
+  if (dek) {
+    const blob = await encrypt(dek, plaintext);
+    payload = encodeBlob(blob);
+  } else {
+    payload = plaintext;
+  }
+
+  await provider.upload(SYNC_FILENAME, payload);
 
   const state = await getSyncState();
   await savePushState(state.lastPushedVersion + 1);
@@ -90,19 +98,26 @@ export async function pushChanges(
 
 /**
  * Pull remote database state from the cloud provider.
- * Downloads, decrypts, and merges into the local database.
+ * Downloads, optionally decrypts, and merges into the local database.
+ * When dek is null, expects plaintext snapshot (unencrypted sync).
  * No-op if no remote blob exists.
  */
 export async function pullChanges(
   db: Database,
   provider: CloudProvider,
-  dek: CryptoKey,
+  dek: CryptoKey | null,
 ): Promise<void> {
   const packed = await provider.download(SYNC_FILENAME);
   if (!packed) return; // nothing to pull
 
-  const blob = decodeBlob(packed);
-  const plaintext = await decrypt(dek, blob);
+  let plaintext: Uint8Array;
+  if (dek) {
+    const blob = decodeBlob(packed);
+    plaintext = await decrypt(dek, blob);
+  } else {
+    plaintext = packed;
+  }
+
   importDatabaseSnapshot(db, plaintext);
 
   await savePullState();

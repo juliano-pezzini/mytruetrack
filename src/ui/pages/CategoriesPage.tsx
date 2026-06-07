@@ -6,6 +6,7 @@ import { TagForm } from '../components/TagForm.tsx';
 import { ConfirmDialog } from '../components/ConfirmDialog.tsx';
 import type { Category, CreateCategoryParams, CategoryType } from '../../domain/category.ts';
 import type { Tag, CreateTagParams } from '../../domain/tag.ts';
+import { suggestTagColor } from '../../domain/tag.ts';
 
 const TYPE_BADGES: Record<CategoryType, { label: string; className: string }> = {
   expense: { label: 'Expense', className: 'bg-red-100 text-red-700' },
@@ -245,7 +246,11 @@ function TagsTab() {
       {showForm && (
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <h3 className="text-sm font-semibold text-gray-900 mb-3">New Tag</h3>
-          <TagForm onSubmit={handleCreate} onCancel={() => setShowForm(false)} />
+          <TagForm
+            onSubmit={handleCreate}
+            onCancel={() => setShowForm(false)}
+            suggestedColor={suggestTagColor(tags.map((t) => t.color))}
+          />
         </div>
       )}
 

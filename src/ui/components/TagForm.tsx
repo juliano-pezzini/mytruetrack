@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { CreateTagParams } from '../../domain/tag.ts';
+import { SUGGESTED_TAG_COLORS } from '../../domain/tag.ts';
 
 type TagFormProps = {
   onSubmit: (params: CreateTagParams) => void;
@@ -8,12 +9,20 @@ type TagFormProps = {
     name: string;
     color: string;
   };
+  suggestedColor?: string;
   submitLabel?: string;
 };
 
-export function TagForm({ onSubmit, onCancel, initial, submitLabel = 'Create' }: TagFormProps) {
+export function TagForm({
+  onSubmit,
+  onCancel,
+  initial,
+  suggestedColor,
+  submitLabel = 'Create',
+}: TagFormProps) {
+  const defaultColor = initial?.color ?? suggestedColor ?? SUGGESTED_TAG_COLORS[0]!;
   const [name, setName] = useState(initial?.name ?? '');
-  const [color, setColor] = useState(initial?.color ?? '#808080');
+  const [color, setColor] = useState(defaultColor);
   const [error, setError] = useState<string | null>(null);
 
   function handleSubmit(e: React.FormEvent) {

@@ -28,9 +28,13 @@ export function TransactionsPage() {
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [period, setPeriod] = useState(getCurrentMonth);
   const range = useMemo(() => monthRange(period.year, period.month), [period.year, period.month]);
-  const { transactions, create, update, remove } = useTransactions(selectedAccountId, range);
+
+  // Auto-select first account (must be before hooks that consume it)
+  const accountId = selectedAccountId ?? accounts[0]?.id ?? null;
+
+  const { transactions, create, update, remove } = useTransactions(accountId, range);
   const { balance: startBalance } = useAccountBalance(
-    selectedAccountId,
+    accountId,
     // Day before the month starts
     (() => {
       const d = new Date(period.year, period.month - 1, 0);
@@ -41,9 +45,6 @@ export function TransactionsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
-
-  // Auto-select first account
-  const accountId = selectedAccountId ?? accounts[0]?.id ?? null;
 
   // Category lookup
   const categoryMap = useMemo(() => {

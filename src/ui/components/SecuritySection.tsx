@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useVault } from '../hooks/useVault.ts';
+import { ConfirmDialog } from './ConfirmDialog.tsx';
 import { hasKeyData } from '../../crypto/key-store.ts';
 import {
   isBiometricAvailable,
@@ -15,9 +16,10 @@ type SecurityState = {
 };
 
 export function SecuritySection() {
-  const { status } = useVault();
+  const { status, reset } = useVault();
   const [state, setState] = useState<SecurityState | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   async function loadState() {
@@ -86,10 +88,17 @@ export function SecuritySection() {
           ) : (
             <>
               <p className="text-sm font-medium text-gray-800">Data is not encrypted</p>
-              <p className="text-xs text-gray-500">
-                You chose local-only mode. To enable encryption, reset the vault and create a
-                passphrase during setup.
+              <p className="text-xs text-gray-500 mb-2">
+                You chose local-only mode. Set up a passphrase to encrypt your data and enable
+                cloud sync.
               </p>
+              <button
+                type="button"
+                onClick={() => setShowResetConfirm(true)}
+                className="text-xs text-blue-600 hover:text-blue-800"
+              >
+                Set up passphrase…
+              </button>
             </>
           )}
         </div>
@@ -153,6 +162,17 @@ export function SecuritySection() {
           {message.text}
         </p>
       )}
+
+      <ConfirmDialog
+        open={showResetConfirm}
+        title="Set up passphrase"
+        message="This will reset your vault and restart the setup wizard. Any existing local data will be permanently deleted. Continue?"
+        onConfirm={async () => {
+          setShowResetConfirm(false);
+          await reset();
+        }}
+        onCancel={() => setShowResetConfirm(false)}
+      />
     </div>
   );
 }

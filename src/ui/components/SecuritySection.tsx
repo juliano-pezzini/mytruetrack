@@ -168,7 +168,9 @@ export function SecuritySection() {
                     <button
                       type="button"
                       onClick={handleChangePassphrase}
-                      disabled={changing || !currentPassphrase || !newPassphrase || !confirmPassphrase}
+                      disabled={
+                        changing || !currentPassphrase || !newPassphrase || !confirmPassphrase
+                      }
                       className="flex-1 py-2 px-3 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       {changing ? 'Saving…' : 'Save new passphrase'}
@@ -189,8 +191,8 @@ export function SecuritySection() {
             <>
               <p className="text-sm font-medium text-gray-800">Data is not encrypted</p>
               <p className="text-xs text-gray-500 mb-2">
-                You chose local-only mode. Set up a passphrase to encrypt your data and enable
-                cloud sync.
+                You chose local-only mode. Set up a passphrase to encrypt your data and enable cloud
+                sync.
               </p>
               <button
                 type="button"
@@ -256,9 +258,7 @@ export function SecuritySection() {
       )}
 
       {message && (
-        <p
-          className={`text-xs ${message.type === 'success' ? 'text-green-600' : 'text-red-600'}`}
-        >
+        <p className={`text-xs ${message.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
           {message.text}
         </p>
       )}

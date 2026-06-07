@@ -119,13 +119,14 @@ src/
 - **WebAuthn:** platform authenticators only (no roaming for v1); user verification required
 - **OAuth (Google Drive):** PKCE flow; minimal scope (`drive.appdata`); no client secret in source
 - **Imports:** parse in Web Worker (isolates parser bugs); validate parsed data with `zod` before persisting
+- **Dependency audit:** use `audit-ci` (not `npm audit` directly) — config in `audit-ci.jsonc`. New advisories must be either fixed or explicitly allowlisted with a documented rationale and a linked TODO to resolve them.
 
 ## Git Conventions
 
 - **All changes must be made via Pull Requests.** Direct commits to `main` are not allowed.
 - Commits: `feat:` / `fix:` / `test:` / `refactor:` / `docs:` / `chore:` / `perf:` / `spike:`
 - Branches: `feat/<short-desc>`, `fix/<short-desc>`, `spike/<short-desc>`
-- PRs must pass: typecheck, lint, unit tests, e2e tests (when present)
+- PRs must pass: typecheck, lint, unit tests, e2e tests (when present), and `audit-ci` security audit
 
 ## Spec-Driven Workflow
 

@@ -35,17 +35,17 @@ export function AccountsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Account | null>(null);
   const [typeFilter, setTypeFilter] = useState<AccountType | 'all'>('all');
 
-  const filtered =
-    typeFilter === 'all'
-      ? accounts
-      : accounts.filter((a) => a.type === typeFilter);
+  const filtered = typeFilter === 'all' ? accounts : accounts.filter((a) => a.type === typeFilter);
 
   function handleCreate(params: CreateAccountParams) {
     create(params);
     setShowForm(false);
   }
 
-  function handleUpdate(account: Account, changes: Partial<Pick<Account, 'name' | 'type' | 'description'>>) {
+  function handleUpdate(
+    account: Account,
+    changes: Partial<Pick<Account, 'name' | 'type' | 'description'>>,
+  ) {
     update(account.id, changes);
     setEditingId(null);
   }

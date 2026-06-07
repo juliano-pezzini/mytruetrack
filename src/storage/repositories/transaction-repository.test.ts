@@ -43,10 +43,38 @@ describe('TransactionRepository', () => {
   });
 
   it('queries by account with date range', () => {
-    repo.create({ id: 't1', accountId: 'a1', amount: fromCents(100), description: 'Jan', transactionDate: '2026-01-15', type: 'debit' });
-    repo.create({ id: 't2', accountId: 'a1', amount: fromCents(200), description: 'Feb', transactionDate: '2026-02-15', type: 'credit' });
-    repo.create({ id: 't3', accountId: 'a1', amount: fromCents(300), description: 'Mar', transactionDate: '2026-03-15', type: 'debit' });
-    repo.create({ id: 't4', accountId: 'a2', amount: fromCents(400), description: 'Other', transactionDate: '2026-02-15', type: 'debit' });
+    repo.create({
+      id: 't1',
+      accountId: 'a1',
+      amount: fromCents(100),
+      description: 'Jan',
+      transactionDate: '2026-01-15',
+      type: 'debit',
+    });
+    repo.create({
+      id: 't2',
+      accountId: 'a1',
+      amount: fromCents(200),
+      description: 'Feb',
+      transactionDate: '2026-02-15',
+      type: 'credit',
+    });
+    repo.create({
+      id: 't3',
+      accountId: 'a1',
+      amount: fromCents(300),
+      description: 'Mar',
+      transactionDate: '2026-03-15',
+      type: 'debit',
+    });
+    repo.create({
+      id: 't4',
+      accountId: 'a2',
+      amount: fromCents(400),
+      description: 'Other',
+      transactionDate: '2026-02-15',
+      type: 'debit',
+    });
 
     // All for a1
     const all = repo.getByAccount('a1');
@@ -64,7 +92,14 @@ describe('TransactionRepository', () => {
   });
 
   it('updates only provided fields', () => {
-    repo.create({ id: 'u1', accountId: 'a1', amount: fromCents(1000), description: 'Old', transactionDate: '2026-01-01', type: 'debit' });
+    repo.create({
+      id: 'u1',
+      accountId: 'a1',
+      amount: fromCents(1000),
+      description: 'Old',
+      transactionDate: '2026-01-01',
+      type: 'debit',
+    });
 
     const updated = repo.update('u1', { description: 'New', categoryId: 'cat-1' });
     expect(updated.description).toBe('New');
@@ -73,7 +108,14 @@ describe('TransactionRepository', () => {
   });
 
   it('updates all supported fields at once', () => {
-    repo.create({ id: 'u2', accountId: 'a1', amount: fromCents(1000), description: 'Orig', transactionDate: '2026-01-01', type: 'debit' });
+    repo.create({
+      id: 'u2',
+      accountId: 'a1',
+      amount: fromCents(1000),
+      description: 'Orig',
+      transactionDate: '2026-01-01',
+      type: 'debit',
+    });
 
     const updated = repo.update('u2', {
       description: 'Changed',
@@ -94,7 +136,14 @@ describe('TransactionRepository', () => {
   });
 
   it('hard-deletes a transaction and its tags', () => {
-    repo.create({ id: 'del-1', accountId: 'a1', amount: fromCents(100), description: 'Bye', transactionDate: '2026-01-01', type: 'debit' });
+    repo.create({
+      id: 'del-1',
+      accountId: 'a1',
+      amount: fromCents(100),
+      description: 'Bye',
+      transactionDate: '2026-01-01',
+      type: 'debit',
+    });
     repo.addTags('del-1', ['t1', 't2']);
 
     repo.delete('del-1');
@@ -104,7 +153,14 @@ describe('TransactionRepository', () => {
   });
 
   it('manages tags via addTags, removeTags, getTagIds', () => {
-    repo.create({ id: 'tag-txn', accountId: 'a1', amount: fromCents(100), description: 'Tagged', transactionDate: '2026-01-01', type: 'debit' });
+    repo.create({
+      id: 'tag-txn',
+      accountId: 'a1',
+      amount: fromCents(100),
+      description: 'Tagged',
+      transactionDate: '2026-01-01',
+      type: 'debit',
+    });
 
     repo.addTags('tag-txn', ['t1', 't2', 't3']);
     expect(repo.getTagIds('tag-txn')).toEqual(['t1', 't2', 't3']);

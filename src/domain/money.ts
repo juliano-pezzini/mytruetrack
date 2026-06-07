@@ -58,7 +58,7 @@ export function subtract(a: Money, b: Money): Money {
 
 /** Negate a Money value */
 export function negate(a: Money): Money {
-  return (-a) as Money;
+  return -a as Money;
 }
 
 /** Absolute value */

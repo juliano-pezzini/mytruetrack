@@ -54,17 +54,14 @@ export function createGoogleDriveProvider(accessToken: string): CloudProvider {
 
       if (existingId) {
         // Update existing file content (PATCH)
-        const response = await fetch(
-          `${UPLOAD_API}/${existingId}?uploadType=media`,
-          {
-            method: 'PATCH',
-            headers: {
-              ...headers(),
-              'Content-Type': 'application/octet-stream',
-            },
-            body: data.buffer as ArrayBuffer,
+        const response = await fetch(`${UPLOAD_API}/${existingId}?uploadType=media`, {
+          method: 'PATCH',
+          headers: {
+            ...headers(),
+            'Content-Type': 'application/octet-stream',
           },
-        );
+          body: data.buffer as ArrayBuffer,
+        });
 
         if (!response.ok) {
           throw new Error(`Drive update failed: ${response.status} ${response.statusText}`);
@@ -77,10 +74,7 @@ export function createGoogleDriveProvider(accessToken: string): CloudProvider {
         };
 
         const form = new FormData();
-        form.append(
-          'metadata',
-          new Blob([JSON.stringify(metadata)], { type: 'application/json' }),
-        );
+        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
         form.append('file', new Blob([data.buffer as ArrayBuffer]));
 
         const response = await fetch(`${UPLOAD_API}?uploadType=multipart`, {

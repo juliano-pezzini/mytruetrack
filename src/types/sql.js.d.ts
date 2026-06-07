@@ -21,7 +21,5 @@ declare module 'sql.js' {
     free(): boolean;
   }
 
-  export default function initSqlJs(
-    config?: Record<string, unknown>,
-  ): Promise<SqlJsStatic>;
+  export default function initSqlJs(config?: Record<string, unknown>): Promise<SqlJsStatic>;
 }

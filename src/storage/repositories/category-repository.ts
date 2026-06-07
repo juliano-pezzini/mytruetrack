@@ -16,7 +16,10 @@ export type CategoryRepository = {
   create(params: CreateCategoryParams): Category;
   getById(id: string): Category | null;
   getAll(): Category[];
-  update(id: string, changes: Partial<Pick<Category, 'name' | 'type' | 'parentId' | 'description'>>): Category;
+  update(
+    id: string,
+    changes: Partial<Pick<Category, 'name' | 'type' | 'parentId' | 'description'>>,
+  ): Category;
   delete(id: string): void;
 };
 
@@ -47,7 +50,10 @@ export function createCategoryRepository(db: Database): CategoryRepository {
       return db.execO('SELECT * FROM categories ORDER BY name').map(rowToCategory);
     },
 
-    update(id: string, changes: Partial<Pick<Category, 'name' | 'type' | 'parentId' | 'description'>>): Category {
+    update(
+      id: string,
+      changes: Partial<Pick<Category, 'name' | 'type' | 'parentId' | 'description'>>,
+    ): Category {
       const existing = this.getById(id);
       if (!existing) throw new Error(`Category not found: ${id}`);
 

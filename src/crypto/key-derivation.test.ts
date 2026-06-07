@@ -80,9 +80,7 @@ describe('key-derivation', () => {
     const dek = await generateDek();
     const wrapped = await wrapDek(dek, correctKek);
 
-    await expect(unwrapDek(wrapped, wrongKek)).rejects.toThrow(
-      /incorrect passphrase|corrupted/i,
-    );
+    await expect(unwrapDek(wrapped, wrongKek)).rejects.toThrow(/incorrect passphrase|corrupted/i);
   });
 
   it('same passphrase + salt produces same KEK (deterministic)', async () => {

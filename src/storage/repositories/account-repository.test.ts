@@ -98,7 +98,13 @@ describe('AccountRepository', () => {
   });
 
   it('updates multiple fields at once', () => {
-    repo.create({ id: 'multi', name: 'Old', type: 'bank', initialBalance: fromCents(0), description: 'old desc' });
+    repo.create({
+      id: 'multi',
+      name: 'Old',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      description: 'old desc',
+    });
 
     const updated = repo.update('multi', { name: 'New', type: 'wallet', description: 'new desc' });
     expect(updated.name).toBe('New');
@@ -107,7 +113,13 @@ describe('AccountRepository', () => {
   });
 
   it('updates description to null', () => {
-    repo.create({ id: 'null-desc', name: 'Test', type: 'bank', initialBalance: fromCents(0), description: 'has desc' });
+    repo.create({
+      id: 'null-desc',
+      name: 'Test',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      description: 'has desc',
+    });
 
     const updated = repo.update('null-desc', { description: null });
     expect(updated.description).toBeNull();

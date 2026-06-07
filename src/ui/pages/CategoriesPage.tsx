@@ -24,7 +24,9 @@ export function CategoriesPage() {
           type="button"
           onClick={() => setTab('categories')}
           className={`px-4 py-1.5 text-sm rounded-md font-medium transition-colors ${
-            tab === 'categories' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+            tab === 'categories'
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-600 hover:text-gray-900'
           }`}
         >
           Categories
@@ -33,7 +35,9 @@ export function CategoriesPage() {
           type="button"
           onClick={() => setTab('tags')}
           className={`px-4 py-1.5 text-sm rounded-md font-medium transition-colors ${
-            tab === 'tags' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+            tab === 'tags'
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-600 hover:text-gray-900'
           }`}
         >
           Tags
@@ -150,12 +154,17 @@ function CategoriesTab() {
                     </td>
                   ) : (
                     <>
-                      <td className="px-4 py-3 text-gray-900" style={{ paddingLeft: `${16 + depth * 24}px` }}>
+                      <td
+                        className="px-4 py-3 text-gray-900"
+                        style={{ paddingLeft: `${16 + depth * 24}px` }}
+                      >
                         {depth > 0 && <span className="text-gray-400 mr-1">└</span>}
                         {category.name}
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_BADGES[category.type].className}`}>
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_BADGES[category.type].className}`}
+                        >
                           {TYPE_BADGES[category.type].label}
                         </span>
                       </td>
@@ -191,9 +200,7 @@ function CategoriesTab() {
         open={deleteTarget !== null}
         title="Delete Category"
         message={
-          deleteError
-            ? deleteError
-            : `Delete "${deleteTarget?.name}"? This cannot be undone.`
+          deleteError ? deleteError : `Delete "${deleteTarget?.name}"? This cannot be undone.`
         }
         onConfirm={handleDelete}
         onCancel={() => {

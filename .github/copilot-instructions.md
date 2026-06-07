@@ -122,6 +122,7 @@ src/
 
 ## Git Conventions
 
+- **All changes must be made via Pull Requests.** Direct commits to `main` are not allowed.
 - Commits: `feat:` / `fix:` / `test:` / `refactor:` / `docs:` / `chore:` / `perf:` / `spike:`
 - Branches: `feat/<short-desc>`, `fix/<short-desc>`, `spike/<short-desc>`
 - PRs must pass: typecheck, lint, unit tests, e2e tests (when present)

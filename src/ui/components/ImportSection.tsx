@@ -64,10 +64,11 @@ export function ImportSection() {
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="import-account" className="block text-sm font-medium text-gray-700 mb-1">
           Target Account
         </label>
         <select
+          id="import-account"
           value={accountId}
           onChange={(e) => setAccountId(e.target.value)}
           className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full max-w-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -82,10 +83,11 @@ export function ImportSection() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="import-file" className="block text-sm font-medium text-gray-700 mb-1">
           Statement File
         </label>
         <input
+          id="import-file"
           type="file"
           accept=".ofx,.xlsx"
           onChange={handleFileChange}

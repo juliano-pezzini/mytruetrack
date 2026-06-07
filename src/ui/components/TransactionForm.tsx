@@ -58,8 +58,9 @@ export function TransactionForm({
       )}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+          <label htmlFor="txn-amount" className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
           <input
+            id="txn-amount"
             type="text"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
@@ -69,8 +70,9 @@ export function TransactionForm({
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+          <label htmlFor="txn-type" className="block text-sm font-medium text-gray-700 mb-1">Type</label>
           <select
+            id="txn-type"
             value={type}
             onChange={(e) => setType(e.target.value as TransactionType)}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -81,8 +83,9 @@ export function TransactionForm({
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <label htmlFor="txn-description" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
         <input
+          id="txn-description"
           type="text"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -92,8 +95,9 @@ export function TransactionForm({
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+          <label htmlFor="txn-date" className="block text-sm font-medium text-gray-700 mb-1">Date</label>
           <input
+            id="txn-date"
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
@@ -102,8 +106,9 @@ export function TransactionForm({
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+          <label htmlFor="txn-category" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
           <select
+            id="txn-category"
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"

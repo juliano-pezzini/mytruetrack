@@ -1,7 +1,7 @@
 # State
 
 **Last Updated:** 2026-06-07
-**Current Work:** Phase 8 — Local-First Foundation COMPLETE. All 10 sub-phases done. 266 tests, 29 files, all passing. PWA installable with offline support. 87 modules, 239 KB gzip.
+**Current Work:** Phase 8 — Local-First Foundation COMPLETE. All 10 sub-phases done + Playwright E2E test suite (46 tests, all passing). 266 unit tests, 29 files, all passing. PWA installable with offline support. 87 modules, 239 KB gzip.
 
 ---
 
@@ -72,7 +72,7 @@
 
 - [x] Run Phase 8.1 Architecture Spike (see `.specs/features/8.1-architecture-spike/spike-report.md`)
 - [ ] Set up Vite + React + TypeScript scaffold once spike confirms stack
-- [ ] Set up ESLint + Prettier + Vitest + Playwright
+- [x] Set up ESLint + Prettier + Vitest + Playwright (Playwright E2E: 46 tests, all passing)
 - [ ] Set up GitHub Actions CI (typecheck, lint, unit tests, e2e)
 - [ ] Add LICENSE file (likely MIT, matching v1)
 - [ ] Write CONTRIBUTING.md once architecture stabilizes

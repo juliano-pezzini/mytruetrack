@@ -56,8 +56,9 @@ export function AccountForm({
         <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>
       )}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+        <label htmlFor="account-name" className="block text-sm font-medium text-gray-700 mb-1">Name</label>
         <input
+          id="account-name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -66,8 +67,9 @@ export function AccountForm({
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+        <label htmlFor="account-type" className="block text-sm font-medium text-gray-700 mb-1">Type</label>
         <select
+          id="account-type"
           value={type}
           onChange={(e) => setType(e.target.value as AccountType)}
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -80,10 +82,11 @@ export function AccountForm({
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="account-initial-balance" className="block text-sm font-medium text-gray-700 mb-1">
           Initial Balance
         </label>
         <input
+          id="account-initial-balance"
           type="text"
           value={balance}
           onChange={(e) => setBalance(e.target.value)}
@@ -92,10 +95,11 @@ export function AccountForm({
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="account-description" className="block text-sm font-medium text-gray-700 mb-1">
           Description
         </label>
         <input
+          id="account-description"
           type="text"
           value={description}
           onChange={(e) => setDescription(e.target.value)}

@@ -42,8 +42,9 @@ export function TagForm({
       )}
       <div className="grid grid-cols-[1fr_auto] gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+          <label htmlFor="tag-name" className="block text-sm font-medium text-gray-700 mb-1">Name</label>
           <input
+            id="tag-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -52,8 +53,9 @@ export function TagForm({
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
+          <label htmlFor="tag-color" className="block text-sm font-medium text-gray-700 mb-1">Color</label>
           <input
+            id="tag-color"
             type="color"
             value={color}
             onChange={(e) => setColor(e.target.value)}

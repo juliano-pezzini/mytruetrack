@@ -54,7 +54,9 @@ export function AccountForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>}
       <div>
-        <label htmlFor="account-name" className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+        <label htmlFor="account-name" className="block text-sm font-medium text-gray-700 mb-1">
+          Name
+        </label>
         <input
           id="account-name"
           type="text"
@@ -65,7 +67,9 @@ export function AccountForm({
         />
       </div>
       <div>
-        <label htmlFor="account-type" className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+        <label htmlFor="account-type" className="block text-sm font-medium text-gray-700 mb-1">
+          Type
+        </label>
         <select
           id="account-type"
           value={type}
@@ -80,7 +84,10 @@ export function AccountForm({
         </select>
       </div>
       <div>
-        <label htmlFor="account-initial-balance" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="account-initial-balance"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Initial Balance
         </label>
         <input
@@ -93,7 +100,10 @@ export function AccountForm({
         />
       </div>
       <div>
-        <label htmlFor="account-description" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="account-description"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Description
         </label>
         <input

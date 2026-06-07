@@ -47,7 +47,9 @@ export function CategoryForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>}
       <div>
-        <label htmlFor="category-name" className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+        <label htmlFor="category-name" className="block text-sm font-medium text-gray-700 mb-1">
+          Name
+        </label>
         <input
           id="category-name"
           type="text"
@@ -59,7 +61,9 @@ export function CategoryForm({
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="category-type" className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+          <label htmlFor="category-type" className="block text-sm font-medium text-gray-700 mb-1">
+            Type
+          </label>
           <select
             id="category-type"
             value={type}
@@ -71,7 +75,9 @@ export function CategoryForm({
           </select>
         </div>
         <div>
-          <label htmlFor="category-parent" className="block text-sm font-medium text-gray-700 mb-1">Parent</label>
+          <label htmlFor="category-parent" className="block text-sm font-medium text-gray-700 mb-1">
+            Parent
+          </label>
           <select
             id="category-parent"
             value={parentId}
@@ -88,7 +94,12 @@ export function CategoryForm({
         </div>
       </div>
       <div>
-        <label htmlFor="category-description" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <label
+          htmlFor="category-description"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Description
+        </label>
         <input
           id="category-description"
           type="text"

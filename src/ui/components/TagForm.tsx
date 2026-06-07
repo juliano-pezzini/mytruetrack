@@ -35,7 +35,9 @@ export function TagForm({ onSubmit, onCancel, initial, submitLabel = 'Create' }:
       {error && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>}
       <div className="grid grid-cols-[1fr_auto] gap-4">
         <div>
-          <label htmlFor="tag-name" className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+          <label htmlFor="tag-name" className="block text-sm font-medium text-gray-700 mb-1">
+            Name
+          </label>
           <input
             id="tag-name"
             type="text"
@@ -46,7 +48,9 @@ export function TagForm({ onSubmit, onCancel, initial, submitLabel = 'Create' }:
           />
         </div>
         <div>
-          <label htmlFor="tag-color" className="block text-sm font-medium text-gray-700 mb-1">Color</label>
+          <label htmlFor="tag-color" className="block text-sm font-medium text-gray-700 mb-1">
+            Color
+          </label>
           <input
             id="tag-color"
             type="color"

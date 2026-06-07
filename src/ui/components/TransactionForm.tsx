@@ -58,7 +58,9 @@ export function TransactionForm({
       {error && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="txn-amount" className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+          <label htmlFor="txn-amount" className="block text-sm font-medium text-gray-700 mb-1">
+            Amount
+          </label>
           <input
             id="txn-amount"
             type="text"
@@ -70,7 +72,9 @@ export function TransactionForm({
           />
         </div>
         <div>
-          <label htmlFor="txn-type" className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+          <label htmlFor="txn-type" className="block text-sm font-medium text-gray-700 mb-1">
+            Type
+          </label>
           <select
             id="txn-type"
             value={type}
@@ -83,7 +87,9 @@ export function TransactionForm({
         </div>
       </div>
       <div>
-        <label htmlFor="txn-description" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <label htmlFor="txn-description" className="block text-sm font-medium text-gray-700 mb-1">
+          Description
+        </label>
         <input
           id="txn-description"
           type="text"
@@ -95,7 +101,9 @@ export function TransactionForm({
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="txn-date" className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+          <label htmlFor="txn-date" className="block text-sm font-medium text-gray-700 mb-1">
+            Date
+          </label>
           <input
             id="txn-date"
             type="date"
@@ -106,7 +114,9 @@ export function TransactionForm({
           />
         </div>
         <div>
-          <label htmlFor="txn-category" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+          <label htmlFor="txn-category" className="block text-sm font-medium text-gray-700 mb-1">
+            Category
+          </label>
           <select
             id="txn-category"
             value={categoryId}

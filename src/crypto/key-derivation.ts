@@ -72,6 +72,34 @@ export async function wrapDek(dek: CryptoKey, kek: CryptoKey): Promise<Uint8Arra
 }
 
 /**
+ * Re-wrap the DEK under a new KEK (passphrase change).
+ * Unwraps with the current KEK as extractable (scoped here only), then
+ * immediately re-wraps with the new KEK. The DEK itself never changes.
+ */
+export async function rewrapDek(
+  wrappedDek: Uint8Array,
+  currentKek: CryptoKey,
+  newKek: CryptoKey,
+): Promise<Uint8Array> {
+  let extractableDek: CryptoKey;
+  try {
+    extractableDek = await crypto.subtle.unwrapKey(
+      'raw',
+      wrappedDek.buffer as ArrayBuffer,
+      currentKek,
+      'AES-KW',
+      { name: 'AES-GCM', length: 256 },
+      true, // extractable — needed for re-wrap, scoped to this function
+      ['encrypt', 'decrypt'],
+    );
+  } catch {
+    throw new Error('Failed to unwrap key — incorrect current passphrase');
+  }
+  const rewrapped = await crypto.subtle.wrapKey('raw', extractableDek, newKek, 'AES-KW');
+  return new Uint8Array(rewrapped);
+}
+
+/**
  * Unwrap (decrypt) a wrapped DEK using the KEK.
  * Returns a non-extractable AES-GCM key for encrypt/decrypt operations.
  * Throws if the passphrase (and thus KEK) is wrong.

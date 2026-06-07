@@ -1,5 +1,6 @@
 import { ImportSection } from '../components/ImportSection.tsx';
 import { SyncSection } from '../components/SyncSection.tsx';
+import { SecuritySection } from '../components/SecuritySection.tsx';
 
 export function SettingsPage() {
   return (
@@ -16,10 +17,10 @@ export function SettingsPage() {
         <SyncSection />
       </section>
 
-      {/* Security placeholder */}
+      {/* Security */}
       <section>
-        <h2 className="text-lg font-semibold text-gray-800 mb-2">Security</h2>
-        <p className="text-sm text-gray-500">Passphrase &amp; biometric unlock — coming soon.</p>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">Security</h2>
+        <SecuritySection />
       </section>
 
       {/* About */}

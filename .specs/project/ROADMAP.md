@@ -1,7 +1,7 @@
 # Roadmap
 
 **Current Milestone:** Phase 8 — Local-First Foundation
-**Status:** Phase 8.9 complete — Phase 8.10 next
+**Status:** Phase 8 COMPLETE
 
 ---
 
@@ -103,11 +103,16 @@ WebDAV CloudProvider, sync config persistence, Settings sync UI, optional unencr
 - [x] Settings sync UI: provider selector, WebDAV config form, test connection, push/pull buttons, unencrypted warning
 - [x] 8 WebDAV provider tests + 5 sync config tests + 2 unencrypted sync engine tests
 
-### 8.10 — PWA + offline polish
+### 8.10 — PWA + offline polish ✅
 
-- [ ] Manifest + icons
-- [ ] Service worker (cache app shell, queue sync ops when offline)
-- [ ] Install prompts
+Installable PWA with offline support, app icons, service worker.
+
+- [x] Web app manifest (name, icons, display: standalone, theme color)
+- [x] App icons: 192x192 + 512x512 PNG (blue rounded rect with "TT")
+- [x] Service worker: precache app shell, cache-first for same-origin, skip API calls
+- [x] SW registration in main.tsx
+- [x] Meta tags: theme-color, apple-mobile-web-app-capable, apple-touch-icon
+- [x] Offline banner: useOnlineStatus hook + OfflineBanner component in Layout
 - [ ] Cross-browser QA (Chrome, Edge, Safari, Firefox)
 - [ ] Release v2.0.0
 

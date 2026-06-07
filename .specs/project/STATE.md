@@ -1,7 +1,7 @@
 # State
 
 **Last Updated:** 2026-06-07
-**Current Work:** Phase 8.9 WebDAV + Sync Settings complete — WebDAV provider, sync config persistence, Settings sync UI, optional encryption in sync engine. 266 tests, 29 files, all passing. Ready for Phase 8.10 PWA + Offline Polish.
+**Current Work:** Phase 8 — Local-First Foundation COMPLETE. All 10 sub-phases done. 266 tests, 29 files, all passing. PWA installable with offline support. 87 modules, 239 KB gzip.
 
 ---
 

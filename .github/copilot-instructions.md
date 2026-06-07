@@ -126,7 +126,8 @@ src/
 - **All changes must be made via Pull Requests.** Direct commits to `main` are not allowed.
 - Commits: `feat:` / `fix:` / `test:` / `refactor:` / `docs:` / `chore:` / `perf:` / `spike:`
 - Branches: `feat/<short-desc>`, `fix/<short-desc>`, `spike/<short-desc>`
-- PRs must pass: typecheck, lint, unit tests, e2e tests (when present), and `audit-ci` security audit
+- **Before every commit, you MUST run all quality checks locally:** typecheck, lint, unit tests, e2e tests (when present), and `audit-ci` security audit. Do not commit if any check fails.
+- PRs must pass the same checks in CI. Local passing is a prerequisite, not a substitute.
 
 ## Spec-Driven Workflow
 

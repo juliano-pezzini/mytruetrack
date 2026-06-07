@@ -8,10 +8,15 @@ import type { ParsedTransaction } from '../../workers/types.ts';
 import type { ImportResult } from '../../workers/types.ts';
 import { toCents } from '../../domain/money.ts';
 
-export function ImportSection() {
+type ImportSectionProps = {
+  initialAccountId?: string;
+  onImportComplete?: () => void;
+};
+
+export function ImportSection({ initialAccountId, onImportComplete }: ImportSectionProps = {}) {
   const db = useDatabase();
   const { accounts } = useAccounts();
-  const [accountId, setAccountId] = useState('');
+  const [accountId, setAccountId] = useState(initialAccountId ?? '');
   const [parsed, setParsed] = useState<ParsedTransaction[] | null>(null);
   const [fileName, setFileName] = useState('');
   const [parseError, setParseError] = useState<string | null>(null);
@@ -51,6 +56,7 @@ export function ImportSection() {
       const importResult = importTransactions(db, accountId, parsed);
       setResult(importResult);
       setParsed(null);
+      onImportComplete?.();
     } catch (err) {
       setParseError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -60,24 +66,23 @@ export function ImportSection() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <label htmlFor="import-account" className="block text-sm font-medium text-gray-700 mb-1">
-          Target Account
-        </label>
-        <select
-          id="import-account"
-          value={accountId}
-          onChange={(e) => setAccountId(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full max-w-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">— Select —</option>
-          {accounts.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      {!initialAccountId && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Target Account</label>
+          <select
+            value={accountId}
+            onChange={(e) => setAccountId(e.target.value)}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full max-w-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">— Select —</option>
+            {accounts.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div>
         <label htmlFor="import-file" className="block text-sm font-medium text-gray-700 mb-1">

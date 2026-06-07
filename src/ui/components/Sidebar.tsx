@@ -3,8 +3,8 @@ import { useState } from 'react';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', icon: '📊' },
-  { to: '/accounts', label: 'Accounts', icon: '🏦' },
   { to: '/transactions', label: 'Transactions', icon: '💳' },
+  { to: '/accounts', label: 'Accounts', icon: '🏦' },
   { to: '/categories', label: 'Categories', icon: '📁' },
   { to: '/settings', label: 'Settings', icon: '⚙️' },
 ] as const;

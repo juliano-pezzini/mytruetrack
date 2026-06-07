@@ -165,11 +165,7 @@ function findMostRecentSnapshot(
     if (snap.year > target.year) continue;
     if (snap.year === target.year && snap.month > target.month) continue;
 
-    if (
-      !best ||
-      snap.year > best.year ||
-      (snap.year === best.year && snap.month > best.month)
-    ) {
+    if (!best || snap.year > best.year || (snap.year === best.year && snap.month > best.month)) {
       best = snap;
     }
   }
@@ -190,11 +186,7 @@ function findPreviousMonthSnapshot(
     if (snap.year > year) continue;
     if (snap.year === year && snap.month >= month) continue;
 
-    if (
-      !best ||
-      snap.year > best.year ||
-      (snap.year === best.year && snap.month > best.month)
-    ) {
+    if (!best || snap.year > best.year || (snap.year === best.year && snap.month > best.month)) {
       best = snap;
     }
   }

@@ -27,7 +27,12 @@ describe('CategoryRepository', () => {
 
   it('creates category with parent', () => {
     repo.create({ id: 'parent', name: 'Food', type: 'expense' });
-    const child = repo.create({ id: 'child', name: 'Restaurant', type: 'expense', parentId: 'parent' });
+    const child = repo.create({
+      id: 'child',
+      name: 'Restaurant',
+      type: 'expense',
+      parentId: 'parent',
+    });
 
     expect(child.parentId).toBe('parent');
 
@@ -54,7 +59,12 @@ describe('CategoryRepository', () => {
 
   it('updates all fields at once', () => {
     repo.create({ id: 'u2', name: 'Orig', type: 'expense' });
-    const updated = repo.update('u2', { name: 'Changed', type: 'revenue', parentId: 'p1', description: 'new desc' });
+    const updated = repo.update('u2', {
+      name: 'Changed',
+      type: 'revenue',
+      parentId: 'p1',
+      description: 'new desc',
+    });
     expect(updated.name).toBe('Changed');
     expect(updated.type).toBe('revenue');
     expect(updated.parentId).toBe('p1');

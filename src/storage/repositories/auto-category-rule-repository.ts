@@ -15,7 +15,10 @@ export type AutoCategoryRuleRepository = {
   create(rule: AutoCategoryRule): AutoCategoryRule;
   getActive(): AutoCategoryRule[];
   getById(id: string): AutoCategoryRule | null;
-  update(id: string, changes: Partial<Pick<AutoCategoryRule, 'pattern' | 'categoryId' | 'priority' | 'isActive'>>): AutoCategoryRule;
+  update(
+    id: string,
+    changes: Partial<Pick<AutoCategoryRule, 'pattern' | 'categoryId' | 'priority' | 'isActive'>>,
+  ): AutoCategoryRule;
 };
 
 export function createAutoCategoryRuleRepository(db: Database): AutoCategoryRuleRepository {
@@ -40,17 +43,32 @@ export function createAutoCategoryRuleRepository(db: Database): AutoCategoryRule
       return rowToRule(rows[0]!);
     },
 
-    update(id: string, changes: Partial<Pick<AutoCategoryRule, 'pattern' | 'categoryId' | 'priority' | 'isActive'>>): AutoCategoryRule {
+    update(
+      id: string,
+      changes: Partial<Pick<AutoCategoryRule, 'pattern' | 'categoryId' | 'priority' | 'isActive'>>,
+    ): AutoCategoryRule {
       const existing = this.getById(id);
       if (!existing) throw new Error(`AutoCategoryRule not found: ${id}`);
 
       const sets: string[] = [];
       const values: (string | number | null)[] = [];
 
-      if (changes.pattern !== undefined) { sets.push('pattern = ?'); values.push(changes.pattern); }
-      if (changes.categoryId !== undefined) { sets.push('category_id = ?'); values.push(changes.categoryId); }
-      if (changes.priority !== undefined) { sets.push('priority = ?'); values.push(changes.priority); }
-      if (changes.isActive !== undefined) { sets.push('is_active = ?'); values.push(changes.isActive ? 1 : 0); }
+      if (changes.pattern !== undefined) {
+        sets.push('pattern = ?');
+        values.push(changes.pattern);
+      }
+      if (changes.categoryId !== undefined) {
+        sets.push('category_id = ?');
+        values.push(changes.categoryId);
+      }
+      if (changes.priority !== undefined) {
+        sets.push('priority = ?');
+        values.push(changes.priority);
+      }
+      if (changes.isActive !== undefined) {
+        sets.push('is_active = ?');
+        values.push(changes.isActive ? 1 : 0);
+      }
 
       if (sets.length > 0) {
         values.push(id);

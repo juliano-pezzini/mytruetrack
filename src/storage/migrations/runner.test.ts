@@ -29,8 +29,12 @@ describe('runMigrations', () => {
     expect(applied[1]!.version).toBe(2);
 
     // Tables should exist
-    expect(db.execA("SELECT name FROM sqlite_master WHERE type='table' AND name='foo'")).toHaveLength(1);
-    expect(db.execA("SELECT name FROM sqlite_master WHERE type='table' AND name='bar'")).toHaveLength(1);
+    expect(
+      db.execA("SELECT name FROM sqlite_master WHERE type='table' AND name='foo'"),
+    ).toHaveLength(1);
+    expect(
+      db.execA("SELECT name FROM sqlite_master WHERE type='table' AND name='bar'"),
+    ).toHaveLength(1);
   });
 
   it('skips already-applied migrations', () => {
@@ -43,7 +47,9 @@ describe('runMigrations', () => {
     const applied = db.execO('SELECT version FROM _migrations ORDER BY version');
     expect(applied).toHaveLength(2);
     // foo should still exist (not re-created)
-    expect(db.execA("SELECT name FROM sqlite_master WHERE type='table' AND name='foo'")).toHaveLength(1);
+    expect(
+      db.execA("SELECT name FROM sqlite_master WHERE type='table' AND name='foo'"),
+    ).toHaveLength(1);
   });
 
   it('throws on bad SQL with version info', () => {
@@ -81,15 +87,16 @@ describe('runMigrations', () => {
     const migration: Migration = {
       version: 1,
       name: 'multi',
-      up: [
-        'CREATE TABLE a (id TEXT PRIMARY KEY)',
-        'CREATE TABLE b (id TEXT PRIMARY KEY)',
-      ],
+      up: ['CREATE TABLE a (id TEXT PRIMARY KEY)', 'CREATE TABLE b (id TEXT PRIMARY KEY)'],
     };
 
     runMigrations(db, [migration]);
 
-    expect(db.execA("SELECT name FROM sqlite_master WHERE type='table' AND name='a'")).toHaveLength(1);
-    expect(db.execA("SELECT name FROM sqlite_master WHERE type='table' AND name='b'")).toHaveLength(1);
+    expect(db.execA("SELECT name FROM sqlite_master WHERE type='table' AND name='a'")).toHaveLength(
+      1,
+    );
+    expect(db.execA("SELECT name FROM sqlite_master WHERE type='table' AND name='b'")).toHaveLength(
+      1,
+    );
   });
 });

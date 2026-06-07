@@ -36,11 +36,7 @@ export async function generateCodeChallenge(verifier: string): Promise<string> {
 /**
  * Build the Google OAuth authorization URL with PKCE parameters.
  */
-export function buildAuthUrl(
-  clientId: string,
-  redirectUri: string,
-  codeChallenge: string,
-): string {
+export function buildAuthUrl(clientId: string, redirectUri: string, codeChallenge: string): string {
   const url = new URL(AUTH_ENDPOINT);
   url.searchParams.set('client_id', clientId);
   url.searchParams.set('redirect_uri', redirectUri);

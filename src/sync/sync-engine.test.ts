@@ -41,14 +41,17 @@ describe('sync-engine', () => {
     });
 
     it('exports and imports rows', async () => {
-      db.exec(
-        `INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`,
-        ['acc-1', 'Checking', 'bank', 50000],
-      );
-      db.exec(
-        `INSERT INTO categories (id, name, type) VALUES (?, ?, ?)`,
-        ['cat-1', 'Groceries', 'expense'],
-      );
+      db.exec(`INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`, [
+        'acc-1',
+        'Checking',
+        'bank',
+        50000,
+      ]);
+      db.exec(`INSERT INTO categories (id, name, type) VALUES (?, ?, ?)`, [
+        'cat-1',
+        'Groceries',
+        'expense',
+      ]);
 
       const snapshot = exportDatabaseSnapshot(db);
 
@@ -71,18 +74,22 @@ describe('sync-engine', () => {
     });
 
     it('INSERT OR REPLACE overwrites existing rows', async () => {
-      db.exec(
-        `INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`,
-        ['acc-1', 'Old Name', 'bank', 1000],
-      );
+      db.exec(`INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`, [
+        'acc-1',
+        'Old Name',
+        'bank',
+        1000,
+      ]);
 
       // Snapshot with updated name
       const db2 = await initDatabase();
       try {
-        db2.exec(
-          `INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`,
-          ['acc-1', 'New Name', 'bank', 2000],
-        );
+        db2.exec(`INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`, [
+          'acc-1',
+          'New Name',
+          'bank',
+          2000,
+        ]);
         const snapshot = exportDatabaseSnapshot(db2);
 
         importDatabaseSnapshot(db, snapshot);
@@ -99,10 +106,12 @@ describe('sync-engine', () => {
 
   describe('pushChanges / pullChanges', () => {
     it('push then pull round-trips data through encryption', async () => {
-      db.exec(
-        `INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`,
-        ['acc-1', 'Savings', 'bank', 100000],
-      );
+      db.exec(`INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`, [
+        'acc-1',
+        'Savings',
+        'bank',
+        100000,
+      ]);
       db.exec(
         `INSERT INTO transactions (id, account_id, amount, description, transaction_date, type) VALUES (?, ?, ?, ?, ?, ?)`,
         ['tx-1', 'acc-1', 2500, 'Coffee', '2025-01-15', 'debit'],
@@ -130,10 +139,12 @@ describe('sync-engine', () => {
     });
 
     it('data in provider is encrypted (not plaintext)', async () => {
-      db.exec(
-        `INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`,
-        ['acc-1', 'Secret Account', 'bank', 0],
-      );
+      db.exec(`INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`, [
+        'acc-1',
+        'Secret Account',
+        'bank',
+        0,
+      ]);
 
       const provider = createMockCloudProvider();
       await pushChanges(db, provider, dek);
@@ -196,10 +207,12 @@ describe('sync-engine', () => {
 
       try {
         // Device A creates an account
-        dbA.exec(
-          `INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`,
-          ['acc-a', 'Device A Account', 'bank', 10000],
-        );
+        dbA.exec(`INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`, [
+          'acc-a',
+          'Device A Account',
+          'bank',
+          10000,
+        ]);
 
         // Push A
         await pushChanges(dbA, provider, dek);
@@ -242,10 +255,12 @@ describe('sync-engine', () => {
 
   describe('unencrypted sync (null dek)', () => {
     it('push with null dek uploads plaintext', async () => {
-      db.exec(
-        `INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`,
-        ['acc-1', 'Visible Account', 'bank', 5000],
-      );
+      db.exec(`INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`, [
+        'acc-1',
+        'Visible Account',
+        'bank',
+        5000,
+      ]);
 
       const provider = createMockCloudProvider();
       await pushChanges(db, provider, null);
@@ -259,10 +274,12 @@ describe('sync-engine', () => {
     });
 
     it('pull with null dek imports plaintext', async () => {
-      db.exec(
-        `INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`,
-        ['acc-1', 'From Cloud', 'bank', 3000],
-      );
+      db.exec(`INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`, [
+        'acc-1',
+        'From Cloud',
+        'bank',
+        3000,
+      ]);
 
       const provider = createMockCloudProvider();
       await pushChanges(db, provider, null);

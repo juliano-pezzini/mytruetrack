@@ -88,6 +88,7 @@
 - [ ] Set up Vite + React + TypeScript scaffold once spike confirms stack
 - [ ] Set up ESLint + Prettier + Vitest + Playwright
 - [x] Set up GitHub Actions CI (typecheck, lint, unit tests, e2e) — see AD-005
-- [ ] Add LICENSE file (likely MIT, matching v1)
+- [ ] Replace `xlsx` with `exceljs` — `xlsx` has 2 known high CVEs (GHSA-4r6h-8v6p-xvw6, GHSA-5pgg-2g8v-p4x9) with no fix available; currently allowlisted in `audit-ci.jsonc`
+  - [ ] Add LICENSE file (likely MIT, matching v1)
 - [ ] Write CONTRIBUTING.md once architecture stabilizes
 - [ ] Archive truetrack v1 repo on GitHub with README banner pointing here

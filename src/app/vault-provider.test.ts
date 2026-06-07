@@ -29,7 +29,9 @@ const localStorageMock = {
   setItem: (key: string, value: string) => localStorageMap.set(key, value),
   removeItem: (key: string) => localStorageMap.delete(key),
   clear: () => localStorageMap.clear(),
-  get length() { return localStorageMap.size; },
+  get length() {
+    return localStorageMap.size;
+  },
   key: (_index: number) => null,
 };
 

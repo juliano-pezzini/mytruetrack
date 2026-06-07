@@ -11,10 +11,12 @@ describe('import-service', () => {
   beforeEach(async () => {
     db = await initDatabase();
     // Create a target account
-    db.exec(
-      `INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`,
-      ['acc-1', 'Checking', 'bank', 0],
-    );
+    db.exec(`INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`, [
+      'acc-1',
+      'Checking',
+      'bank',
+      0,
+    ]);
   });
 
   afterEach(() => {
@@ -137,10 +139,12 @@ describe('import-service', () => {
   });
 
   it('does not cross-deduplicate between different accounts', () => {
-    db.exec(
-      `INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`,
-      ['acc-2', 'Savings', 'bank', 0],
-    );
+    db.exec(`INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`, [
+      'acc-2',
+      'Savings',
+      'bank',
+      0,
+    ]);
 
     importTransactions(db, 'acc-1', [baseTxns[0]!]);
     const result = importTransactions(db, 'acc-2', [baseTxns[0]!]);

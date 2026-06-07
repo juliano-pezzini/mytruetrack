@@ -67,5 +67,6 @@ jobs:
         run: npm run build
 
       - name: Dependency vulnerability audit
-        # Fail only on high and critical severity vulnerabilities
-        run: npm audit --audit-level=high
+        # audit-ci allows specific advisory IDs to be allowlisted with documented reasons.
+        # See audit-ci.jsonc for the current allowlist and rationale.
+        run: npx audit-ci --config audit-ci.jsonc

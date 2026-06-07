@@ -4,7 +4,11 @@ import { createAutoCategoryRuleRepository } from './auto-category-rule-repositor
 import { createLearnedPatternRepository } from './learned-pattern-repository.ts';
 import { createAutoCategoryCorrectionRepository } from './auto-category-correction-repository.ts';
 import type { Database } from '../database.ts';
-import type { AutoCategoryRule, LearnedCategoryPattern, AutoCategoryCorrection } from '../../domain/auto-categorization.ts';
+import type {
+  AutoCategoryRule,
+  LearnedCategoryPattern,
+  AutoCategoryCorrection,
+} from '../../domain/auto-categorization.ts';
 
 describe('AutoCategoryRuleRepository', () => {
   let db: Database;
@@ -36,7 +40,13 @@ describe('AutoCategoryRuleRepository', () => {
   it('getActive returns only active rules ordered by priority DESC', () => {
     repo.create({ id: 'r1', pattern: 'LOW', categoryId: 'c1', priority: 1, isActive: true });
     repo.create({ id: 'r2', pattern: 'HIGH', categoryId: 'c2', priority: 10, isActive: true });
-    repo.create({ id: 'r3', pattern: 'INACTIVE', categoryId: 'c3', priority: 100, isActive: false });
+    repo.create({
+      id: 'r3',
+      pattern: 'INACTIVE',
+      categoryId: 'c3',
+      priority: 100,
+      isActive: false,
+    });
 
     const active = repo.getActive();
     expect(active).toHaveLength(2);

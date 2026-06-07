@@ -32,9 +32,7 @@ export function runMigrations(db: Database, migrations: readonly Migration[]): v
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      throw new Error(
-        `Migration ${migration.version} (${migration.name}) failed: ${message}`,
-      );
+      throw new Error(`Migration ${migration.version} (${migration.name}) failed: ${message}`);
     }
 
     db.exec('INSERT INTO _migrations (version, name, applied_at) VALUES (?, ?, ?)', [

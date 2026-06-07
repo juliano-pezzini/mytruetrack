@@ -1,11 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import 'fake-indexeddb/auto';
-import {
-  getSyncState,
-  savePushState,
-  savePullState,
-  clearSyncState,
-} from './sync-state.ts';
+import { getSyncState, savePushState, savePullState, clearSyncState } from './sync-state.ts';
 
 describe('sync-state', () => {
   beforeEach(async () => {

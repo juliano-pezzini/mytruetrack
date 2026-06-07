@@ -1,0 +1,17 @@
+{
+  // audit-ci config — allowlisted advisories must be reviewed and re-evaluated
+  // when a fix becomes available or when xlsx is replaced with exceljs (see STATE.md todos).
+  "high": true,
+  "allowlist": [
+    // xlsx (SheetJS) — Prototype Pollution — GHSA-4r6h-8v6p-xvw6
+    // No patched version available on npm. Risk is mitigated: xlsx parsing runs inside
+    // a Web Worker (isolated context), input comes from user-selected local files only,
+    // and parsed output is validated with zod before persisting.
+    // Track: replace xlsx with exceljs — see STATE.md todos.
+    "GHSA-4r6h-8v6p-xvw6",
+
+    // xlsx (SheetJS) — ReDoS — GHSA-5pgg-2g8v-p4x9
+    // Same package, same mitigation as above (Web Worker isolation, local input only).
+    "GHSA-5pgg-2g8v-p4x9"
+  ]
+}

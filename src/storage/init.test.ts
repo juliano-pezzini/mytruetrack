@@ -25,7 +25,9 @@ describe('initDatabase', () => {
     db = await initDatabase();
 
     const tables = db
-      .execO("SELECT name FROM sqlite_master WHERE type='table' AND name != '_migrations' ORDER BY name")
+      .execO(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name != '_migrations' ORDER BY name",
+      )
       .map((r) => r.name as string);
 
     for (const expected of EXPECTED_TABLES) {
@@ -96,6 +98,8 @@ describe('initDatabase', () => {
     // Re-init — migrations should be idempotent (skipped)
     db = await initDatabase();
     // New in-memory DB won't have the old data (in-memory only), but init should not throw
-    expect(db.execO("SELECT name FROM sqlite_master WHERE type='table' AND name='accounts'")).toHaveLength(1);
+    expect(
+      db.execO("SELECT name FROM sqlite_master WHERE type='table' AND name='accounts'"),
+    ).toHaveLength(1);
   });
 });

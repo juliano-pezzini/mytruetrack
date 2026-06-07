@@ -84,9 +84,7 @@ describe('suggestCategory', () => {
   });
 
   it('skips learned patterns below confidence threshold', () => {
-    const patterns = [
-      pattern({ keyword: 'random', categoryId: 'cat-x', confidenceScore: 50 }),
-    ];
+    const patterns = [pattern({ keyword: 'random', categoryId: 'cat-x', confidenceScore: 50 })];
     const result = suggestCategory('RANDOM STORE', [], patterns);
     expect(result).toBeNull(); // 50 < 70 threshold
   });

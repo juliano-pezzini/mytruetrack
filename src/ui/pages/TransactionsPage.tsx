@@ -177,9 +177,7 @@ export function TransactionsPage() {
           Create an account first to add transactions.
         </p>
       ) : sortedTxns.length === 0 ? (
-        <p className="text-gray-500 text-sm py-8 text-center">
-          No transactions for {monthLabel}.
-        </p>
+        <p className="text-gray-500 text-sm py-8 text-center">No transactions for {monthLabel}.</p>
       ) : (
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">
@@ -226,7 +224,7 @@ export function TransactionsPage() {
                       <td className="px-4 py-3 text-gray-600">{txn.transactionDate}</td>
                       <td className="px-4 py-3 text-gray-900">{txn.description}</td>
                       <td className="px-4 py-3 text-gray-500">
-                        {txn.categoryId ? categoryMap.get(txn.categoryId) ?? '—' : '—'}
+                        {txn.categoryId ? (categoryMap.get(txn.categoryId) ?? '—') : '—'}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <span

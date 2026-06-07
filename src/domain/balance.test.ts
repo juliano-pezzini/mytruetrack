@@ -66,9 +66,7 @@ describe('calculateBalance', () => {
     const snapshots: AccountBalance[] = [
       { accountId: 'acct-1', year: 2026, month: 4, closingBalance: fromCents(200000) },
     ];
-    const txns = [
-      txn({ amount: 10000, type: 'credit', transactionDate: '2026-05-10' }),
-    ];
+    const txns = [txn({ amount: 10000, type: 'credit', transactionDate: '2026-05-10' })];
     const result = calculateBalance(acct, txns, snapshots, '2026-05-31');
     // 200000 (April snapshot) + 10000 = 210000
     expect(toCents(result)).toBe(210000);
@@ -100,9 +98,7 @@ describe('calculateBalance', () => {
       { accountId: 'acct-1', year: 2026, month: 3, closingBalance: fromCents(150000) },
       { accountId: 'acct-1', year: 2026, month: 4, closingBalance: fromCents(200000) },
     ];
-    const txns = [
-      txn({ amount: 10000, type: 'debit', transactionDate: '2026-05-15' }),
-    ];
+    const txns = [txn({ amount: 10000, type: 'debit', transactionDate: '2026-05-15' })];
     const result = calculateBalance(acct, txns, snapshots, '2026-05-31');
     // Uses April (most recent): 200000 - 10000 = 190000
     expect(toCents(result)).toBe(190000);
@@ -171,9 +167,7 @@ describe('computeMonthSnapshot', () => {
     const prevSnapshots: AccountBalance[] = [
       { accountId: 'acct-1', year: 2026, month: 4, closingBalance: fromCents(200000) },
     ];
-    const txns = [
-      txn({ amount: 10000, type: 'credit', transactionDate: '2026-05-15' }),
-    ];
+    const txns = [txn({ amount: 10000, type: 'credit', transactionDate: '2026-05-15' })];
     const snap = computeMonthSnapshot(acct, txns, prevSnapshots, 2026, 5);
     // 200000 + 10000 = 210000
     expect(toCents(snap.closingBalance)).toBe(210000);

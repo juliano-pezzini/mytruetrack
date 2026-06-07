@@ -60,10 +60,7 @@ function parseDate(cell: XLSX.CellObject | undefined): string {
 /**
  * Parse an XLSX file into ParsedTransaction[].
  */
-export function parseXlsx(
-  data: Uint8Array,
-  options?: XlsxParseOptions,
-): ParsedTransaction[] {
+export function parseXlsx(data: Uint8Array, options?: XlsxParseOptions): ParsedTransaction[] {
   const opts = { ...DEFAULTS, ...options };
   if (options?.typeColumn === undefined) {
     opts.typeColumn = -1;
@@ -92,16 +89,17 @@ export function parseXlsx(
     const description = descCell?.v != null ? String(descCell.v).trim() : 'Unknown';
 
     // Parse amount
-    const amountStr = typeof amountCell.v === 'number'
-      ? amountCell.v.toFixed(2)
-      : String(amountCell.v);
+    const amountStr =
+      typeof amountCell.v === 'number' ? amountCell.v.toFixed(2) : String(amountCell.v);
     const rawAmount = fromDecimal(amountStr);
 
     // Determine type
     let type: TransactionType;
     if (opts.typeColumn >= 0) {
       const typeCell = sheet[XLSX.utils.encode_cell({ r, c: opts.typeColumn })];
-      const typeStr = String(typeCell?.v ?? '').toUpperCase().trim();
+      const typeStr = String(typeCell?.v ?? '')
+        .toUpperCase()
+        .trim();
       type = typeStr === 'CREDIT' ? 'credit' : 'debit';
     } else {
       type = isNegative(rawAmount) ? 'debit' : 'credit';

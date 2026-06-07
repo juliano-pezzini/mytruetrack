@@ -3,8 +3,8 @@ import { useState } from 'react';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', icon: '📊' },
-  { to: '/accounts', label: 'Accounts', icon: '🏦' },
   { to: '/transactions', label: 'Transactions', icon: '💳' },
+  { to: '/accounts', label: 'Accounts', icon: '🏦' },
   { to: '/categories', label: 'Categories', icon: '📁' },
   { to: '/settings', label: 'Settings', icon: '⚙️' },
 ] as const;
@@ -26,10 +26,7 @@ export function Sidebar() {
 
       {/* Overlay */}
       {open && (
-        <div
-          className="lg:hidden fixed inset-0 z-30 bg-black/30"
-          onClick={() => setOpen(false)}
-        />
+        <div className="lg:hidden fixed inset-0 z-30 bg-black/30" onClick={() => setOpen(false)} />
       )}
 
       {/* Sidebar */}

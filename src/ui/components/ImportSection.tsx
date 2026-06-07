@@ -18,34 +18,31 @@ export function ImportSection() {
   const [result, setResult] = useState<ImportResult | null>(null);
   const [importing, setImporting] = useState(false);
 
-  const handleFileChange = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-      setParsed(null);
-      setResult(null);
-      setParseError(null);
-      setFileName(file.name);
+    setParsed(null);
+    setResult(null);
+    setParseError(null);
+    setFileName(file.name);
 
-      try {
-        if (file.name.endsWith('.ofx')) {
-          const text = await file.text();
-          const statement = await parseOfx(text);
-          setParsed([...statement.transactions]);
-        } else if (file.name.endsWith('.xlsx')) {
-          const buffer = await file.arrayBuffer();
-          const txns = parseXlsx(new Uint8Array(buffer));
-          setParsed(txns);
-        } else {
-          setParseError('Unsupported file type. Use .ofx or .xlsx');
-        }
-      } catch (err) {
-        setParseError(err instanceof Error ? err.message : String(err));
+    try {
+      if (file.name.endsWith('.ofx')) {
+        const text = await file.text();
+        const statement = await parseOfx(text);
+        setParsed([...statement.transactions]);
+      } else if (file.name.endsWith('.xlsx')) {
+        const buffer = await file.arrayBuffer();
+        const txns = parseXlsx(new Uint8Array(buffer));
+        setParsed(txns);
+      } else {
+        setParseError('Unsupported file type. Use .ofx or .xlsx');
       }
-    },
-    [],
-  );
+    } catch (err) {
+      setParseError(err instanceof Error ? err.message : String(err));
+    }
+  }, []);
 
   function handleImport() {
     if (!parsed || !accountId) return;
@@ -103,7 +100,8 @@ export function ImportSection() {
       {parsed && (
         <div className="bg-gray-50 rounded-lg p-4 space-y-3">
           <p className="text-sm text-gray-700">
-            <strong>{fileName}</strong> — {parsed.length} transaction{parsed.length !== 1 ? 's' : ''} found
+            <strong>{fileName}</strong> — {parsed.length} transaction
+            {parsed.length !== 1 ? 's' : ''} found
           </p>
           {parsed.length > 0 && (
             <table className="w-full text-xs">
@@ -162,7 +160,9 @@ export function ImportSection() {
           {result.errors.length > 0 && (
             <ul className="mt-2 text-red-600 text-xs list-disc list-inside">
               {result.errors.map((err, i) => (
-                <li key={i}>Row {err.index + 1}: {err.message}</li>
+                <li key={i}>
+                  Row {err.index + 1}: {err.message}
+                </li>
               ))}
             </ul>
           )}

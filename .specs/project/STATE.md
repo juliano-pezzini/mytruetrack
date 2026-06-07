@@ -1,11 +1,25 @@
 # State
 
 **Last Updated:** 2026-06-07
-**Current Work:** Phase 8 — Local-First Foundation COMPLETE. All 10 sub-phases done + Playwright E2E test suite (46 tests, all passing). 266 unit tests, 29 files, all passing. PWA installable with offline support. 87 modules, 239 KB gzip.
+**Current Work:** Phase 8 — Local-First Foundation COMPLETE. All 10 sub-phases done + Playwright E2E test suite (46 tests, all passing). 266 unit tests, 29 files, all passing. PWA installable with offline support. 87 modules, 239 KB gzip. GitHub Actions PR pipeline added (AD-005)
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-005: GitHub Actions PR pipeline — quality, tests, build, SAST (2026-06-07)
+
+**Decision:** Add two workflows triggered on every PR targeting `main`:
+- **`pr-checks.yml`** — 3 parallel jobs: (1) Prettier format check + ESLint + tsc typecheck; (2) Vitest with 80% coverage thresholds; (3) production Vite build + `npm audit --audit-level=high`.
+- **`codeql.yml`** — GitHub CodeQL SAST (`javascript-typescript`, `security-and-quality` query suite). Also runs on pushes to `main` and weekly.
+
+**Reason:** Enforce code quality and prevent regressions automatically. CodeQL catches prototype pollution, ReDoS, injection, and eval-like constructs — critical for a crypto/WebAuthn app. `npm audit` at `high` threshold avoids noisy false positives while blocking real supply-chain risk.
+
+**Trade-off:** CodeQL build step adds ~1–2 min to CI. Accepted for SAST coverage.
+
+**Impact:** All PRs require green checks before merge. Branch protection should be enabled in GitHub Settings → Branches (manual step). Dependabot recommended as follow-up to keep `npm audit` clean over time.
+
+---
 
 ### AD-001: Local-first client-only architecture (2026-05-26)
 
@@ -73,7 +87,8 @@
 - [x] Run Phase 8.1 Architecture Spike (see `.specs/features/8.1-architecture-spike/spike-report.md`)
 - [ ] Set up Vite + React + TypeScript scaffold once spike confirms stack
 - [x] Set up ESLint + Prettier + Vitest + Playwright (Playwright E2E: 46 tests, all passing)
-- [ ] Set up GitHub Actions CI (typecheck, lint, unit tests, e2e)
-- [ ] Add LICENSE file (likely MIT, matching v1)
+- [x] Set up GitHub Actions CI (typecheck, lint, unit tests, e2e) — see AD-005
+- [ ] Replace `xlsx` with `exceljs` — `xlsx` has 2 known high CVEs (GHSA-4r6h-8v6p-xvw6, GHSA-5pgg-2g8v-p4x9) with no fix available; currently allowlisted in `audit-ci.jsonc`
+  - [ ] Add LICENSE file (likely MIT, matching v1)
 - [ ] Write CONTRIBUTING.md once architecture stabilizes
 - [ ] Archive truetrack v1 repo on GitHub with README banner pointing here

@@ -13,14 +13,14 @@ test('welcome screen shows Get Started button', async ({ page }) => {
 
 test('skip passphrase → lands on dashboard', async ({ page }) => {
   await page.getByRole('button', { name: 'Get Started' }).click();
-  await page.getByRole('button', { name: /Skip.*locally/i }).click();
+  await page.getByRole('button', { name: /Skip.*passphrase/i }).click();
 
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
 });
 
 test('skip passphrase → sidebar navigation is visible', async ({ page }) => {
   await page.getByRole('button', { name: 'Get Started' }).click();
-  await page.getByRole('button', { name: /Skip.*locally/i }).click();
+  await page.getByRole('button', { name: /Skip.*passphrase/i }).click();
 
   await expect(page.getByRole('link', { name: /Accounts/i })).toBeVisible();
   await expect(page.getByRole('link', { name: /Transactions/i })).toBeVisible();

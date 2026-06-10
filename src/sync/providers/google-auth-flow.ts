@@ -57,9 +57,7 @@ export async function connectGoogleDrive(): Promise<GoogleTokens> {
  * session or revoked grant), returns `null` to signal that an interactive
  * reconnect is needed.
  */
-export async function ensureValidGoogleTokens(
-  tokens: GoogleTokens,
-): Promise<GoogleTokens | null> {
+export async function ensureValidGoogleTokens(tokens: GoogleTokens): Promise<GoogleTokens | null> {
   if (Date.now() < tokens.expiresAt - EXPIRY_SKEW_MS) {
     return tokens;
   }

@@ -50,7 +50,7 @@ export async function setupLocalOnly(page: Page): Promise<void> {
   // Welcome → Get Started
   await page.getByRole('button', { name: 'Get Started' }).click();
   // Choice → Skip (local-only)
-  await page.getByRole('button', { name: /Skip.*locally/i }).click();
+  await page.getByRole('button', { name: /Skip.*passphrase/i }).click();
   await page.waitForURL('/');
   await page.getByRole('heading', { name: 'Dashboard' }).waitFor();
 }

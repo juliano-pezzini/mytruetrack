@@ -2,6 +2,18 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ensureValidGoogleTokens } from './google-auth-flow.ts';
 import type { GoogleTokens } from '../sync-config.ts';
 
+/**
+ * Mock the GIS requestAccessToken helper used internally by google-auth-flow.
+ * We mock google-gis.ts so no real GIS script is loaded.
+ */
+vi.mock('./google-gis.ts', () => ({
+  loadGisClient: vi.fn().mockResolvedValue(undefined),
+  requestAccessToken: vi.fn(),
+}));
+
+import { requestAccessToken } from './google-gis.ts';
+const mockRequestAccessToken = vi.mocked(requestAccessToken);
+
 describe('google-auth-flow / ensureValidGoogleTokens', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -18,50 +30,42 @@ describe('google-auth-flow / ensureValidGoogleTokens', () => {
   it('returns the same tokens when the access token is still valid', async () => {
     const tokens: GoogleTokens = {
       accessToken: 'valid',
-      refreshToken: 'rt',
       expiresAt: Date.now() + 10 * 60_000,
     };
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
 
     const result = await ensureValidGoogleTokens(tokens);
 
     expect(result).toBe(tokens);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(mockRequestAccessToken).not.toHaveBeenCalled();
   });
 
-  it('refreshes when expired and a refresh token is present', async () => {
+  it('silently re-requests when expired and GIS succeeds', async () => {
     const tokens: GoogleTokens = {
       accessToken: 'old',
-      refreshToken: 'rt-1',
       expiresAt: Date.now() - 1000,
     };
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ access_token: 'fresh', expires_in: 3600, token_type: 'Bearer' }),
+    mockRequestAccessToken.mockResolvedValue({
+      accessToken: 'fresh',
+      expiresIn: 3600,
     });
-    vi.stubGlobal('fetch', fetchMock);
 
     const result = await ensureValidGoogleTokens(tokens);
 
-    expect(result.accessToken).toBe('fresh');
-    expect(result.refreshToken).toBe('rt-1'); // preserved across refresh
-    expect(result.expiresAt).toBe(Date.now() + 3600 * 1000);
-    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(result).not.toBeNull();
+    expect(result!.accessToken).toBe('fresh');
+    expect(result!.expiresAt).toBe(Date.now() + 3600 * 1000);
+    expect(mockRequestAccessToken).toHaveBeenCalledWith('test-client', expect.any(String), '');
   });
 
-  it('returns tokens unchanged when expired but no refresh token exists', async () => {
+  it('returns null when expired and silent re-request fails', async () => {
     const tokens: GoogleTokens = {
       accessToken: 'old',
-      refreshToken: null,
       expiresAt: Date.now() - 1000,
     };
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
+    mockRequestAccessToken.mockRejectedValue(new Error('popup_closed'));
 
     const result = await ensureValidGoogleTokens(tokens);
 
-    expect(result).toBe(tokens);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(result).toBeNull();
   });
 });

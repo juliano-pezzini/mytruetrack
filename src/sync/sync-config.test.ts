@@ -39,7 +39,6 @@ describe('sync-config', () => {
       webdav: null,
       google: {
         accessToken: 'access-123',
-        refreshToken: 'refresh-456',
         expiresAt: 1_700_000_000_000,
       },
     };
@@ -79,6 +78,30 @@ describe('sync-config', () => {
 
     expect(loaded.provider).toBe('webdav');
     expect(loaded.google).toBeNull();
+  });
+
+  it('loadSyncConfig strips legacy refreshToken from google tokens', async () => {
+    const db = await openDB('mytruetrack-sync-config', 1, {
+      upgrade(database) {
+        if (!database.objectStoreNames.contains('config')) {
+          database.createObjectStore('config');
+        }
+      },
+    });
+    await db.put(
+      'config',
+      {
+        provider: 'google-drive',
+        webdav: null,
+        google: { accessToken: 'at', refreshToken: 'rt-old', expiresAt: 999 },
+      },
+      'active',
+    );
+
+    const loaded = await loadSyncConfig();
+
+    expect(loaded.google).toEqual({ accessToken: 'at', expiresAt: 999 });
+    expect((loaded.google as Record<string, unknown>)['refreshToken']).toBeUndefined();
   });
 
   it('clearSyncConfig resets to default', async () => {

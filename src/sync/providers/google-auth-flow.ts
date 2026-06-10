@@ -1,50 +1,24 @@
 /**
  * Google Drive OAuth connect flow + token lifecycle.
  *
- * Browser-only. Drives a popup-based PKCE Authorization Code flow so the app's
- * in-memory database and unlocked vault survive the connect (no full-page
- * redirect). The popup loads a tiny static callback page that posts the auth
- * code back to the opener.
+ * Uses the Google Identity Services (GIS) token model: the GIS library opens
+ * its own consent popup, obtains an access token directly (no auth code, no
+ * PKCE, no client secret), and returns it to the app via a callback. Tokens
+ * last ~1 hour with no refresh token; we re-request silently when expired and
+ * fall back to an interactive prompt if needed.
  */
 
-import {
-  generateCodeVerifier,
-  generateCodeChallenge,
-  buildAuthUrl,
-  exchangeCodeForToken,
-  refreshAccessToken,
-  type TokenResponse,
-} from './google-oauth.ts';
+import { loadGisClient, requestAccessToken } from './google-gis.ts';
 import type { GoogleTokens } from '../sync-config.ts';
 
-const CALLBACK_PATH = '/oauth2-callback.html';
-const POPUP_MESSAGE_SOURCE = 'mtt-google-oauth';
+const SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
 
 /** Refresh the access token this many ms before it actually expires. */
 const EXPIRY_SKEW_MS = 60_000;
 
-type CallbackMessage = {
-  readonly source: typeof POPUP_MESSAGE_SOURCE;
-  readonly code?: string;
-  readonly error?: string;
-};
-
 /** Read the configured OAuth client ID (empty string if unset). */
 export function getClientId(): string {
   return import.meta.env.VITE_GOOGLE_CLIENT_ID ?? '';
-}
-
-/**
- * Read the configured OAuth client secret (empty string if unset).
- *
- * Trade-off: Google's "Web application" OAuth clients require a client_secret
- * in the token exchange even when using PKCE. For a browser-only app with no
- * backend this secret will be present in the JS bundle. The blast radius is
- * limited to the drive.appdata scope (app-private storage only). Self-hosted
- * deployments should create their own OAuth client.
- */
-export function getClientSecret(): string {
-  return import.meta.env.VITE_GOOGLE_CLIENT_SECRET ?? '';
 }
 
 /** Whether a client ID is configured at build time. */
@@ -52,22 +26,17 @@ export function isGoogleConfigured(): boolean {
   return getClientId().length > 0;
 }
 
-/** The redirect URI registered with the OAuth client. */
-export function redirectUri(): string {
-  return `${window.location.origin}${CALLBACK_PATH}`;
-}
-
-function toTokens(response: TokenResponse, previousRefreshToken: string | null): GoogleTokens {
+function toTokens(accessToken: string, expiresIn: number): GoogleTokens {
   return {
-    accessToken: response.access_token,
-    refreshToken: response.refresh_token ?? previousRefreshToken,
-    expiresAt: Date.now() + response.expires_in * 1000,
+    accessToken,
+    expiresAt: Date.now() + expiresIn * 1000,
   };
 }
 
 /**
- * Run the interactive connect flow. Opens a popup to Google's consent screen,
- * waits for the auth code via postMessage, then exchanges it for tokens.
+ * Run the interactive connect flow. Loads the GIS library (if needed), then
+ * requests an access token with `prompt:'consent'` which shows Google's
+ * consent popup.
  *
  * Must be called from a user gesture (click) so the popup is not blocked.
  */
@@ -77,70 +46,22 @@ export async function connectGoogleDrive(): Promise<GoogleTokens> {
     throw new Error('Google client ID is not configured (set VITE_GOOGLE_CLIENT_ID).');
   }
 
-  const verifier = generateCodeVerifier();
-  const challenge = await generateCodeChallenge(verifier);
-  const authUrl = buildAuthUrl(clientId, redirectUri(), challenge);
-
-  const popup = window.open(authUrl, 'mtt-google-oauth', 'width=480,height=640');
-  if (!popup) {
-    throw new Error('Popup blocked. Allow popups for this site and try again.');
-  }
-
-  const code = await waitForAuthCode(popup);
-  const response = await exchangeCodeForToken(clientId, redirectUri(), code, verifier, getClientSecret() || undefined);
-  return toTokens(response, null);
-}
-
-function waitForAuthCode(popup: Window): Promise<string> {
-  return new Promise<string>((resolve, reject) => {
-    let settled = false;
-
-    function cleanup() {
-      window.removeEventListener('message', onMessage);
-      window.clearInterval(closedTimer);
-    }
-
-    function onMessage(event: MessageEvent) {
-      if (event.origin !== window.location.origin) return;
-      const data = event.data as CallbackMessage | undefined;
-      if (!data || data.source !== POPUP_MESSAGE_SOURCE) return;
-
-      settled = true;
-      cleanup();
-      popup.close();
-
-      if (data.error) {
-        reject(new Error(`Authorization failed: ${data.error}`));
-      } else if (data.code) {
-        resolve(data.code);
-      } else {
-        reject(new Error('Authorization returned no code.'));
-      }
-    }
-
-    const closedTimer = window.setInterval(() => {
-      if (popup.closed && !settled) {
-        settled = true;
-        cleanup();
-        reject(new Error('Authorization cancelled.'));
-      }
-    }, 500);
-
-    window.addEventListener('message', onMessage);
-  });
+  await loadGisClient();
+  const result = await requestAccessToken(clientId, SCOPE, 'consent');
+  return toTokens(result.accessToken, result.expiresIn);
 }
 
 /**
- * Return tokens with a valid (non-expired) access token, refreshing if needed.
- * The returned object may differ from the input; callers should persist it when
- * `tokens.accessToken` changed.
+ * Return tokens with a valid (non-expired) access token, re-requesting
+ * silently if possible. When silent re-request fails (no active Google
+ * session or revoked grant), returns `null` to signal that an interactive
+ * reconnect is needed.
  */
-export async function ensureValidGoogleTokens(tokens: GoogleTokens): Promise<GoogleTokens> {
+export async function ensureValidGoogleTokens(
+  tokens: GoogleTokens,
+): Promise<GoogleTokens | null> {
   if (Date.now() < tokens.expiresAt - EXPIRY_SKEW_MS) {
     return tokens;
-  }
-  if (!tokens.refreshToken) {
-    return tokens; // expired and unrefreshable — Drive call will surface the auth error
   }
 
   const clientId = getClientId();
@@ -148,6 +69,12 @@ export async function ensureValidGoogleTokens(tokens: GoogleTokens): Promise<Goo
     throw new Error('Google client ID is not configured (set VITE_GOOGLE_CLIENT_ID).');
   }
 
-  const response = await refreshAccessToken(clientId, tokens.refreshToken, getClientSecret() || undefined);
-  return toTokens(response, tokens.refreshToken);
+  try {
+    await loadGisClient();
+    const result = await requestAccessToken(clientId, SCOPE, '');
+    return toTokens(result.accessToken, result.expiresIn);
+  } catch {
+    // Silent re-request failed — caller should prompt interactive reconnect.
+    return null;
+  }
 }

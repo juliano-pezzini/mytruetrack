@@ -11,27 +11,30 @@ Phase 8.5; Phase 8.9 deferred the **OAuth flow UI wiring** to this phase. Closes
 
 ### GDO-01: Persist Google OAuth tokens
 
-Extend `SyncConfig` with `google: { accessToken, refreshToken, expiresAt } | null`, stored in
-IndexedDB alongside the WebDAV config. `loadSyncConfig` normalizes older records missing the field.
+Extend `SyncConfig` with `google: { accessToken, expiresAt } | null`, stored in
+IndexedDB alongside the WebDAV config. `loadSyncConfig` normalizes older records missing
+the field or containing a legacy `refreshToken` (stripped).
 
 ### GDO-02: Client ID configuration
 
 Read the OAuth client ID from `import.meta.env.VITE_GOOGLE_CLIENT_ID` (typed in `vite-env.d.ts`,
-documented in `.env.example`). No client secret in source — PKCE public client. The UI shows a
+documented in `.env.example`). No client secret needed — GIS token model. The UI shows a
 setup hint when the ID is unset.
 
-### GDO-03: Interactive connect flow (popup PKCE)
+### GDO-03: Interactive connect flow (GIS token model)
 
-`connectGoogleDrive()` opens a popup to Google's consent screen
-(`redirect_uri = ${origin}/oauth2-callback.html`), receives the auth code via `postMessage`
-(origin-validated), and exchanges it for tokens. A static `public/oauth2-callback.html` posts the
-code back to the opener and closes. Popup approach preserves the in-memory DB and unlocked vault.
+`connectGoogleDrive()` loads the GIS client library (`accounts.google.com/gsi/client`)
+dynamically on first use, then calls `requestAccessToken` with `prompt:'consent'`. Google
+opens its own consent popup, obtains user permission, and returns an access token directly
+to the app's callback — no auth code, no PKCE, no callback page, no client secret.
 
-### GDO-04: Token refresh
+### GDO-04: Token refresh (silent re-request)
 
-`ensureValidGoogleTokens(tokens)` refreshes the access token (60s skew) using the refresh token
-when expired, preserving the existing refresh token. `SyncSection.getActiveProvider()` refreshes
-and persists before building `createGoogleDriveProvider(accessToken)`.
+`ensureValidGoogleTokens(tokens)` checks token expiry (60s skew). When expired, it silently
+re-requests a token via GIS (`prompt:''`). If the user has an active Google session and the
+grant is still valid, a fresh token is returned without interaction. If silent re-request
+fails (no session / revoked grant), returns `null` — the UI shows "session expired, reconnect"
+and clears tokens.
 
 ### GDO-05: Settings UI
 
@@ -47,11 +50,10 @@ Push/Pull controls use the live provider.
 
 ## Testing
 
-- `google-oauth.test.ts`: PKCE helpers, `buildAuthUrl`, `parseAuthCallback`, `exchangeCodeForToken`,
-  `refreshAccessToken` (mocked fetch).
-- `google-auth-flow.test.ts`: `ensureValidGoogleTokens` — valid passthrough, expired+refresh,
-  expired+no-refresh (fake timers, mocked fetch).
-- `sync-config.test.ts`: google-token round-trip + back-compat normalization.
+- `google-auth-flow.test.ts`: `ensureValidGoogleTokens` — valid passthrough, expired+silent
+  re-request succeeds, expired+silent fails → null (mocked GIS via `google-gis.ts` mock).
+- `sync-config.test.ts`: google-token round-trip + back-compat normalization (missing google
+  field, legacy `refreshToken` stripped).
 - Gate: `npx tsc --noEmit && npx vite build && npx vitest run` + ESLint + audit-ci.
 
 ## Requirement Traceability

@@ -171,6 +171,13 @@ export function SyncSection() {
     if (provider === 'google-drive') {
       if (!google) return null;
       const valid = await ensureValidGoogleTokens(google);
+      if (!valid) {
+        // Silent re-request failed — session expired, need interactive reconnect.
+        setGoogle(null);
+        await saveSyncConfig({ provider: 'google-drive', webdav: null, google: null });
+        setStatus('Google session expired. Please reconnect.');
+        return null;
+      }
       if (valid.accessToken !== google.accessToken) {
         setGoogle(valid);
         await saveSyncConfig({ provider: 'google-drive', webdav: null, google: valid });

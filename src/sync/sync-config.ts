@@ -14,7 +14,6 @@ export type SyncProviderType = 'google-drive' | 'webdav' | null;
 
 export type GoogleTokens = {
   readonly accessToken: string;
-  readonly refreshToken: string | null;
   /** Epoch milliseconds at which the access token expires. */
   readonly expiresAt: number;
 };
@@ -51,11 +50,15 @@ export async function loadSyncConfig(): Promise<SyncConfig> {
   const stored = await db.get(STORE_NAME, CONFIG_KEY);
   if (!stored) return DEFAULT_CONFIG;
   const config = stored as Partial<SyncConfig>;
-  // Normalize older records that predate the `google` field.
+  // Normalize older records that predate the `google` field or still have `refreshToken`.
+  const rawGoogle = config.google as (GoogleTokens & { refreshToken?: unknown }) | null | undefined;
+  const google: GoogleTokens | null = rawGoogle
+    ? { accessToken: rawGoogle.accessToken, expiresAt: rawGoogle.expiresAt }
+    : null;
   return {
     provider: config.provider ?? null,
     webdav: config.webdav ?? null,
-    google: config.google ?? null,
+    google,
   };
 }
 

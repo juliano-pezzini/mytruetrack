@@ -7,6 +7,14 @@
 
 import type { CloudProvider, FileMetadata } from '../cloud-provider.ts';
 
+/** Thrown when the Drive API returns 401 — signals the caller to refresh the token and retry. */
+export class DriveAuthError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'DriveAuthError';
+  }
+}
+
 const DRIVE_API = 'https://www.googleapis.com/drive/v3/files';
 const UPLOAD_API = 'https://www.googleapis.com/upload/drive/v3/files';
 
@@ -40,6 +48,9 @@ export function createGoogleDriveProvider(accessToken: string): CloudProvider {
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        throw new DriveAuthError(`Drive list failed: ${response.status} ${response.statusText}`);
+      }
       throw new Error(`Drive list failed: ${response.status} ${response.statusText}`);
     }
 
@@ -64,6 +75,9 @@ export function createGoogleDriveProvider(accessToken: string): CloudProvider {
         });
 
         if (!response.ok) {
+          if (response.status === 401) {
+            throw new DriveAuthError(`Drive update failed: ${response.status} ${response.statusText}`);
+          }
           throw new Error(`Drive update failed: ${response.status} ${response.statusText}`);
         }
       } else {
@@ -84,6 +98,9 @@ export function createGoogleDriveProvider(accessToken: string): CloudProvider {
         });
 
         if (!response.ok) {
+          if (response.status === 401) {
+            throw new DriveAuthError(`Drive upload failed: ${response.status} ${response.statusText}`);
+          }
           throw new Error(`Drive upload failed: ${response.status} ${response.statusText}`);
         }
       }
@@ -99,6 +116,9 @@ export function createGoogleDriveProvider(accessToken: string): CloudProvider {
 
       if (!response.ok) {
         if (response.status === 404) return null;
+        if (response.status === 401) {
+          throw new DriveAuthError(`Drive download failed: ${response.status} ${response.statusText}`);
+        }
         throw new Error(`Drive download failed: ${response.status} ${response.statusText}`);
       }
 
@@ -117,6 +137,9 @@ export function createGoogleDriveProvider(accessToken: string): CloudProvider {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          throw new DriveAuthError(`Drive list failed: ${response.status} ${response.statusText}`);
+        }
         throw new Error(`Drive list failed: ${response.status} ${response.statusText}`);
       }
 
@@ -138,6 +161,9 @@ export function createGoogleDriveProvider(accessToken: string): CloudProvider {
       });
 
       if (!response.ok && response.status !== 404) {
+        if (response.status === 401) {
+          throw new DriveAuthError(`Drive delete failed: ${response.status} ${response.statusText}`);
+        }
         throw new Error(`Drive delete failed: ${response.status} ${response.statusText}`);
       }
     },

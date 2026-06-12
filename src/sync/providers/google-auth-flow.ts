@@ -76,3 +76,23 @@ export async function ensureValidGoogleTokens(tokens: GoogleTokens): Promise<Goo
     return null;
   }
 }
+
+/**
+ * Force a token refresh regardless of local expiry. Used when the Drive API
+ * returns 401 (token invalidated server-side before local expiry).
+ * Returns null if the silent re-request fails.
+ */
+export async function forceRefreshGoogleTokens(): Promise<GoogleTokens | null> {
+  const clientId = getClientId();
+  if (!clientId) {
+    throw new Error('Google client ID is not configured (set VITE_GOOGLE_CLIENT_ID).');
+  }
+
+  try {
+    await loadGisClient();
+    const result = await requestAccessToken(clientId, SCOPE, '');
+    return toTokens(result.accessToken, result.expiresIn);
+  } catch {
+    return null;
+  }
+}

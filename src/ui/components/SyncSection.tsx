@@ -8,11 +8,15 @@ import {
   type SyncProviderType,
 } from '../../sync/sync-config.ts';
 import { createWebDavProvider, type WebDavConfig } from '../../sync/providers/webdav-provider.ts';
-import { createGoogleDriveProvider } from '../../sync/providers/google-drive-provider.ts';
+import {
+  createGoogleDriveProvider,
+  DriveAuthError,
+} from '../../sync/providers/google-drive-provider.ts';
 import {
   connectGoogleDrive,
   ensureValidGoogleTokens,
   isGoogleConfigured,
+  forceRefreshGoogleTokens,
 } from '../../sync/providers/google-auth-flow.ts';
 import type { GoogleTokens } from '../../sync/sync-config.ts';
 import { pushChanges, pullChanges } from '../../sync/sync-engine.ts';
@@ -130,6 +134,21 @@ export function SyncSection() {
       setSyncState(state);
       setStatus('Push complete.');
     } catch (err) {
+      if (err instanceof DriveAuthError) {
+        const retryProvider = await refreshAndRetryProvider();
+        if (retryProvider) {
+          try {
+            await pushChanges(db, retryProvider, dek);
+            const state = await getSyncState();
+            setSyncState(state);
+            setStatus('Push complete.');
+            return;
+          } catch (retryErr) {
+            setStatus(`Push failed: ${retryErr instanceof Error ? retryErr.message : String(retryErr)}`);
+            return;
+          }
+        }
+      }
       setStatus(`Push failed: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setLoading(false);
@@ -158,6 +177,21 @@ export function SyncSection() {
       setSyncState(state);
       setStatus('Pull complete.');
     } catch (err) {
+      if (err instanceof DriveAuthError) {
+        const retryProvider = await refreshAndRetryProvider();
+        if (retryProvider) {
+          try {
+            await pullChanges(db, retryProvider, dek);
+            const state = await getSyncState();
+            setSyncState(state);
+            setStatus('Pull complete.');
+            return;
+          } catch (retryErr) {
+            setStatus(`Pull failed: ${retryErr instanceof Error ? retryErr.message : String(retryErr)}`);
+            return;
+          }
+        }
+      }
       setStatus(`Pull failed: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setLoading(false);
@@ -185,6 +219,28 @@ export function SyncSection() {
       return createGoogleDriveProvider(valid.accessToken);
     }
     return null;
+  }
+
+  /** Force-refresh the Google token and return a new provider. Used as 401 retry. */
+  async function refreshAndRetryProvider(): Promise<CloudProvider | null> {
+    if (provider !== 'google-drive') return null;
+    try {
+      const refreshed = await forceRefreshGoogleTokens();
+      if (!refreshed) {
+        setGoogle(null);
+        await saveSyncConfig({ provider: 'google-drive', webdav: null, google: null });
+        setStatus('Google session expired. Please reconnect.');
+        return null;
+      }
+      setGoogle(refreshed);
+      await saveSyncConfig({ provider: 'google-drive', webdav: null, google: refreshed });
+      return createGoogleDriveProvider(refreshed.accessToken);
+    } catch {
+      setGoogle(null);
+      await saveSyncConfig({ provider: 'google-drive', webdav: null, google: null });
+      setStatus('Google session expired. Please reconnect.');
+      return null;
+    }
   }
 
   function confirmUnencrypted() {

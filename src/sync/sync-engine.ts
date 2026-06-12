@@ -115,6 +115,14 @@ export async function pullChanges(
     const blob = decodeBlob(packed);
     plaintext = await decrypt(dek, blob);
   } else {
+    // Sanity-check: if the blob doesn't look like JSON, it's likely encrypted
+    // data pushed from a session that had a passphrase.
+    if (packed.length > 0 && packed[0] !== 0x5b /* '[' */) {
+      throw new Error(
+        'The remote data appears to be encrypted, but no passphrase is set. ' +
+          'Please set up a passphrase to decrypt the synced data.',
+      );
+    }
     plaintext = packed;
   }
 

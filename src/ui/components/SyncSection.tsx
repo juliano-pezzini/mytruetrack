@@ -18,6 +18,7 @@ import {
   isGoogleConfigured,
   forceRefreshGoogleTokens,
 } from '../../sync/providers/google-auth-flow.ts';
+import { loadGisClient, revokeAccessToken } from '../../sync/providers/google-gis.ts';
 import type { GoogleTokens } from '../../sync/sync-config.ts';
 import { pushChanges, pullChanges } from '../../sync/sync-engine.ts';
 import type { CloudProvider } from '../../sync/cloud-provider.ts';
@@ -35,7 +36,7 @@ export function SyncSection() {
   const { dek } = useVault();
   const [provider, setProvider] = useState<SyncProviderType>(null);
   const [webdav, setWebdav] = useState<WebDavConfig>(DEFAULT_WEBDAV);
-  const [google, setGoogle] = useState<GoogleTokens | null>(null);
+  const [googleTokens, setGoogleTokens] = useState<GoogleTokens | null>(null);
   const [syncState, setSyncState] = useState<SyncState | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -48,7 +49,7 @@ export function SyncSection() {
       const config = await loadSyncConfig();
       setProvider(config.provider);
       if (config.webdav) setWebdav(config.webdav);
-      setGoogle(config.google);
+      setGoogleTokens(config.google);
       const state = await getSyncState();
       setSyncState(state);
     }
@@ -62,13 +63,13 @@ export function SyncSection() {
       return;
     }
     await doSave();
-  }, [provider, webdav, google, dek]);
+  }, [provider, webdav, googleTokens, dek]);
 
   async function doSave() {
     const config: SyncConfig = {
       provider,
       webdav: provider === 'webdav' ? webdav : null,
-      google,
+      google: googleTokens,
     };
     await saveSyncConfig(config);
     setStatus('Configuration saved.');
@@ -95,7 +96,7 @@ export function SyncSection() {
     setLoading(true);
     try {
       const tokens = await connectGoogleDrive();
-      setGoogle(tokens);
+      setGoogleTokens(tokens);
       await saveSyncConfig({ provider: 'google-drive', webdav: null, google: tokens });
       setProvider('google-drive');
       setStatus('Connected to Google Drive.');
@@ -107,7 +108,17 @@ export function SyncSection() {
   }
 
   async function handleDisconnectGoogle() {
-    setGoogle(null);
+    // Revoke the granted token at Google so it can't be used until expiry,
+    // then clear it locally. Revocation is best-effort.
+    if (googleTokens) {
+      try {
+        await loadGisClient();
+        revokeAccessToken(googleTokens.accessToken);
+      } catch {
+        // Ignore — the token is cleared locally regardless.
+      }
+    }
+    setGoogleTokens(null);
     await saveSyncConfig({ provider: 'google-drive', webdav: null, google: null });
     setStatus('Disconnected from Google Drive.');
   }
@@ -128,7 +139,10 @@ export function SyncSection() {
     setPendingAction(null);
     try {
       const cloudProvider = await getActiveProvider();
-      if (!cloudProvider) return;
+      if (!cloudProvider) {
+        setStatus((prev) => prev ?? 'Connect a cloud provider before syncing.');
+        return;
+      }
       await pushChanges(db, cloudProvider, dek);
       const state = await getSyncState();
       setSyncState(state);
@@ -171,7 +185,10 @@ export function SyncSection() {
     setPendingAction(null);
     try {
       const cloudProvider = await getActiveProvider();
-      if (!cloudProvider) return;
+      if (!cloudProvider) {
+        setStatus((prev) => prev ?? 'Connect a cloud provider before syncing.');
+        return;
+      }
       await pullChanges(db, cloudProvider, dek);
       const state = await getSyncState();
       setSyncState(state);
@@ -203,17 +220,17 @@ export function SyncSection() {
       return createWebDavProvider(webdav);
     }
     if (provider === 'google-drive') {
-      if (!google) return null;
-      const valid = await ensureValidGoogleTokens(google);
+      if (!googleTokens) return null;
+      const valid = await ensureValidGoogleTokens(googleTokens);
       if (!valid) {
         // Silent re-request failed — session expired, need interactive reconnect.
-        setGoogle(null);
+        setGoogleTokens(null);
         await saveSyncConfig({ provider: 'google-drive', webdav: null, google: null });
         setStatus('Google session expired. Please reconnect.');
         return null;
       }
-      if (valid.accessToken !== google.accessToken) {
-        setGoogle(valid);
+      if (valid.accessToken !== googleTokens.accessToken) {
+        setGoogleTokens(valid);
         await saveSyncConfig({ provider: 'google-drive', webdav: null, google: valid });
       }
       return createGoogleDriveProvider(valid.accessToken);
@@ -227,16 +244,16 @@ export function SyncSection() {
     try {
       const refreshed = await forceRefreshGoogleTokens();
       if (!refreshed) {
-        setGoogle(null);
+        setGoogleTokens(null);
         await saveSyncConfig({ provider: 'google-drive', webdav: null, google: null });
         setStatus('Google session expired. Please reconnect.');
         return null;
       }
-      setGoogle(refreshed);
+      setGoogleTokens(refreshed);
       await saveSyncConfig({ provider: 'google-drive', webdav: null, google: refreshed });
       return createGoogleDriveProvider(refreshed.accessToken);
     } catch {
-      setGoogle(null);
+      setGoogleTokens(null);
       await saveSyncConfig({ provider: 'google-drive', webdav: null, google: null });
       setStatus('Google session expired. Please reconnect.');
       return null;
@@ -380,7 +397,7 @@ export function SyncSection() {
               <code className="px-1 bg-gray-200 rounded">VITE_GOOGLE_CLIENT_ID</code> (see{' '}
               <code className="px-1 bg-gray-200 rounded">.env.example</code>) and rebuild.
             </p>
-          ) : google ? (
+          ) : googleTokens ? (
             <div className="space-y-2">
               <p className="text-sm text-green-700">✓ Connected to Google Drive.</p>
               <button

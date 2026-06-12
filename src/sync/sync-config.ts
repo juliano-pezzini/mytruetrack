@@ -51,10 +51,16 @@ export async function loadSyncConfig(): Promise<SyncConfig> {
   if (!stored) return DEFAULT_CONFIG;
   const config = stored as Partial<SyncConfig>;
   // Normalize older records that predate the `google` field or still have `refreshToken`.
+  // Only accept a token object when both fields have the expected types; a corrupt or
+  // partially-written record is treated as "not connected" rather than producing
+  // `{ accessToken: undefined, expiresAt: undefined }` that breaks later expiry logic.
   const rawGoogle = config.google as (GoogleTokens & { refreshToken?: unknown }) | null | undefined;
-  const google: GoogleTokens | null = rawGoogle
-    ? { accessToken: rawGoogle.accessToken, expiresAt: rawGoogle.expiresAt }
-    : null;
+  const google: GoogleTokens | null =
+    rawGoogle &&
+    typeof rawGoogle.accessToken === 'string' &&
+    typeof rawGoogle.expiresAt === 'number'
+      ? { accessToken: rawGoogle.accessToken, expiresAt: rawGoogle.expiresAt }
+      : null;
   return {
     provider: config.provider ?? null,
     webdav: config.webdav ?? null,

@@ -24,7 +24,16 @@ export function loadGisClient(): Promise<void> {
     const script = document.createElement('script');
     script.src = GIS_SCRIPT_URL;
     script.async = true;
-    script.onload = () => resolve();
+    script.onload = () => {
+      // The script may load but fail to initialize (CSP rewrite, adblock, partial
+      // download). Verify the expected API before resolving so callers can retry.
+      if (typeof google !== 'undefined' && google.accounts?.oauth2?.initTokenClient != null) {
+        resolve();
+      } else {
+        loadPromise = null; // allow retry
+        reject(new Error('Google Identity Services loaded but did not initialize.'));
+      }
+    };
     script.onerror = () => {
       loadPromise = null; // allow retry
       reject(new Error('Failed to load Google Identity Services script.'));
@@ -75,4 +84,13 @@ export function requestAccessToken(
 
     client.requestAccessToken({ prompt });
   });
+}
+
+/**
+ * Revoke a previously-granted access token at Google so it becomes unusable
+ * immediately (instead of remaining valid until expiry). Best-effort: callers
+ * should ignore failures since the token is cleared locally regardless.
+ */
+export function revokeAccessToken(accessToken: string): void {
+  google.accounts.oauth2.revoke(accessToken);
 }

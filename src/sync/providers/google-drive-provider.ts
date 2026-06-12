@@ -76,7 +76,9 @@ export function createGoogleDriveProvider(accessToken: string): CloudProvider {
 
         if (!response.ok) {
           if (response.status === 401) {
-            throw new DriveAuthError(`Drive update failed: ${response.status} ${response.statusText}`);
+            throw new DriveAuthError(
+              `Drive update failed: ${response.status} ${response.statusText}`,
+            );
           }
           throw new Error(`Drive update failed: ${response.status} ${response.statusText}`);
         }
@@ -99,7 +101,9 @@ export function createGoogleDriveProvider(accessToken: string): CloudProvider {
 
         if (!response.ok) {
           if (response.status === 401) {
-            throw new DriveAuthError(`Drive upload failed: ${response.status} ${response.statusText}`);
+            throw new DriveAuthError(
+              `Drive upload failed: ${response.status} ${response.statusText}`,
+            );
           }
           throw new Error(`Drive upload failed: ${response.status} ${response.statusText}`);
         }
@@ -117,7 +121,9 @@ export function createGoogleDriveProvider(accessToken: string): CloudProvider {
       if (!response.ok) {
         if (response.status === 404) return null;
         if (response.status === 401) {
-          throw new DriveAuthError(`Drive download failed: ${response.status} ${response.statusText}`);
+          throw new DriveAuthError(
+            `Drive download failed: ${response.status} ${response.statusText}`,
+          );
         }
         throw new Error(`Drive download failed: ${response.status} ${response.statusText}`);
       }
@@ -162,7 +168,9 @@ export function createGoogleDriveProvider(accessToken: string): CloudProvider {
 
       if (!response.ok && response.status !== 404) {
         if (response.status === 401) {
-          throw new DriveAuthError(`Drive delete failed: ${response.status} ${response.statusText}`);
+          throw new DriveAuthError(
+            `Drive delete failed: ${response.status} ${response.statusText}`,
+          );
         }
         throw new Error(`Drive delete failed: ${response.status} ${response.statusText}`);
       }

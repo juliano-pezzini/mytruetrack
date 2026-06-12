@@ -158,7 +158,9 @@ export function SyncSection() {
             setStatus('Push complete.');
             return;
           } catch (retryErr) {
-            setStatus(`Push failed: ${retryErr instanceof Error ? retryErr.message : String(retryErr)}`);
+            setStatus(
+              `Push failed: ${retryErr instanceof Error ? retryErr.message : String(retryErr)}`,
+            );
             return;
           }
         }
@@ -204,7 +206,9 @@ export function SyncSection() {
             setStatus('Pull complete.');
             return;
           } catch (retryErr) {
-            setStatus(`Pull failed: ${retryErr instanceof Error ? retryErr.message : String(retryErr)}`);
+            setStatus(
+              `Pull failed: ${retryErr instanceof Error ? retryErr.message : String(retryErr)}`,
+            );
             return;
           }
         }

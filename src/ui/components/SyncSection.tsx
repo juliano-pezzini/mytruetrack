@@ -8,7 +8,20 @@ import {
   type SyncProviderType,
 } from '../../sync/sync-config.ts';
 import { createWebDavProvider, type WebDavConfig } from '../../sync/providers/webdav-provider.ts';
+import {
+  createGoogleDriveProvider,
+  DriveAuthError,
+} from '../../sync/providers/google-drive-provider.ts';
+import {
+  connectGoogleDrive,
+  ensureValidGoogleTokens,
+  isGoogleConfigured,
+  forceRefreshGoogleTokens,
+} from '../../sync/providers/google-auth-flow.ts';
+import { loadGisClient, revokeAccessToken } from '../../sync/providers/google-gis.ts';
+import type { GoogleTokens } from '../../sync/sync-config.ts';
 import { pushChanges, pullChanges } from '../../sync/sync-engine.ts';
+import type { CloudProvider } from '../../sync/cloud-provider.ts';
 import { getSyncState, type SyncState } from '../../sync/sync-state.ts';
 
 const DEFAULT_WEBDAV: WebDavConfig = {
@@ -23,6 +36,7 @@ export function SyncSection() {
   const { dek } = useVault();
   const [provider, setProvider] = useState<SyncProviderType>(null);
   const [webdav, setWebdav] = useState<WebDavConfig>(DEFAULT_WEBDAV);
+  const [googleTokens, setGoogleTokens] = useState<GoogleTokens | null>(null);
   const [syncState, setSyncState] = useState<SyncState | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -35,6 +49,7 @@ export function SyncSection() {
       const config = await loadSyncConfig();
       setProvider(config.provider);
       if (config.webdav) setWebdav(config.webdav);
+      setGoogleTokens(config.google);
       const state = await getSyncState();
       setSyncState(state);
     }
@@ -48,12 +63,13 @@ export function SyncSection() {
       return;
     }
     await doSave();
-  }, [provider, webdav, dek]);
+  }, [provider, webdav, googleTokens, dek]);
 
   async function doSave() {
     const config: SyncConfig = {
       provider,
       webdav: provider === 'webdav' ? webdav : null,
+      google: googleTokens,
     };
     await saveSyncConfig(config);
     setStatus('Configuration saved.');
@@ -75,6 +91,38 @@ export function SyncSection() {
     }
   }
 
+  async function handleConnectGoogle() {
+    setStatus(null);
+    setLoading(true);
+    try {
+      const tokens = await connectGoogleDrive();
+      setGoogleTokens(tokens);
+      await saveSyncConfig({ provider: 'google-drive', webdav: null, google: tokens });
+      setProvider('google-drive');
+      setStatus('Connected to Google Drive.');
+    } catch (err) {
+      setStatus(`Google connect failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDisconnectGoogle() {
+    // Revoke the granted token at Google so it can't be used until expiry,
+    // then clear it locally. Revocation is best-effort.
+    if (googleTokens) {
+      try {
+        await loadGisClient();
+        revokeAccessToken(googleTokens.accessToken);
+      } catch {
+        // Ignore — the token is cleared locally regardless.
+      }
+    }
+    setGoogleTokens(null);
+    await saveSyncConfig({ provider: 'google-drive', webdav: null, google: null });
+    setStatus('Disconnected from Google Drive.');
+  }
+
   async function handlePush() {
     if (!dek && provider !== null) {
       setShowUnencryptedWarning(true);
@@ -90,13 +138,33 @@ export function SyncSection() {
     setShowUnencryptedWarning(false);
     setPendingAction(null);
     try {
-      const cloudProvider = getActiveProvider();
-      if (!cloudProvider) return;
+      const cloudProvider = await getActiveProvider();
+      if (!cloudProvider) {
+        setStatus((prev) => prev ?? 'Connect a cloud provider before syncing.');
+        return;
+      }
       await pushChanges(db, cloudProvider, dek);
       const state = await getSyncState();
       setSyncState(state);
       setStatus('Push complete.');
     } catch (err) {
+      if (err instanceof DriveAuthError) {
+        const retryProvider = await refreshAndRetryProvider();
+        if (retryProvider) {
+          try {
+            await pushChanges(db, retryProvider, dek);
+            const state = await getSyncState();
+            setSyncState(state);
+            setStatus('Push complete.');
+            return;
+          } catch (retryErr) {
+            setStatus(
+              `Push failed: ${retryErr instanceof Error ? retryErr.message : String(retryErr)}`,
+            );
+            return;
+          }
+        }
+      }
       setStatus(`Push failed: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setLoading(false);
@@ -118,25 +186,82 @@ export function SyncSection() {
     setShowUnencryptedWarning(false);
     setPendingAction(null);
     try {
-      const cloudProvider = getActiveProvider();
-      if (!cloudProvider) return;
+      const cloudProvider = await getActiveProvider();
+      if (!cloudProvider) {
+        setStatus((prev) => prev ?? 'Connect a cloud provider before syncing.');
+        return;
+      }
       await pullChanges(db, cloudProvider, dek);
       const state = await getSyncState();
       setSyncState(state);
       setStatus('Pull complete.');
     } catch (err) {
+      if (err instanceof DriveAuthError) {
+        const retryProvider = await refreshAndRetryProvider();
+        if (retryProvider) {
+          try {
+            await pullChanges(db, retryProvider, dek);
+            const state = await getSyncState();
+            setSyncState(state);
+            setStatus('Pull complete.');
+            return;
+          } catch (retryErr) {
+            setStatus(
+              `Pull failed: ${retryErr instanceof Error ? retryErr.message : String(retryErr)}`,
+            );
+            return;
+          }
+        }
+      }
       setStatus(`Pull failed: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setLoading(false);
     }
   }
 
-  function getActiveProvider() {
+  async function getActiveProvider(): Promise<CloudProvider | null> {
     if (provider === 'webdav') {
       return createWebDavProvider(webdav);
     }
-    // Google Drive provider creation would go here with stored tokens
+    if (provider === 'google-drive') {
+      if (!googleTokens) return null;
+      const valid = await ensureValidGoogleTokens(googleTokens);
+      if (!valid) {
+        // Silent re-request failed — session expired, need interactive reconnect.
+        setGoogleTokens(null);
+        await saveSyncConfig({ provider: 'google-drive', webdav: null, google: null });
+        setStatus('Google session expired. Please reconnect.');
+        return null;
+      }
+      if (valid.accessToken !== googleTokens.accessToken) {
+        setGoogleTokens(valid);
+        await saveSyncConfig({ provider: 'google-drive', webdav: null, google: valid });
+      }
+      return createGoogleDriveProvider(valid.accessToken);
+    }
     return null;
+  }
+
+  /** Force-refresh the Google token and return a new provider. Used as 401 retry. */
+  async function refreshAndRetryProvider(): Promise<CloudProvider | null> {
+    if (provider !== 'google-drive') return null;
+    try {
+      const refreshed = await forceRefreshGoogleTokens();
+      if (!refreshed) {
+        setGoogleTokens(null);
+        await saveSyncConfig({ provider: 'google-drive', webdav: null, google: null });
+        setStatus('Google session expired. Please reconnect.');
+        return null;
+      }
+      setGoogleTokens(refreshed);
+      await saveSyncConfig({ provider: 'google-drive', webdav: null, google: refreshed });
+      return createGoogleDriveProvider(refreshed.accessToken);
+    } catch {
+      setGoogleTokens(null);
+      await saveSyncConfig({ provider: 'google-drive', webdav: null, google: null });
+      setStatus('Google session expired. Please reconnect.');
+      return null;
+    }
   }
 
   function confirmUnencrypted() {
@@ -267,16 +392,36 @@ export function SyncSection() {
         </div>
       )}
 
-      {/* Google Drive placeholder */}
+      {/* Google Drive */}
       {provider === 'google-drive' && (
-        <div className="bg-gray-50 rounded-lg p-4">
-          <button
-            type="button"
-            disabled
-            className="px-4 py-2 text-sm font-medium text-gray-400 bg-white border border-gray-200 rounded-lg cursor-not-allowed"
-          >
-            Connect with Google — coming soon
-          </button>
+        <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+          {!isGoogleConfigured() ? (
+            <p className="text-sm text-gray-600">
+              Google Drive sync is not configured for this build. Set{' '}
+              <code className="px-1 bg-gray-200 rounded">VITE_GOOGLE_CLIENT_ID</code> (see{' '}
+              <code className="px-1 bg-gray-200 rounded">.env.example</code>) and rebuild.
+            </p>
+          ) : googleTokens ? (
+            <div className="space-y-2">
+              <p className="text-sm text-green-700">✓ Connected to Google Drive.</p>
+              <button
+                type="button"
+                onClick={handleDisconnectGoogle}
+                className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Disconnect
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleConnectGoogle}
+              disabled={loading}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {loading ? 'Connecting…' : 'Connect with Google'}
+            </button>
+          )}
         </div>
       )}
 

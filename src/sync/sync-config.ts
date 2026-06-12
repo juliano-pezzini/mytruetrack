@@ -12,14 +12,22 @@ const CONFIG_KEY = 'active';
 
 export type SyncProviderType = 'google-drive' | 'webdav' | null;
 
+export type GoogleTokens = {
+  readonly accessToken: string;
+  /** Epoch milliseconds at which the access token expires. */
+  readonly expiresAt: number;
+};
+
 export type SyncConfig = {
   readonly provider: SyncProviderType;
   readonly webdav: WebDavConfig | null;
+  readonly google: GoogleTokens | null;
 };
 
 const DEFAULT_CONFIG: SyncConfig = {
   provider: null,
   webdav: null,
+  google: null,
 };
 
 async function getDb() {
@@ -41,7 +49,23 @@ export async function loadSyncConfig(): Promise<SyncConfig> {
   const db = await getDb();
   const stored = await db.get(STORE_NAME, CONFIG_KEY);
   if (!stored) return DEFAULT_CONFIG;
-  return stored as SyncConfig;
+  const config = stored as Partial<SyncConfig>;
+  // Normalize older records that predate the `google` field or still have `refreshToken`.
+  // Only accept a token object when both fields have the expected types; a corrupt or
+  // partially-written record is treated as "not connected" rather than producing
+  // `{ accessToken: undefined, expiresAt: undefined }` that breaks later expiry logic.
+  const rawGoogle = config.google as (GoogleTokens & { refreshToken?: unknown }) | null | undefined;
+  const google: GoogleTokens | null =
+    rawGoogle &&
+    typeof rawGoogle.accessToken === 'string' &&
+    typeof rawGoogle.expiresAt === 'number'
+      ? { accessToken: rawGoogle.accessToken, expiresAt: rawGoogle.expiresAt }
+      : null;
+  return {
+    provider: config.provider ?? null,
+    webdav: config.webdav ?? null,
+    google,
+  };
 }
 
 export async function clearSyncConfig(): Promise<void> {

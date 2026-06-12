@@ -1,11 +1,34 @@
 # State
 
-**Last Updated:** 2026-06-07
-**Current Work:** Phase 8 — Local-First Foundation COMPLETE. All 10 sub-phases done + Playwright E2E test suite (46 tests, all passing). 266 unit tests, 29 files, all passing. PWA installable with offline support. 87 modules, 239 KB gzip. GitHub Actions PR pipeline added (AD-005)
+**Last Updated:** 2026-06-09
+**Current Work:** Phase 8 — Local-First Foundation COMPLETE. Google Drive auth migrated from PKCE to GIS token model (AD-006). All 10 sub-phases done + Playwright E2E test suite (46 tests, all passing). 266 unit tests, 29 files, all passing. PWA installable with offline support. 87 modules, 239 KB gzip. GitHub Actions PR pipeline added (AD-005)
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-006: Google Drive OAuth — GIS token model (Phase 8.10) (2026-06-09)
+
+**Decision:** Wire the existing Drive `CloudProvider` into the Settings sync UI using the
+Google Identity Services (GIS) **token model**. GIS loads dynamically on first use, opens
+its own consent popup, and returns an access token directly — no auth code, no PKCE, no
+client secret, no callback page. Tokens (`accessToken`, `expiresAt`) persist in IndexedDB
+via `SyncConfig.google`; on expiry the app silently re-requests via GIS (`prompt:''`) and
+falls back to an interactive reconnect if the Google session is gone.
+Client ID comes from `VITE_GOOGLE_CLIENT_ID`. No secret in source (truly, now).
+
+**Reason:** The previous PKCE approach required embedding `VITE_GOOGLE_CLIENT_SECRET` in
+the JS bundle because Google's "Web application" OAuth clients demand it for code exchange.
+GIS eliminates this entirely — only `client_id` + authorized JavaScript origins are needed.
+
+**Trade-off:** Access tokens last ~1 hour with no refresh token; re-authentication requires
+an active Google session or user interaction. For a manual push/pull app this is acceptable.
+GIS requires loading an external script (`accounts.google.com/gsi/client`) — loaded
+dynamically to preserve offline-first boot.
+
+**Impact:** Replaced `google-oauth.ts` (PKCE helpers), `oauth2-callback.html`, and
+`VITE_GOOGLE_CLIENT_SECRET`. New `google-gis.ts` (dynamic loader + typed wrapper).
+`GoogleTokens` no longer has `refreshToken`; `loadSyncConfig` strips it from old records.
 
 ### AD-005: GitHub Actions PR pipeline — quality, tests, build, SAST (2026-06-07)
 

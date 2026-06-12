@@ -115,6 +115,17 @@ export async function pullChanges(
     const blob = decodeBlob(packed);
     plaintext = await decrypt(dek, blob);
   } else {
+    // Sanity-check: a plaintext snapshot is a JSON array of {table, rows} objects.
+    // Encrypted blobs start with random IV bytes, so checking only the first byte
+    // ('[') misclassifies ~1/256 of encrypted blobs as plaintext. Decode the head
+    // and require both the leading '[' and a `"table"` key before trusting it.
+    const head = new TextDecoder().decode(packed.subarray(0, 256));
+    if (!(head.startsWith('[') && head.includes('"table"'))) {
+      throw new Error(
+        'The remote data appears to be encrypted, but no passphrase is set. ' +
+          'Please set up a passphrase to decrypt the synced data.',
+      );
+    }
     plaintext = packed;
   }
 

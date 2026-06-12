@@ -106,15 +106,15 @@ Sync is currently manual — users must navigate to Settings and click Push/Pull
 
 | Requirement ID | Story | Phase | Status |
 |---|---|---|---|
-| ASYNC-01 | P1: Auto-pull on app load | Design | Pending |
-| ASYNC-02 | P1: Auto-pull error handling | Design | Pending |
-| ASYNC-03 | P1: Debounced auto-push | Design | Pending |
-| ASYNC-04 | P1: Push coalescing | Design | Pending |
-| ASYNC-05 | P1: Pending push on failure | Design | Pending |
-| ASYNC-06 | P1: Online retry | Design | Pending |
-| ASYNC-07 | P2: Sync status indicator | - | Pending |
+| ASYNC-01 | P1: Auto-pull on app load | Execute | Done |
+| ASYNC-02 | P1: Auto-pull error handling | Execute | Done |
+| ASYNC-03 | P1: Debounced auto-push | Execute | Done |
+| ASYNC-04 | P1: Push coalescing | Execute | Done |
+| ASYNC-05 | P1: Pending push on failure | Execute | Done |
+| ASYNC-06 | P1: Online retry | Execute | Done |
+| ASYNC-07 | P2: Sync status indicator | Execute | Done |
 
-**Coverage:** 7 total, 0 mapped to tasks, 7 unmapped
+**Coverage:** 7 total, 7 mapped to tasks, 0 unmapped
 
 ---
 

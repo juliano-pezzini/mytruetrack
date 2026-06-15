@@ -47,10 +47,12 @@ T6 → T7
 **Requirement**: Spike prerequisite
 
 **Tools**:
+
 - MCP: NONE
 - Skill: NONE
 
 **Done when**:
+
 - [ ] `spikes/` contains a Vite + TypeScript project (`package.json`, `tsconfig.json`, `vite.config.ts`)
 - [ ] Dependencies installed: `@sqlite.org/sqlite-wasm`, `@vlcn.io/crsqlite-wasm`, `idb`, `ofx-js`
 - [ ] `vite build` succeeds with no errors
@@ -73,10 +75,12 @@ T6 → T7
 **Requirement**: Spike A (spec.md)
 
 **Tools**:
+
 - MCP: `context7` (cr-sqlite API docs)
 - Skill: NONE
 
 **Done when**:
+
 - [ ] Two in-memory cr-sqlite instances created, each with a shared-schema table (e.g. `transactions`)
 - [ ] Both instances independently insert/update/delete rows
 - [ ] Change-set blobs exported from each, applied to the other
@@ -102,10 +106,12 @@ T6 → T7
 **Requirement**: Spike B (spec.md)
 
 **Tools**:
+
 - MCP: `context7` (Web Crypto API, WebAuthn)
 - Skill: NONE
 
 **Done when**:
+
 - [ ] PBKDF2 key derivation from passphrase works (KEK)
 - [ ] AES-GCM DEK generated, wrapped with KEK, stored in IndexedDB (via `idb`)
 - [ ] WebAuthn registration succeeds with platform authenticator
@@ -132,15 +138,18 @@ T6 → T7
 **Requirement**: Spike C (spec.md)
 
 **Tools**:
+
 - MCP: `context7` (Google Drive REST API v3)
 - Skill: NONE
 
 **Prerequisites (user action)**:
+
 - Google Cloud project created with Drive API enabled
 - OAuth 2.0 client ID configured for SPA (authorized JS origin: `http://localhost:5173`)
 - Client ID provided as env var or hardcoded in spike code
 
 **Done when**:
+
 - [ ] OAuth 2.0 PKCE flow completes in browser (no client secret)
 - [ ] 1 MB blob uploaded to `appDataFolder`
 - [ ] Downloaded and checksum verified (matches upload)
@@ -167,13 +176,16 @@ T6 → T7
 **Requirement**: Spike D (spec.md)
 
 **Tools**:
+
 - MCP: NONE
 - Skill: NONE
 
 **Prerequisites (user action)**:
+
 - Access to v1 `truetrack` repo fixtures (`workspace/tests/fixtures/`)
 
 **Done when**:
+
 - [ ] v1 OFX fixture files copied to `spikes/fixtures/`
 - [ ] `ofx-js` parses each fixture without errors
 - [ ] Transaction count, dates, amounts, account IDs extracted and logged
@@ -198,10 +210,12 @@ T6 → T7
 **Requirement**: Spike E (spec.md)
 
 **Tools**:
+
 - MCP: NONE
 - Skill: NONE
 
 **Done when**:
+
 - [ ] `vite build` with all spike code succeeds
 - [ ] Total gzipped size measured (e.g., via `vite-plugin-compression` or `gzip -k` on output)
 - [ ] Per-dependency size breakdown logged (sqlite-wasm, cr-sqlite, crypto, ofx-js, idb)
@@ -225,10 +239,12 @@ T6 → T7
 **Requirement**: Definition of Done (spec.md)
 
 **Tools**:
+
 - MCP: NONE
 - Skill: NONE
 
 **Done when**:
+
 - [ ] `spike-report.md` contains verdict + evidence for each of the 5 spikes
 - [ ] Any stack changes reflected in PROJECT.md
 - [ ] AD-004 recorded in STATE.md with final stack choices
@@ -261,6 +277,7 @@ Phase 3 (Sequential):
 ```
 
 **Parallelism notes:**
+
 - T2–T5 are fully independent spikes with no shared state
 - T6 needs all spike code present to measure combined bundle
 - T7 needs all verdicts to write the report
@@ -272,27 +289,27 @@ Phase 3 (Sequential):
 
 ### Task Granularity Check
 
-| Task | Scope | Status |
-|------|-------|--------|
-| T1: Scaffold spike project | 1 project scaffold | ✅ Granular |
-| T2: cr-sqlite CRDT sync | 1 prototype (1 file) | ✅ Granular |
-| T3: Passphrase + WebAuthn | 1 prototype (1 file, 1 flow) | ⚠️ Acceptable — single flow spanning crypto + auth, tightly coupled |
-| T4: Google Drive CRUD | 1 prototype (1 file) | ✅ Granular |
-| T5: OFX parsing | 1 prototype (1 file + fixtures) | ✅ Granular |
-| T6: Bundle size measurement | 1 measurement task | ✅ Granular |
-| T7: Write spike report | 1 document | ✅ Granular |
+| Task                        | Scope                           | Status                                                              |
+| --------------------------- | ------------------------------- | ------------------------------------------------------------------- |
+| T1: Scaffold spike project  | 1 project scaffold              | ✅ Granular                                                         |
+| T2: cr-sqlite CRDT sync     | 1 prototype (1 file)            | ✅ Granular                                                         |
+| T3: Passphrase + WebAuthn   | 1 prototype (1 file, 1 flow)    | ⚠️ Acceptable — single flow spanning crypto + auth, tightly coupled |
+| T4: Google Drive CRUD       | 1 prototype (1 file)            | ✅ Granular                                                         |
+| T5: OFX parsing             | 1 prototype (1 file + fixtures) | ✅ Granular                                                         |
+| T6: Bundle size measurement | 1 measurement task              | ✅ Granular                                                         |
+| T7: Write spike report      | 1 document                      | ✅ Granular                                                         |
 
 ### Diagram-Definition Cross-Check
 
-| Task | Depends On (task body) | Diagram Shows | Status |
-|------|------------------------|---------------|--------|
-| T1 | None | No incoming arrows | ✅ Match |
-| T2 | T1 | T1 → T2 | ✅ Match |
-| T3 | T1 | T1 → T3 | ✅ Match |
-| T4 | T1 | T1 → T4 | ✅ Match |
-| T5 | T1 | T1 → T5 | ✅ Match |
-| T6 | T2, T3, T4, T5 | T2, T3, T4, T5 → T6 | ✅ Match |
-| T7 | T2, T3, T4, T5, T6 | T6 → T7 | ⚠️ Partial — body says T2–T6, diagram shows only T6 → T7 |
+| Task | Depends On (task body) | Diagram Shows       | Status                                                   |
+| ---- | ---------------------- | ------------------- | -------------------------------------------------------- |
+| T1   | None                   | No incoming arrows  | ✅ Match                                                 |
+| T2   | T1                     | T1 → T2             | ✅ Match                                                 |
+| T3   | T1                     | T1 → T3             | ✅ Match                                                 |
+| T4   | T1                     | T1 → T4             | ✅ Match                                                 |
+| T5   | T1                     | T1 → T5             | ✅ Match                                                 |
+| T6   | T2, T3, T4, T5         | T2, T3, T4, T5 → T6 | ✅ Match                                                 |
+| T7   | T2, T3, T4, T5, T6     | T6 → T7             | ⚠️ Partial — body says T2–T6, diagram shows only T6 → T7 |
 
 **Fix for T7**: The diagram shows `T6 → T7` which implies T7 only depends on T6. Since T6 already depends on T2–T5, this is transitively correct. However, T7 directly uses outputs from T2–T5 (verdict comments), so the explicit dependency is accurate in the body. The diagram is simplified but not incorrect — T7 cannot start until T6 finishes, which already gates on T2–T5. **✅ Consistent (transitive).**
 
@@ -300,12 +317,12 @@ Phase 3 (Sequential):
 
 No TESTING.md exists. All tasks produce spike/throwaway code with no production test requirements. `Tests: none` is valid for all tasks.
 
-| Task | Code Layer | Matrix Requires | Task Says | Status |
-|------|-----------|----------------|-----------|--------|
-| T1 | Spike scaffold | N/A (no matrix) | none | ✅ OK |
-| T2 | Spike prototype | N/A | none | ✅ OK |
-| T3 | Spike prototype | N/A | none | ✅ OK |
-| T4 | Spike prototype | N/A | none | ✅ OK |
-| T5 | Spike prototype | N/A | none | ✅ OK |
-| T6 | Measurement | N/A | none | ✅ OK |
-| T7 | Documentation | N/A | none | ✅ OK |
+| Task | Code Layer      | Matrix Requires | Task Says | Status |
+| ---- | --------------- | --------------- | --------- | ------ |
+| T1   | Spike scaffold  | N/A (no matrix) | none      | ✅ OK  |
+| T2   | Spike prototype | N/A             | none      | ✅ OK  |
+| T3   | Spike prototype | N/A             | none      | ✅ OK  |
+| T4   | Spike prototype | N/A             | none      | ✅ OK  |
+| T5   | Spike prototype | N/A             | none      | ✅ OK  |
+| T6   | Measurement     | N/A             | none      | ✅ OK  |
+| T7   | Documentation   | N/A             | none      | ✅ OK  |

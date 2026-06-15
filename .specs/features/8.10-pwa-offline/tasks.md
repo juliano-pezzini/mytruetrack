@@ -21,6 +21,7 @@ T1 → T2 → T3 → T4 → T5
 **Requirement**: PWA-01, PWA-03
 
 **Done when**:
+
 - [ ] `manifest.json` with name, icons, display, colors
 - [ ] SVG icon → 192 and 512 PNG generated
 - [ ] `index.html` links manifest + apple meta tags + theme-color
@@ -34,6 +35,7 @@ T1 → T2 → T3 → T4 → T5
 **Requirement**: PWA-02
 
 **Done when**:
+
 - [ ] `sw.js` with install (precache), fetch (cache-first for static), activate (cache cleanup)
 - [ ] SW registered in `main.tsx`
 - [ ] Only caches same-origin static assets, not API calls
@@ -47,6 +49,7 @@ T1 → T2 → T3 → T4 → T5
 **Requirement**: PWA-04
 
 **Done when**:
+
 - [ ] `useOnlineStatus()` hook → boolean, listens to online/offline events
 - [ ] `OfflineBanner` shows "You are offline" when disconnected
 - [ ] Banner integrated into Layout
@@ -59,5 +62,6 @@ T1 → T2 → T3 → T4 → T5
 **Requirement**: All
 
 **Done when**:
+
 - [ ] `npx tsc --noEmit && npx vite build && npx vitest run` — all pass
 - [ ] Update STATE.md, ROADMAP.md, tasks.md

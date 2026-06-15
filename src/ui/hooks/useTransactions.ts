@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useDatabase } from './useDatabase.ts';
+import { useAutoSync } from './useAutoSync.ts';
 import {
   createTransactionRepository,
   type DateRange,
@@ -8,6 +9,7 @@ import type { Transaction, CreateTransactionParams } from '../../domain/transact
 
 export function useTransactions(accountId: string | null, dateRange?: DateRange) {
   const db = useDatabase();
+  const { notifyChange } = useAutoSync();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,9 +33,10 @@ export function useTransactions(accountId: string | null, dateRange?: DateRange)
       const repo = createTransactionRepository(db);
       const txn = repo.create(params);
       refresh();
+      notifyChange();
       return txn;
     },
-    [db, refresh],
+    [db, refresh, notifyChange],
   );
 
   const update = useCallback(
@@ -46,9 +49,10 @@ export function useTransactions(accountId: string | null, dateRange?: DateRange)
       const repo = createTransactionRepository(db);
       const txn = repo.update(id, changes);
       refresh();
+      notifyChange();
       return txn;
     },
-    [db, refresh],
+    [db, refresh, notifyChange],
   );
 
   const remove = useCallback(
@@ -56,8 +60,9 @@ export function useTransactions(accountId: string | null, dateRange?: DateRange)
       const repo = createTransactionRepository(db);
       repo.delete(id);
       refresh();
+      notifyChange();
     },
-    [db, refresh],
+    [db, refresh, notifyChange],
   );
 
   return { transactions, loading, create, update, remove, refresh };

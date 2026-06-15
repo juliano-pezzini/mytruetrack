@@ -14,13 +14,13 @@ v2 needs the same domain logic as v1 (balance calculation, account/transaction m
 
 ## Out of Scope
 
-| Feature | Reason |
-|---------|--------|
-| SQLite schema / repositories | Phase 8.3 |
-| UI components | Phase 8.7 |
-| Crypto / encryption | Phase 8.4 |
-| OFX/XLSX import parsing | Phase 8.6 |
-| `user_id` on models | v2 is single-user; no user table |
+| Feature                      | Reason                           |
+| ---------------------------- | -------------------------------- |
+| SQLite schema / repositories | Phase 8.3                        |
+| UI components                | Phase 8.7                        |
+| Crypto / encryption          | Phase 8.4                        |
+| OFX/XLSX import parsing      | Phase 8.6                        |
+| `user_id` on models          | v2 is single-user; no user table |
 
 ---
 
@@ -155,7 +155,7 @@ v2 needs the same domain logic as v1 (balance calculation, account/transaction m
 1. WHEN a user corrects a category THEN learning service SHALL extract keywords from the description
 2. WHEN a keyword already exists for that category THEN it SHALL increment occurrence_count and update confidence
 3. WHEN a keyword is new THEN it SHALL be created with occurrence_count=1 and base confidence
-4. WHEN confidence is calculated THEN formula SHALL be: min(95, 50 + (occurrence_count * 5) + recency_bonus)
+4. WHEN confidence is calculated THEN formula SHALL be: min(95, 50 + (occurrence_count \* 5) + recency_bonus)
 
 **Independent Test**: Simulate corrections, verify learned patterns and confidence scores.
 
@@ -175,16 +175,16 @@ v2 needs the same domain logic as v1 (balance calculation, account/transaction m
 
 ## Requirement Traceability
 
-| Requirement ID | Story | Priority | Status |
-|---------------|-------|----------|--------|
-| DOM-01 | Money type | P1 | Pending |
-| DOM-02 | Account model | P1 | Pending |
-| DOM-03 | Transaction model | P1 | Pending |
-| DOM-04 | Category + Tag models | P1 | Pending |
-| DOM-05 | Balance calculation | P1 | Pending |
-| DOM-06 | Monthly snapshot | P1 | Pending |
-| DOM-07 | Auto-categorization | P2 | Pending |
-| DOM-08 | Auto-cat learning | P2 | Pending |
+| Requirement ID | Story                 | Priority | Status  |
+| -------------- | --------------------- | -------- | ------- |
+| DOM-01         | Money type            | P1       | Pending |
+| DOM-02         | Account model         | P1       | Pending |
+| DOM-03         | Transaction model     | P1       | Pending |
+| DOM-04         | Category + Tag models | P1       | Pending |
+| DOM-05         | Balance calculation   | P1       | Pending |
+| DOM-06         | Monthly snapshot      | P1       | Pending |
+| DOM-07         | Auto-categorization   | P2       | Pending |
+| DOM-08         | Auto-cat learning     | P2       | Pending |
 
 **Coverage:** 8 total, 0 mapped to tasks, 8 unmapped
 

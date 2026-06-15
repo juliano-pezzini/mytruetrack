@@ -73,7 +73,10 @@ test('delete an account with confirmation', async ({ page }) => {
 
 test('type filter narrows visible accounts', async ({ page }) => {
   // Create bank and wallet
-  for (const [name, type] of [['My Bank', 'bank'], ['My Wallet', 'wallet']]) {
+  for (const [name, type] of [
+    ['My Bank', 'bank'],
+    ['My Wallet', 'wallet'],
+  ]) {
     await page.getByRole('button', { name: '+ New Account' }).click();
     await page.getByLabel('Name').fill(name);
     await page.getByLabel('Type').selectOption(type);

@@ -35,6 +35,7 @@ T1 updates the sync engine (foundational). T2 is WebDAV provider. T3 is config p
 **Requirement**: WDV-02
 
 **Done when**:
+
 - [ ] `pushChanges(db, provider, dek)` — if `dek === null`, upload plaintext snapshot
 - [ ] `pullChanges(db, provider, dek)` — if `dek === null`, download and import plaintext directly
 - [ ] Existing encrypted path unchanged when `dek !== null`
@@ -54,6 +55,7 @@ T1 updates the sync engine (foundational). T2 is WebDAV provider. T3 is config p
 **Requirement**: WDV-01
 
 **Done when**:
+
 - [ ] `createWebDavProvider(config)` factory function
 - [ ] `upload(filename, data)` → PUT to `{endpoint}/{syncFolder}/{filename}`
 - [ ] `download(filename)` → GET, returns Uint8Array or null on 404
@@ -76,6 +78,7 @@ T1 updates the sync engine (foundational). T2 is WebDAV provider. T3 is config p
 **Requirement**: WDV-03
 
 **Done when**:
+
 - [ ] `SyncConfig` type: `{ provider: 'google-drive' | 'webdav' | null; webdav: WebDavConfig | null }`
 - [ ] `WebDavConfig` type: `{ endpoint: string; syncFolder: string; username: string; password: string }`
 - [ ] `saveSyncConfig(config)` → saves to IndexedDB
@@ -96,6 +99,7 @@ T1 updates the sync engine (foundational). T2 is WebDAV provider. T3 is config p
 **Requirement**: WDV-04
 
 **Done when**:
+
 - [ ] Provider selector: None / Google Drive / WebDAV radio buttons
 - [ ] WebDAV form: endpoint, folder, username, password inputs + "Test Connection" + "Save"
 - [ ] Test connection: calls PROPFIND, shows success/error
@@ -118,6 +122,7 @@ T1 updates the sync engine (foundational). T2 is WebDAV provider. T3 is config p
 **Requirement**: WDV-05
 
 **Done when**:
+
 - [ ] Test: upload sends PUT with correct URL, auth header, body
 - [ ] Test: download returns Uint8Array on 200
 - [ ] Test: download returns null on 404
@@ -139,6 +144,7 @@ T1 updates the sync engine (foundational). T2 is WebDAV provider. T3 is config p
 **Requirement**: WDV-02, WDV-03
 
 **Done when**:
+
 - [ ] Test: pushChanges with null dek uploads plaintext
 - [ ] Test: pullChanges with null dek imports plaintext
 - [ ] Test: saveSyncConfig + loadSyncConfig round-trip

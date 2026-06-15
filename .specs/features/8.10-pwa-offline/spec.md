@@ -9,6 +9,7 @@ Make mytruetrack installable as a Progressive Web App. Cache the app shell for o
 ### PWA-01: Web App Manifest
 
 `public/manifest.json` with:
+
 - `name`: "mytruetrack"
 - `short_name`: "mytruetrack"
 - `start_url`: "/"
@@ -22,6 +23,7 @@ Link manifest in `index.html`.
 ### PWA-02: Service Worker
 
 A simple cache-first service worker that:
+
 1. On install: pre-caches the app shell (index.html, JS, CSS, WASM files)
 2. On fetch: serve from cache first, fall back to network
 3. On activate: clean up old caches
@@ -32,6 +34,7 @@ Use Vite's `vite-plugin-pwa` or a hand-rolled SW registered from `main.tsx`.
 ### PWA-03: Meta tags + install
 
 Add to `index.html`:
+
 - `<meta name="theme-color" content="#2563eb">`
 - `<meta name="apple-mobile-web-app-capable" content="yes">`
 - `<meta name="apple-mobile-web-app-status-bar-style" content="default">`
@@ -49,13 +52,13 @@ Show a small banner when `navigator.onLine === false`. Dismiss when back online.
 
 ## Files
 
-| File | Purpose |
-|------|---------|
-| `public/manifest.json` | Web app manifest |
-| `public/icon-192.png` | App icon 192x192 |
-| `public/icon-512.png` | App icon 512x512 |
-| `public/sw.js` | Service worker |
-| `src/ui/hooks/useOnlineStatus.ts` | Online/offline hook |
-| `src/ui/components/OfflineBanner.tsx` | Offline indicator |
-| `index.html` | Updated with manifest link + meta tags |
-| `src/main.tsx` | SW registration |
+| File                                  | Purpose                                |
+| ------------------------------------- | -------------------------------------- |
+| `public/manifest.json`                | Web app manifest                       |
+| `public/icon-192.png`                 | App icon 192x192                       |
+| `public/icon-512.png`                 | App icon 512x512                       |
+| `public/sw.js`                        | Service worker                         |
+| `src/ui/hooks/useOnlineStatus.ts`     | Online/offline hook                    |
+| `src/ui/components/OfflineBanner.tsx` | Offline indicator                      |
+| `index.html`                          | Updated with manifest link + meta tags |
+| `src/main.tsx`                        | SW registration                        |

@@ -7,10 +7,16 @@ export default defineConfig({
     include: ['src/**/*.test.ts'],
     coverage: {
       provider: 'v8',
-      include: ['src/domain/**', 'src/storage/**', 'src/crypto/**', 'src/sync/**', 'src/workers/**'],
+      include: [
+        'src/domain/**',
+        'src/storage/**',
+        'src/crypto/**',
+        'src/sync/**',
+        'src/workers/**',
+      ],
       exclude: [
-        'src/crypto/webauthn.ts',       // browser-only (WebAuthn API)
-        'src/sync/providers/**',         // browser-only (OAuth + fetch)
+        'src/crypto/webauthn.ts', // browser-only (WebAuthn API)
+        'src/sync/providers/**', // browser-only (OAuth + fetch)
       ],
       thresholds: {
         lines: 80,

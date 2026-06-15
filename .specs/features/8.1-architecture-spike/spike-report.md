@@ -11,19 +11,19 @@
 
 ### Evidence
 
-| Scenario | Result |
-|----------|--------|
-| Independent inserts (4 rows, both sides) | ✅ Converged |
-| Concurrent update to same row (LWW) | ✅ Converged — last-write-wins deterministic |
-| Delete on one side, update on other | ✅ Converged — delete wins |
+| Scenario                                 | Result                                       |
+| ---------------------------------------- | -------------------------------------------- |
+| Independent inserts (4 rows, both sides) | ✅ Converged                                 |
+| Concurrent update to same row (LWW)      | ✅ Converged — last-write-wins deterministic |
+| Delete on one side, update on other      | ✅ Converged — delete wins                   |
 
 ### Measurements
 
-| Metric | Value |
-|--------|-------|
-| cr-sqlite WASM (includes SQLite) | 1,735 KB raw / **625 KB gzipped** |
-| API learning curve | Low — SQL-based (`crsql_as_crr`, `crsql_changes` table) |
-| Library | `@vlcn.io/crsqlite-wasm` v0.16.0 |
+| Metric                           | Value                                                   |
+| -------------------------------- | ------------------------------------------------------- |
+| cr-sqlite WASM (includes SQLite) | 1,735 KB raw / **625 KB gzipped**                       |
+| API learning curve               | Low — SQL-based (`crsql_as_crr`, `crsql_changes` table) |
+| Library                          | `@vlcn.io/crsqlite-wasm` v0.16.0                        |
 
 ### Constraints Discovered
 
@@ -44,24 +44,24 @@
 
 ### Evidence
 
-| Step | Result |
-|------|--------|
-| PBKDF2 key derivation (600k iterations) | ✅ |
-| AES-GCM DEK generation | ✅ |
-| DEK wrapped with KEK (AES-KW) | ✅ (40 bytes) |
-| Wrapped DEK stored in IndexedDB (via `idb`) | ✅ |
-| DEK unwrapped from passphrase | ✅ |
-| 5 MB encrypt/decrypt round-trip | ✅ |
-| WebAuthn registration (Windows Hello) | ✅ |
-| WebAuthn assertion | ✅ |
-| PRF extension | ⚠️ Not supported |
+| Step                                        | Result           |
+| ------------------------------------------- | ---------------- |
+| PBKDF2 key derivation (600k iterations)     | ✅               |
+| AES-GCM DEK generation                      | ✅               |
+| DEK wrapped with KEK (AES-KW)               | ✅ (40 bytes)    |
+| Wrapped DEK stored in IndexedDB (via `idb`) | ✅               |
+| DEK unwrapped from passphrase               | ✅               |
+| 5 MB encrypt/decrypt round-trip             | ✅               |
+| WebAuthn registration (Windows Hello)       | ✅               |
+| WebAuthn assertion                          | ✅               |
+| PRF extension                               | ⚠️ Not supported |
 
 ### Measurements
 
-| Metric | Value |
-|--------|-------|
-| 5 MB encrypt | 8.1 ms |
-| 5 MB decrypt | 7.1 ms |
+| Metric          | Value                         |
+| --------------- | ----------------------------- |
+| 5 MB encrypt    | 8.1 ms                        |
+| 5 MB decrypt    | 7.1 ms                        |
 | 5 MB round-trip | **15.2 ms** (target < 500 ms) |
 
 ### Caveat: PRF Extension
@@ -69,6 +69,7 @@
 The WebAuthn `prf` extension is not yet supported on the test platform (Chrome + Windows Hello). This means biometric authentication can verify the user's identity but **cannot produce a cryptographic key** from the biometric signal.
 
 **Fallback architecture:**
+
 1. User enters passphrase → derives KEK → unwraps DEK (always works)
 2. Optionally, after passphrase unlock, store the unwrapped DEK in a session-scoped non-extractable Web Crypto key
 3. WebAuthn assertion gates access to the session key (biometric confirms "you are the same person who entered the passphrase earlier this session")
@@ -78,11 +79,11 @@ This fallback is acceptable — the user enters the passphrase once per device t
 
 ### Argon2 Assessment
 
-| Option | Bundle Size | Notes |
-|--------|------------|-------|
-| PBKDF2 (Web Crypto native) | 0 KB | 600k iterations, good baseline |
-| `hash-wasm` (Argon2) | ~80 KB | Better resistance to GPU attacks |
-| `argon2-browser` | ~200 KB | More established but larger |
+| Option                     | Bundle Size | Notes                            |
+| -------------------------- | ----------- | -------------------------------- |
+| PBKDF2 (Web Crypto native) | 0 KB        | 600k iterations, good baseline   |
+| `hash-wasm` (Argon2)       | ~80 KB      | Better resistance to GPU attacks |
+| `argon2-browser`           | ~200 KB     | More established but larger      |
 
 **Recommendation:** Ship with PBKDF2. Add Argon2 as optional upgrade if bundle budget allows (budget is healthy — see Spike E).
 
@@ -94,24 +95,24 @@ This fallback is acceptable — the user enters the passphrase once per device t
 
 ### Evidence
 
-| Operation | Result | Latency |
-|-----------|--------|---------|
-| OAuth 2.0 (implicit flow, SPA) | ✅ | — |
-| Upload 1 MB to `appDataFolder` | ✅ | 2,158 ms |
-| Download + checksum verify | ✅ | 1,463 ms |
-| List files | ✅ (1 file returned) | — |
-| Delete file | ✅ | — |
-| Total round-trip (upload + download) | — | 3,621 ms |
+| Operation                            | Result               | Latency  |
+| ------------------------------------ | -------------------- | -------- |
+| OAuth 2.0 (implicit flow, SPA)       | ✅                   | —        |
+| Upload 1 MB to `appDataFolder`       | ✅                   | 2,158 ms |
+| Download + checksum verify           | ✅                   | 1,463 ms |
+| List files                           | ✅ (1 file returned) | —        |
+| Delete file                          | ✅                   | —        |
+| Total round-trip (upload + download) | —                    | 3,621 ms |
 
 ### Quota & Limits
 
-| Limit | Value | Concern? |
-|-------|-------|----------|
-| Storage | Shared with user's Drive (15 GB free) | No — our data is < 100 MB |
-| File count | No separate limit | No |
-| API rate | 12,000 queries/day | No — sync is infrequent |
-| Scope | `drive.appdata` only — no broad Drive access | ✅ Privacy-safe |
-| Visibility | App data invisible in Drive UI | ✅ |
+| Limit      | Value                                        | Concern?                  |
+| ---------- | -------------------------------------------- | ------------------------- |
+| Storage    | Shared with user's Drive (15 GB free)        | No — our data is < 100 MB |
+| File count | No separate limit                            | No                        |
+| API rate   | 12,000 queries/day                           | No — sync is infrequent   |
+| Scope      | `drive.appdata` only — no broad Drive access | ✅ Privacy-safe           |
+| Visibility | App data invisible in Drive UI               | ✅                        |
 
 ### Notes for Production
 
@@ -128,23 +129,23 @@ This fallback is acceptable — the user enters the passphrase once per device t
 
 ### Evidence
 
-| Test | Result |
-|------|--------|
-| Bank statement (OFX 1.x SGML, 3 transactions) | ✅ All fields parsed correctly |
-| Credit card statement (OFX 1.x SGML, 2 transactions) | ✅ Including negative balance |
-| Transaction fields (TRNTYPE, DTPOSTED, TRNAMT, FITID, NAME, MEMO) | ✅ |
-| Account fields (BANKID, ACCTID, ACCTTYPE, CCACCTFROM) | ✅ |
-| Ledger balance (BALAMT, DTASOF) | ✅ |
-| Currency (CURDEF) | ✅ |
+| Test                                                              | Result                         |
+| ----------------------------------------------------------------- | ------------------------------ |
+| Bank statement (OFX 1.x SGML, 3 transactions)                     | ✅ All fields parsed correctly |
+| Credit card statement (OFX 1.x SGML, 2 transactions)              | ✅ Including negative balance  |
+| Transaction fields (TRNTYPE, DTPOSTED, TRNAMT, FITID, NAME, MEMO) | ✅                             |
+| Account fields (BANKID, ACCTID, ACCTTYPE, CCACCTFROM)             | ✅                             |
+| Ledger balance (BALAMT, DTASOF)                                   | ✅                             |
+| Currency (CURDEF)                                                 | ✅                             |
 
 ### Measurements
 
-| Metric | Value |
-|--------|-------|
-| `ofx-js` bundle | ~15 KB (uncompressed) |
-| Dependencies | Zero |
-| TypeScript types | ✅ Ships `.d.ts` |
-| Format support | OFX 1.x (SGML) + OFX 2.x (XML) |
+| Metric           | Value                          |
+| ---------------- | ------------------------------ |
+| `ofx-js` bundle  | ~15 KB (uncompressed)          |
+| Dependencies     | Zero                           |
+| TypeScript types | ✅ Ships `.d.ts`               |
+| Format support   | OFX 1.x (SGML) + OFX 2.x (XML) |
 
 ### Notes
 
@@ -160,24 +161,24 @@ This fallback is acceptable — the user enters the passphrase once per device t
 
 ### Measurements
 
-| Asset | Raw | Gzipped |
-|-------|-----|---------|
-| `crsqlite.wasm` (SQLite + CRDT engine) | 1,735 KB | 625 KB |
-| `index.js` (all JS: cr-sqlite, ofx-js, idb, crypto, Drive) | 101 KB | 32 KB |
-| **Total spike bundle** | **1,836 KB** | **657 KB** |
+| Asset                                                      | Raw          | Gzipped    |
+| ---------------------------------------------------------- | ------------ | ---------- |
+| `crsqlite.wasm` (SQLite + CRDT engine)                     | 1,735 KB     | 625 KB     |
+| `index.js` (all JS: cr-sqlite, ofx-js, idb, crypto, Drive) | 101 KB       | 32 KB      |
+| **Total spike bundle**                                     | **1,836 KB** | **657 KB** |
 
 **Budget: < 2 MB gzipped. Actual: 657 KB (33% of budget).**
 
 ### Remaining Budget for Production
 
-| Addition | Estimated Gzipped Size |
-|----------|----------------------|
-| React + React DOM | ~45 KB |
-| React Router | ~15 KB |
-| Tailwind CSS (purged) | ~10 KB |
-| Chart library (e.g., lightweight) | ~30–50 KB |
-| App code | ~50–100 KB |
-| **Projected total** | **~850–900 KB** |
+| Addition                          | Estimated Gzipped Size |
+| --------------------------------- | ---------------------- |
+| React + React DOM                 | ~45 KB                 |
+| React Router                      | ~15 KB                 |
+| Tailwind CSS (purged)             | ~10 KB                 |
+| Chart library (e.g., lightweight) | ~30–50 KB              |
+| App code                          | ~50–100 KB             |
+| **Projected total**               | **~850–900 KB**        |
 
 Plenty of headroom. No lazy-loading needed for the critical path.
 
@@ -200,12 +201,12 @@ No stack changes required. All bets validated. Minor adjustments:
 
 ## Go / No-Go Summary
 
-| Spike | Verdict | Key Metric |
-|-------|---------|------------|
-| A — cr-sqlite CRDT | ✅ Go | 3/3 convergence scenarios pass; 625 KB gzip |
-| B — Crypto + WebAuthn | ✅ Go (caveat) | 15 ms for 5 MB; PRF not yet supported |
-| C — Google Drive | ✅ Go | Full CRUD works; `drive.appdata` scope sufficient |
-| D — OFX parsing | ✅ Go | All fields parsed; 15 KB bundle |
-| E — Bundle size | ✅ Go | 657 KB gzip (33% of 2 MB budget) |
+| Spike                 | Verdict        | Key Metric                                        |
+| --------------------- | -------------- | ------------------------------------------------- |
+| A — cr-sqlite CRDT    | ✅ Go          | 3/3 convergence scenarios pass; 625 KB gzip       |
+| B — Crypto + WebAuthn | ✅ Go (caveat) | 15 ms for 5 MB; PRF not yet supported             |
+| C — Google Drive      | ✅ Go          | Full CRUD works; `drive.appdata` scope sufficient |
+| D — OFX parsing       | ✅ Go          | All fields parsed; 15 KB bundle                   |
+| E — Bundle size       | ✅ Go          | 657 KB gzip (33% of 2 MB budget)                  |
 
 **Overall: ✅ Proceed to Phase 8.2 (Domain Port)**

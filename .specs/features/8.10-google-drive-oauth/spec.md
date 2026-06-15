@@ -58,10 +58,10 @@ Push/Pull controls use the live provider.
 
 ## Requirement Traceability
 
-| ID     | Requirement                  |
-|--------|------------------------------|
-| GDO-01 | Persist Google tokens        |
-| GDO-02 | Client ID configuration      |
-| GDO-03 | Interactive connect flow     |
-| GDO-04 | Token refresh                |
-| GDO-05 | Settings UI                  |
+| ID     | Requirement              |
+| ------ | ------------------------ |
+| GDO-01 | Persist Google tokens    |
+| GDO-02 | Client ID configuration  |
+| GDO-03 | Interactive connect flow |
+| GDO-04 | Token refresh            |
+| GDO-05 | Settings UI              |

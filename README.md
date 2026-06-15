@@ -24,4 +24,3 @@ Project bootstrap. See [.specs/project/ROADMAP.md](./.specs/project/ROADMAP.md).
 ## License
 
 See [LICENSE](./LICENSE) (TBD — likely MIT, matching v1).
-

@@ -15,21 +15,17 @@ const PRECACHE_URLS = [
 const sw = /** @type {ServiceWorkerGlobalScope} */ (/** @type {unknown} */ (self));
 
 sw.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS)));
   sw.skipWaiting();
 });
 
 sw.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((names) =>
-      Promise.all(
-        names
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
-      )
-    )
+    caches
+      .keys()
+      .then((names) =>
+        Promise.all(names.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name))),
+      ),
   );
   sw.clients.claim();
 });
@@ -59,6 +55,6 @@ sw.addEventListener('fetch', (event) => {
 
         return response;
       });
-    })
+    }),
   );
 });

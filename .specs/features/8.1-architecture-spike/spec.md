@@ -34,12 +34,14 @@ A failure in any of these mid-build would force costly rework. Spend ~1-2 weeks 
 **Question:** Can two browser instances exchange CRDT changes via a shared blob (simulating cloud sync) without conflicts or data loss?
 
 **Method:**
+
 1. Open the prototype in two browser tabs / two profiles
 2. Both write to a shared SQLite table (e.g. transactions)
 3. Export change-set blobs; manually shuffle between them
 4. Apply and assert convergent state
 
 **Go criteria:**
+
 - Convergence after arbitrary write/sync orderings
 - Bundle size of `cr-sqlite` + `sqlite-wasm` ≤ 1.5 MB gzipped
 - API surface understandable in a day
@@ -54,6 +56,7 @@ A failure in any of these mid-build would force costly rework. Spend ~1-2 weeks 
 **Question:** Can we wrap an AES-GCM key with a passphrase-derived key, store it encrypted in IndexedDB, and unlock it via WebAuthn (platform authenticator) on every app open?
 
 **Method:**
+
 1. Derive `KEK` from passphrase via PBKDF2 (Argon2 if WASM size acceptable)
 2. Generate `DEK` (AES-GCM); wrap with `KEK`; store wrapped blob in IndexedDB
 3. Register a platform WebAuthn credential
@@ -61,6 +64,7 @@ A failure in any of these mid-build would force costly rework. Spend ~1-2 weeks 
 5. Encrypt/decrypt a sample blob with `DEK`
 
 **Go criteria:**
+
 - Works on Chrome (Windows Hello), Safari (Touch ID), and Chrome Android (fingerprint)
 - Fallback path works on browsers without `prf` extension support (e.g., older Firefox)
 - Round-trip encrypt → upload → download → decrypt of 5 MB blob completes in < 500 ms after unlock
@@ -74,6 +78,7 @@ A failure in any of these mid-build would force costly rework. Spend ~1-2 weeks 
 **Question:** Is `appDataFolder` viable for app-private sync (upload, download, list, delete, quota)?
 
 **Method:**
+
 1. OAuth 2.0 PKCE flow (no client secret needed for a SPA)
 2. Upload 1 MB encrypted blob
 3. Download and verify checksum
@@ -82,6 +87,7 @@ A failure in any of these mid-build would force costly rework. Spend ~1-2 weeks 
 6. Check quota / file count limits in Google docs
 
 **Go criteria:**
+
 - Full CRUD works with `https://www.googleapis.com/auth/drive.appdata` scope only (no broad Drive access)
 - No surprise quota cliff below 100 MB / 1000 files (well above expected use)
 - OAuth flow works on installed PWA (not just dev origin)
@@ -95,12 +101,14 @@ A failure in any of these mid-build would force costly rework. Spend ~1-2 weeks 
 **Question:** Does `ofx-js` (or alternative) correctly parse the OFX fixtures used in v1's import tests?
 
 **Method:**
+
 1. Copy v1 OFX fixtures from `truetrack/workspace/tests/fixtures`
 2. Parse with `ofx-js`
 3. Assert transaction count, dates, amounts, account IDs match expected
 4. Compare bundle size vs. hand-rolled parser
 
 **Go criteria:**
+
 - All v1 fixture files parse correctly
 - Bundle size acceptable (< 100 KB gzipped)
 - Library maintained (release in last 12 months)

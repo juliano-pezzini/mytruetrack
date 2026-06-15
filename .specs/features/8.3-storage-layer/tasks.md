@@ -49,6 +49,7 @@ T3 ──┼→ T6 [P] ─┼→ (done)
 **Requirement**: STR-08
 
 **Done when**:
+
 - [ ] `@vlcn.io/crsqlite-wasm` in dependencies
 - [ ] `sql.js` + `@types/sql.js` in devDependencies
 - [ ] `Database` interface exported from `src/storage/database.ts` with `exec`, `execA`, `execO`, `close`
@@ -71,6 +72,7 @@ T3 ──┼→ T6 [P] ─┼→ (done)
 **Requirement**: STR-06
 
 **Done when**:
+
 - [ ] `Migration` type defined: `{ version: number; name: string; up: string | string[] }`
 - [ ] `runMigrations(db, migrations)` creates `_migrations` table if missing, applies pending migrations in version order, records each version
 - [ ] Skips already-applied migrations
@@ -92,6 +94,7 @@ T3 ──┼→ T6 [P] ─┼→ (done)
 **Requirement**: STR-01, STR-08
 
 **Schema tables** (all money columns INTEGER, all dates TEXT):
+
 - `accounts` (id TEXT PK, name TEXT, type TEXT, initial_balance INTEGER, is_active INTEGER DEFAULT 1, description TEXT DEFAULT '')
 - `transactions` (id TEXT PK, account_id TEXT, category_id TEXT DEFAULT '', amount INTEGER, description TEXT, transaction_date TEXT, settled_date TEXT DEFAULT '', type TEXT, external_id TEXT DEFAULT '')
 - `categories` (id TEXT PK, parent_id TEXT DEFAULT '', name TEXT, type TEXT, description TEXT DEFAULT '')
@@ -103,6 +106,7 @@ T3 ──┼→ T6 [P] ─┼→ (done)
 - `auto_category_corrections` (id TEXT PK, transaction_id TEXT, original_category_id TEXT DEFAULT '', corrected_category_id TEXT, description_text TEXT, correction_type TEXT, confidence_at_correction INTEGER DEFAULT 0)
 
 **Done when**:
+
 - [ ] Migration 001 creates all 9 tables with correct column types
 - [ ] `migrations/index.ts` exports the ordered migration list
 - [ ] `initDatabase(options?)` opens DB, runs migrations, returns `Database`
@@ -126,6 +130,7 @@ T3 ──┼→ T6 [P] ─┼→ (done)
 **Requirement**: STR-02
 
 **Done when**:
+
 - [ ] `create(params)` inserts row, returns domain `Account`
 - [ ] `getById(id)` returns `Account | null`
 - [ ] `getAll()` returns active accounts (default), or all with `includeInactive` option
@@ -149,6 +154,7 @@ T3 ──┼→ T6 [P] ─┼→ (done)
 **Requirement**: STR-03
 
 **Done when**:
+
 - [ ] `create(params)` inserts row, returns domain `Transaction`
 - [ ] `getById(id)` returns `Transaction | null`
 - [ ] `getByAccount(accountId, dateRange?)` returns transactions ordered by `transaction_date DESC`
@@ -175,6 +181,7 @@ T3 ──┼→ T6 [P] ─┼→ (done)
 **Requirement**: STR-04
 
 **Done when**:
+
 - [ ] `CategoryRepository.create(params)` inserts, returns domain `Category`
 - [ ] `CategoryRepository.getById(id)` returns `Category | null`
 - [ ] `CategoryRepository.getAll()` returns all categories with parentId intact
@@ -202,6 +209,7 @@ T3 ──┼→ T6 [P] ─┼→ (done)
 **Requirement**: STR-05
 
 **Done when**:
+
 - [ ] `upsert(accountId, year, month, closingBalance)` inserts or updates the snapshot
 - [ ] `getByAccount(accountId)` returns all snapshots ordered by year/month DESC
 - [ ] `getLatest(accountId, beforeDate)` returns the most recent snapshot at or before the given date, or null
@@ -224,6 +232,7 @@ T3 ──┼→ T6 [P] ─┼→ (done)
 **Requirement**: STR-07
 
 **Done when**:
+
 - [ ] `AutoCategoryRuleRepository.create(rule)` inserts, returns domain type
 - [ ] `AutoCategoryRuleRepository.getActive()` returns rules where `is_active = 1` ordered by priority DESC
 - [ ] `LearnedPatternRepository.create(pattern)` inserts, returns domain type
@@ -243,38 +252,38 @@ T3 ──┼→ T6 [P] ─┼→ (done)
 ### Diagram-Definition Cross-Check
 
 | Task | Depends on (definition) | Depends on (diagram) | Match |
-|------|------------------------|---------------------|-------|
-| T1 | None | None | ✅ |
-| T2 | T1 | T1 | ✅ |
-| T3 | T2 | T2 | ✅ |
-| T4 | T3 | T3 | ✅ |
-| T5 | T3 | T3 | ✅ |
-| T6 | T3 | T3 | ✅ |
-| T7 | T3 | T3 | ✅ |
-| T8 | T3 | T3 | ✅ |
+| ---- | ----------------------- | -------------------- | ----- |
+| T1   | None                    | None                 | ✅    |
+| T2   | T1                      | T1                   | ✅    |
+| T3   | T2                      | T2                   | ✅    |
+| T4   | T3                      | T3                   | ✅    |
+| T5   | T3                      | T3                   | ✅    |
+| T6   | T3                      | T3                   | ✅    |
+| T7   | T3                      | T3                   | ✅    |
+| T8   | T3                      | T3                   | ✅    |
 
 ### Test Co-location Validation
 
-| Task | Code layer | Test type | Co-located | Valid |
-|------|-----------|-----------|------------|-------|
-| T1 | storage/database | integration | ✅ smoke test in test-helpers.test.ts | ✅ |
-| T2 | storage/migrations | integration | ✅ runner.test.ts | ✅ |
-| T3 | storage/init + migrations | integration | ✅ init.test.ts | ✅ |
-| T4 | storage/repositories | integration | ✅ account-repository.test.ts | ✅ |
-| T5 | storage/repositories | integration | ✅ transaction-repository.test.ts | ✅ |
-| T6 | storage/repositories | integration | ✅ category + tag .test.ts | ✅ |
-| T7 | storage/repositories | integration | ✅ account-balance-repository.test.ts | ✅ |
-| T8 | storage/repositories | integration | ✅ auto-cat-repositories.test.ts | ✅ |
+| Task | Code layer                | Test type   | Co-located                            | Valid |
+| ---- | ------------------------- | ----------- | ------------------------------------- | ----- |
+| T1   | storage/database          | integration | ✅ smoke test in test-helpers.test.ts | ✅    |
+| T2   | storage/migrations        | integration | ✅ runner.test.ts                     | ✅    |
+| T3   | storage/init + migrations | integration | ✅ init.test.ts                       | ✅    |
+| T4   | storage/repositories      | integration | ✅ account-repository.test.ts         | ✅    |
+| T5   | storage/repositories      | integration | ✅ transaction-repository.test.ts     | ✅    |
+| T6   | storage/repositories      | integration | ✅ category + tag .test.ts            | ✅    |
+| T7   | storage/repositories      | integration | ✅ account-balance-repository.test.ts | ✅    |
+| T8   | storage/repositories      | integration | ✅ auto-cat-repositories.test.ts      | ✅    |
 
 ### Granularity Check
 
-| Task | Files created/modified | Single concept | Atomic |
-|------|----------------------|----------------|--------|
-| T1 | 4 (package.json, database.ts, test-helpers.ts, vitest.config.ts) | DB abstraction | ✅ |
-| T2 | 3 (types.ts, runner.ts, runner.test.ts) | Migration framework | ✅ |
-| T3 | 4 (001-initial-schema.ts, index.ts, init.ts, init.test.ts) | Schema + init | ✅ |
-| T4 | 2 (repository + test) | Account CRUD | ✅ |
-| T5 | 2 (repository + test) | Transaction CRUD | ✅ |
-| T6 | 4 (2 repos + 2 tests) | Category + Tag CRUD | ✅ |
-| T7 | 2 (repository + test) | Balance snapshots | ✅ |
-| T8 | 4 (3 repos + 1 test) | Auto-cat persistence | ✅ |
+| Task | Files created/modified                                           | Single concept       | Atomic |
+| ---- | ---------------------------------------------------------------- | -------------------- | ------ |
+| T1   | 4 (package.json, database.ts, test-helpers.ts, vitest.config.ts) | DB abstraction       | ✅     |
+| T2   | 3 (types.ts, runner.ts, runner.test.ts)                          | Migration framework  | ✅     |
+| T3   | 4 (001-initial-schema.ts, index.ts, init.ts, init.test.ts)       | Schema + init        | ✅     |
+| T4   | 2 (repository + test)                                            | Account CRUD         | ✅     |
+| T5   | 2 (repository + test)                                            | Transaction CRUD     | ✅     |
+| T6   | 4 (2 repos + 2 tests)                                            | Category + Tag CRUD  | ✅     |
+| T7   | 2 (repository + test)                                            | Balance snapshots    | ✅     |
+| T8   | 4 (3 repos + 1 test)                                             | Auto-cat persistence | ✅     |

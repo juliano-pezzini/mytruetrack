@@ -19,6 +19,7 @@ Implement `CloudProvider` for WebDAV servers (Nextcloud, ownCloud, generic). Use
 **Auth**: Basic auth (username + password/app-token). The credentials are stored in IndexedDB (not localStorage — avoids XSS exposure via `document.cookie` adjacent storage).
 
 **Config**:
+
 - `endpoint`: WebDAV server URL (e.g., `https://cloud.example.com/remote.php/dav/files/user/`)
 - `syncFolder`: folder path within WebDAV (default: `mytruetrack/`)
 - `username`: WebDAV username
@@ -27,12 +28,14 @@ Implement `CloudProvider` for WebDAV servers (Nextcloud, ownCloud, generic). Use
 ### WDV-02: Sync engine — optional encryption
 
 Update `pushChanges` and `pullChanges` to accept `dek: CryptoKey | null`:
+
 - `dek !== null` → encrypt before upload, decrypt after download (current behavior)
 - `dek === null` → upload/download plaintext snapshots (no crypto step)
 
 ### WDV-03: Sync configuration persistence
 
 Store the active sync provider config in IndexedDB:
+
 - `provider: 'google-drive' | 'webdav' | null` — which provider is active
 - `webdav: { endpoint, syncFolder, username, password }` — WebDAV credentials
 - `google: { accessToken, refreshToken, expiresAt }` — Google OAuth tokens (placeholder, wired in future)
@@ -50,6 +53,7 @@ Replace the "Sync — coming soon" placeholder in Settings with:
 ### WDV-05: WebDAV provider tests
 
 Unit tests with mocked `fetch`:
+
 - Upload creates/overwrites a file
 - Download returns content or null on 404
 - List parses PROPFIND XML response

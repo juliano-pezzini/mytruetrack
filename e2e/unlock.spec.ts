@@ -25,9 +25,12 @@ test('vault locked after reload → unlock page shown', async ({ page }) => {
 
   // Reload → should need unlock
   await page.reload();
-  await page.waitForFunction(() => !document.querySelector('p')?.textContent?.includes('Loading…'), {
-    timeout: 10_000,
-  });
+  await page.waitForFunction(
+    () => !document.querySelector('p')?.textContent?.includes('Loading…'),
+    {
+      timeout: 10_000,
+    },
+  );
 
   await expect(page.getByText('Enter your passphrase to unlock')).toBeVisible();
 });

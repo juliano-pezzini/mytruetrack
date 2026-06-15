@@ -14,13 +14,13 @@ import {
 } from '../../sync/providers/google-drive-provider.ts';
 import {
   connectGoogleDrive,
-  ensureValidGoogleTokens,
   isGoogleConfigured,
   forceRefreshGoogleTokens,
 } from '../../sync/providers/google-auth-flow.ts';
 import { loadGisClient, revokeAccessToken } from '../../sync/providers/google-gis.ts';
 import type { GoogleTokens } from '../../sync/sync-config.ts';
 import { pushChanges, pullChanges } from '../../sync/sync-engine.ts';
+import { resolveActiveProvider } from '../../sync/active-provider.ts';
 import type { CloudProvider } from '../../sync/cloud-provider.ts';
 import { getSyncState, type SyncState } from '../../sync/sync-state.ts';
 
@@ -225,19 +225,24 @@ export function SyncSection() {
     }
     if (provider === 'google-drive') {
       if (!googleTokens) return null;
-      const valid = await ensureValidGoogleTokens(googleTokens);
-      if (!valid) {
+      const resolved = await resolveActiveProvider({
+        provider: 'google-drive',
+        webdav: null,
+        google: googleTokens,
+      });
+      if (resolved.kind === 'reconnect') {
         // Silent re-request failed — session expired, need interactive reconnect.
         setGoogleTokens(null);
         await saveSyncConfig({ provider: 'google-drive', webdav: null, google: null });
         setStatus('Google session expired. Please reconnect.');
         return null;
       }
-      if (valid.accessToken !== googleTokens.accessToken) {
-        setGoogleTokens(valid);
-        await saveSyncConfig({ provider: 'google-drive', webdav: null, google: valid });
+      if (resolved.kind === 'none') return null;
+      if (resolved.config.google && resolved.config.google !== googleTokens) {
+        setGoogleTokens(resolved.config.google);
+        await saveSyncConfig(resolved.config);
       }
-      return createGoogleDriveProvider(valid.accessToken);
+      return resolved.provider;
     }
     return null;
   }

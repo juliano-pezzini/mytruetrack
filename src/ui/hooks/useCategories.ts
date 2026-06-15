@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useDatabase } from './useDatabase.ts';
+import { useAutoSync } from './useAutoSync.ts';
 import { createCategoryRepository } from '../../storage/repositories/category-repository.ts';
 import type { Category, CreateCategoryParams } from '../../domain/category.ts';
 
 export function useCategories() {
   const db = useDatabase();
+  const { notifyChange } = useAutoSync();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,9 +25,10 @@ export function useCategories() {
       const repo = createCategoryRepository(db);
       const category = repo.create(params);
       refresh();
+      notifyChange();
       return category;
     },
-    [db, refresh],
+    [db, refresh, notifyChange],
   );
 
   const update = useCallback(
@@ -36,9 +39,10 @@ export function useCategories() {
       const repo = createCategoryRepository(db);
       const category = repo.update(id, changes);
       refresh();
+      notifyChange();
       return category;
     },
-    [db, refresh],
+    [db, refresh, notifyChange],
   );
 
   const remove = useCallback(
@@ -46,8 +50,9 @@ export function useCategories() {
       const repo = createCategoryRepository(db);
       repo.delete(id);
       refresh();
+      notifyChange();
     },
-    [db, refresh],
+    [db, refresh, notifyChange],
   );
 
   return { categories, loading, create, update, remove, refresh };

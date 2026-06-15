@@ -47,6 +47,7 @@ T3 ──┤           ├→ (done)
 **Requirement**: CRY-01
 
 **Done when**:
+
 - [ ] `deriveKek(passphrase, salt, iterations)` → returns AES-KW CryptoKey (non-extractable)
 - [ ] `generateDek()` → returns AES-GCM-256 CryptoKey (extractable for wrapping)
 - [ ] `wrapDek(dek, kek)` → returns `Uint8Array` (wrapped DEK bytes)
@@ -72,6 +73,7 @@ T3 ──┤           ├→ (done)
 **Requirement**: CRY-02
 
 **Done when**:
+
 - [ ] `EncryptedBlob` type: `{ iv: Uint8Array; ciphertext: Uint8Array }`
 - [ ] `encrypt(dek, plaintext)` → returns `EncryptedBlob` with random 12-byte IV
 - [ ] `decrypt(dek, blob)` → returns `Uint8Array` (original plaintext)
@@ -96,6 +98,7 @@ T3 ──┤           ├→ (done)
 **Requirement**: CRY-03
 
 **Done when**:
+
 - [ ] `idb` in dependencies, `fake-indexeddb` in devDependencies
 - [ ] `KeyData` type: `{ wrappedDek: Uint8Array; salt: Uint8Array; iterations: number }`
 - [ ] `saveKeyData(data)` → persists to IndexedDB `mytruetrack-keystore`
@@ -120,6 +123,7 @@ T3 ──┤           ├→ (done)
 **Requirement**: CRY-04
 
 **Done when**:
+
 - [ ] `isBiometricAvailable()` → checks `PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()`
 - [ ] `registerBiometric(userId, userName)` → creates credential, returns `{ credentialId: Uint8Array }`
 - [ ] `assertBiometric(credentialId)` → performs assertion, returns `true` on success
@@ -142,6 +146,7 @@ T3 ──┤           ├→ (done)
 **Requirement**: CRY-05
 
 **Done when**:
+
 - [ ] `generateVerificationChecksum(passphrase)` → truncated SHA-256 hex (first 8 chars)
 - [ ] `generateRecoverySheet(passphrase)` → returns self-contained HTML string
 - [ ] HTML includes: passphrase (in a reveal-on-click section), verification checksum, recovery instructions, app name, generation date
@@ -159,29 +164,29 @@ T3 ──┤           ├→ (done)
 ### Diagram-Definition Cross-Check
 
 | Task | Depends on (definition) | Depends on (diagram) | Match |
-|------|------------------------|---------------------|-------|
-| T1 | None | None | ✅ |
-| T2 | T1 | T1 | ✅ |
-| T3 | T2 | T2 | ✅ |
-| T4 | T3 | T3 | ✅ |
-| T5 | T3 | T3 | ✅ |
+| ---- | ----------------------- | -------------------- | ----- |
+| T1   | None                    | None                 | ✅    |
+| T2   | T1                      | T1                   | ✅    |
+| T3   | T2                      | T2                   | ✅    |
+| T4   | T3                      | T3                   | ✅    |
+| T5   | T3                      | T3                   | ✅    |
 
 ### Test Co-location Validation
 
-| Task | Code layer | Test type | Co-located | Valid |
-|------|-----------|-----------|------------|-------|
-| T1 | crypto/key-derivation | unit | ✅ key-derivation.test.ts | ✅ |
-| T2 | crypto/encryption | unit | ✅ encryption.test.ts | ✅ |
-| T3 | crypto/key-store | integration | ✅ key-store.test.ts | ✅ |
-| T4 | crypto/webauthn | none (browser-only) | N/A | ✅ |
-| T5 | crypto/recovery-sheet | unit | ✅ recovery-sheet.test.ts | ✅ |
+| Task | Code layer            | Test type           | Co-located                | Valid |
+| ---- | --------------------- | ------------------- | ------------------------- | ----- |
+| T1   | crypto/key-derivation | unit                | ✅ key-derivation.test.ts | ✅    |
+| T2   | crypto/encryption     | unit                | ✅ encryption.test.ts     | ✅    |
+| T3   | crypto/key-store      | integration         | ✅ key-store.test.ts      | ✅    |
+| T4   | crypto/webauthn       | none (browser-only) | N/A                       | ✅    |
+| T5   | crypto/recovery-sheet | unit                | ✅ recovery-sheet.test.ts | ✅    |
 
 ### Granularity Check
 
-| Task | Files created/modified | Single concept | Atomic |
-|------|----------------------|----------------|--------|
-| T1 | 2 (module + test) | Key derivation | ✅ |
-| T2 | 2 (module + test) | Encrypt/decrypt | ✅ |
-| T3 | 4 (module + test + deps + config) | Key persistence | ✅ |
-| T4 | 1 (module, no test) | WebAuthn | ✅ |
-| T5 | 2 (module + test) | Recovery sheet | ✅ |
+| Task | Files created/modified            | Single concept  | Atomic |
+| ---- | --------------------------------- | --------------- | ------ |
+| T1   | 2 (module + test)                 | Key derivation  | ✅     |
+| T2   | 2 (module + test)                 | Encrypt/decrypt | ✅     |
+| T3   | 4 (module + test + deps + config) | Key persistence | ✅     |
+| T4   | 1 (module, no test)               | WebAuthn        | ✅     |
+| T5   | 2 (module + test)                 | Recovery sheet  | ✅     |

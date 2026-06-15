@@ -69,9 +69,9 @@ Validate and persist parsed transactions, with deduplication by `externalId`.
 
 ```typescript
 type ParsedTransaction = {
-  date: string;          // ISO: YYYY-MM-DD
+  date: string; // ISO: YYYY-MM-DD
   description: string;
-  amount: Money;         // always positive
+  amount: Money; // always positive
   type: TransactionType; // 'credit' | 'debit'
   externalId: string | null;
 };
@@ -96,13 +96,14 @@ type ParsedStatement = {
 ### XLSX column mapping
 
 Configurable via `XlsxParseOptions`:
+
 ```typescript
 type XlsxParseOptions = {
-  dateColumn?: number;        // default: 0
+  dateColumn?: number; // default: 0
   descriptionColumn?: number; // default: 1
-  amountColumn?: number;      // default: 2
-  typeColumn?: number;        // default: undefined (infer from sign)
-  headerRow?: boolean;        // default: true (skip first row)
+  amountColumn?: number; // default: 2
+  typeColumn?: number; // default: undefined (infer from sign)
+  headerRow?: boolean; // default: true (skip first row)
 };
 ```
 

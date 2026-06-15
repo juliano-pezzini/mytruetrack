@@ -1,11 +1,35 @@
 # State
 
-**Last Updated:** 2026-06-09
-**Current Work:** Phase 8 — Local-First Foundation COMPLETE. Google Drive auth migrated from PKCE to GIS token model (AD-006). All 10 sub-phases done + Playwright E2E test suite (46 tests, all passing). 266 unit tests, 29 files, all passing. PWA installable with offline support. 87 modules, 239 KB gzip. GitHub Actions PR pipeline added (AD-005)
+**Last Updated:** 2026-06-12
+**Current Work:** Auto-sync feature COMPLETE (AD-007) — pull-on-load, debounced push,
+online retry, sync status indicator. 293 unit tests, 41 e2e tests, all passing. Phase 8 —
+Local-First Foundation complete prior (AD-006).
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-007: Auto-sync — pull-on-load + debounced push + online retry (2026-06-12)
+
+**Decision:** Sync is now automatic. A framework-agnostic `createAutoSyncController`
+(`src/sync/auto-sync-engine.ts`) orchestrates: pull-on-load, a 5s debounced push that
+coalesces rapid writes, an in-flight rerun when a write lands mid-push, and a `pending`
+flag retried on the browser `online` event. The `AutoSyncProvider`
+(`src/app/auto-sync-provider.tsx`, mounted inside `DatabaseProvider`) injects the live DB,
+vault DEK, cloud config, and browser events; data hooks call `useAutoSync().notifyChange()`
+after writes. Provider construction + Google token refresh were extracted into a shared
+`resolveActiveProvider` (`src/sync/active-provider.ts`) reused by both auto-sync and the
+manual `SyncSection`. A subtle header `SyncStatusIndicator` surfaces syncing/pending only.
+
+**Reason:** Manual push/pull was error-prone (data loss if user forgets to push, stale data
+if they forget to pull). See `.specs/features/auto-sync/spec.md`.
+
+**Trade-off:** Auto-sync failures are logged silently (never block the UI); the indicator
+shows nothing when idle to avoid a misleading "synced" badge in local-only mode. No periodic
+background timers and no push on `beforeunload` (unreliable) — debounce + online-retry cover it.
+
+**Impact:** Manual push/pull retained as fallback. 5 new files + 4 hooks wired; 293 unit
+tests (+27) and 41 e2e tests pass. ASYNC-01..07 all Done.
 
 ### AD-006: Google Drive OAuth — GIS token model (Phase 8.10) (2026-06-09)
 
@@ -33,6 +57,7 @@ dynamically to preserve offline-first boot.
 ### AD-005: GitHub Actions PR pipeline — quality, tests, build, SAST (2026-06-07)
 
 **Decision:** Add two workflows triggered on every PR targeting `main`:
+
 - **`pr-checks.yml`** — 3 parallel jobs: (1) Prettier format check + ESLint + tsc typecheck; (2) Vitest with 80% coverage thresholds; (3) production Vite build + `npm audit --audit-level=high`.
 - **`codeql.yml`** — GitHub CodeQL SAST (`javascript-typescript`, `security-and-quality` query suite). Also runs on pushes to `main` and weekly.
 

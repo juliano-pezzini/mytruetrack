@@ -34,6 +34,7 @@ T1-T2 are foundation (context + hook). T3-T5 are UI. T6 wires it into the app. T
 **Requirement**: ONB-01, ONB-04
 
 **Done when**:
+
 - [ ] `VaultContext` created with `{ dek: CryptoKey | null; mode: 'encrypted' | 'local-only'; status: 'loading' | 'needs-setup' | 'needs-unlock' | 'ready'; unlock: (dek: CryptoKey) => void; skipToLocalOnly: () => void; reset: () => Promise<void> }`
 - [ ] `VaultProvider` checks `hasKeyData()` + `localStorage.getItem('vault-skipped')` on mount → sets status
 - [ ] `skipToLocalOnly()` sets localStorage flag, sets mode to 'local-only', status to 'ready'
@@ -56,6 +57,7 @@ T1-T2 are foundation (context + hook). T3-T5 are UI. T6 wires it into the app. T
 **Requirement**: ONB-04
 
 **Done when**:
+
 - [ ] Exports `useVault()` returning VaultContext value
 - [ ] Throws descriptive error if context is null
 - [ ] Gate: `npx tsc --noEmit && npx vite build`
@@ -73,6 +75,7 @@ T1-T2 are foundation (context + hook). T3-T5 are UI. T6 wires it into the app. T
 **Requirement**: ONB-02
 
 **Done when**:
+
 - [ ] `PassphraseInput`: controlled input, type toggle (password/text), label prop
 - [ ] `StrengthMeter`: takes passphrase string, shows colored bar (red < 8, yellow 8-15, green 16+)
 - [ ] Gate: `npx tsc --noEmit && npx vite build`
@@ -91,6 +94,7 @@ T1-T2 are foundation (context + hook). T3-T5 are UI. T6 wires it into the app. T
 **Requirement**: ONB-02
 
 **Done when**:
+
 - [ ] Step 1 (Welcome): branding text + "Get Started" button
 - [ ] Step 2 (Choice): "Create a passphrase" button + "Skip — local only" button with explanation text
 - [ ] "Skip" path: calls `skipToLocalOnly()` on VaultContext → app loads
@@ -116,6 +120,7 @@ T1-T2 are foundation (context + hook). T3-T5 are UI. T6 wires it into the app. T
 **Requirement**: ONB-03, ONB-05
 
 **Done when**:
+
 - [ ] Passphrase input + "Unlock" button
 - [ ] On submit: load key data → derive KEK → unwrap DEK → unlock
 - [ ] Wrong passphrase: show "Incorrect passphrase" error, clear input
@@ -137,6 +142,7 @@ T1-T2 are foundation (context + hook). T3-T5 are UI. T6 wires it into the app. T
 **Requirement**: ONB-01
 
 **Done when**:
+
 - [ ] `App.tsx`: `<VaultProvider>` wraps `<DatabaseProvider>` + `<RouterProvider>`
 - [ ] VaultProvider: `status === 'needs-setup'` → `<SetupWizard />`
 - [ ] VaultProvider: `status === 'needs-unlock'` → `<UnlockPage />`
@@ -157,6 +163,7 @@ T1-T2 are foundation (context + hook). T3-T5 are UI. T6 wires it into the app. T
 **Requirement**: ONB-01, ONB-04
 
 **Done when**:
+
 - [ ] Test: no key data + no skip flag → status is 'needs-setup'
 - [ ] Test: key data exists → status is 'needs-unlock'
 - [ ] Test: skip flag in localStorage → status is 'ready', mode is 'local-only'

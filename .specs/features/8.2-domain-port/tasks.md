@@ -41,10 +41,10 @@ T5, T7 ──→ T8 (AutoCat service + learning) [P]
 
 No TESTING.md exists yet. Convention for Phase 8.2:
 
-| Layer | Test Type | Pattern | Gate Command |
-|-------|-----------|---------|-------------|
-| Domain types | unit | `src/domain/*.test.ts` | `npx vitest run` |
-| Domain services | unit | `src/domain/*.test.ts` | `npx vitest run` |
+| Layer           | Test Type | Pattern                | Gate Command     |
+| --------------- | --------- | ---------------------- | ---------------- |
+| Domain types    | unit      | `src/domain/*.test.ts` | `npx vitest run` |
+| Domain services | unit      | `src/domain/*.test.ts` | `npx vitest run` |
 
 **Quick gate**: `npx vitest run`
 **Coverage gate**: `npx vitest run --coverage` (target ≥ 80% on `src/domain/`)
@@ -59,13 +59,15 @@ No TESTING.md exists yet. Convention for Phase 8.2:
 **Where**: repo root (`package.json`, `tsconfig.json`, `vite.config.ts`, `vitest.config.ts`, `src/`)
 **Depends on**: None
 **Reuses**: None
-**Requirement**: Prerequisite for all DOM-* requirements
+**Requirement**: Prerequisite for all DOM-\* requirements
 
 **Tools**:
+
 - MCP: NONE
 - Skill: NONE
 
 **Done when**:
+
 - [ ] `package.json` with React, TypeScript, Vitest, ESLint, Prettier
 - [ ] `tsconfig.json` with `strict: true`
 - [ ] `vite.config.ts` with React plugin
@@ -93,10 +95,12 @@ No TESTING.md exists yet. Convention for Phase 8.2:
 **Requirement**: DOM-01
 
 **Tools**:
+
 - MCP: NONE
 - Skill: NONE
 
 **Done when**:
+
 - [ ] `Money` type defined (branded number or class wrapping integer cents)
 - [ ] `Money.fromCents(n)` creates from integer
 - [ ] `Money.fromDecimal(s)` creates from string like "150.75" → 15075 cents
@@ -123,10 +127,12 @@ No TESTING.md exists yet. Convention for Phase 8.2:
 **Requirement**: DOM-04
 
 **Tools**:
+
 - MCP: NONE
 - Skill: NONE
 
 **Done when**:
+
 - [ ] `Category` type: id, parentId (optional), name, type ('revenue' | 'expense'), description (optional)
 - [ ] `CategoryType` discriminated union: 'revenue' | 'expense'
 - [ ] `createCategory(params)` factory with validation (name required, type required)
@@ -151,10 +157,12 @@ No TESTING.md exists yet. Convention for Phase 8.2:
 **Requirement**: DOM-02
 
 **Tools**:
+
 - MCP: NONE
 - Skill: NONE
 
 **Done when**:
+
 - [ ] `AccountType` union: 'bank' | 'credit_card' | 'wallet' | 'transitional'
 - [ ] `Account` type: id, name, type (AccountType), initialBalance (Money), isActive (boolean), description (optional)
 - [ ] `createAccount(params)` factory with validation
@@ -179,10 +187,12 @@ No TESTING.md exists yet. Convention for Phase 8.2:
 **Requirement**: DOM-03
 
 **Tools**:
+
 - MCP: NONE
 - Skill: NONE
 
 **Done when**:
+
 - [ ] `TransactionType` union: 'credit' | 'debit'
 - [ ] `Transaction` type: id, accountId, categoryId (optional), amount (Money, always positive), description, transactionDate (string ISO date), settledDate (optional), type (TransactionType), externalId (optional)
 - [ ] `createTransaction(params)` factory — validates amount > 0, rejects zero/negative
@@ -206,10 +216,12 @@ No TESTING.md exists yet. Convention for Phase 8.2:
 **Requirement**: DOM-05, DOM-06
 
 **Tools**:
+
 - MCP: NONE
 - Skill: NONE
 
 **Done when**:
+
 - [ ] `AccountBalance` type: accountId, year, month, closingBalance (Money)
 - [ ] `calculateBalance(account, transactions, snapshots, targetDate)` — pure function
 - [ ] Uses most recent snapshot before target date as base (or initialBalance if none)
@@ -237,10 +249,12 @@ No TESTING.md exists yet. Convention for Phase 8.2:
 **Requirement**: DOM-07 (types only), DOM-08 (types only)
 
 **Tools**:
+
 - MCP: NONE
 - Skill: NONE
 
 **Done when**:
+
 - [ ] `AutoCategoryRule` type: id, pattern, categoryId, priority, isActive
 - [ ] `LearnedCategoryPattern` type: id, categoryId, keyword, occurrenceCount, confidenceScore (0-100), firstLearnedAt, lastMatchedAt, isActive
 - [ ] `CorrectionType` union: 'override' | 'manual_assign' | 'reject_suggestion'
@@ -264,10 +278,12 @@ No TESTING.md exists yet. Convention for Phase 8.2:
 **Requirement**: DOM-07, DOM-08
 
 **Tools**:
+
 - MCP: NONE
 - Skill: NONE
 
 **Done when**:
+
 - [ ] `suggestCategory(description, rules, patterns)` — pure function returning `CategorizationSuggestion | null`
 - [ ] Checks explicit rules first in priority order (lowest number = highest priority)
 - [ ] Pattern matching is case-insensitive substring
@@ -316,6 +332,7 @@ Phase 4 (Parallel):
 ```
 
 **Parallelism notes:**
+
 - T2/T3 are independent types — fully parallel
 - T4/T5 both need Money but not each other — parallel
 - T7 needs Category but not Money/Account/Transaction — parallel with T4/T5
@@ -328,39 +345,39 @@ Phase 4 (Parallel):
 
 ### Task Granularity Check
 
-| Task | Scope | Status |
-|------|-------|--------|
-| T1: Scaffold app | 1 project scaffold | ✅ Granular |
-| T2: Money type | 1 type + functions (1 file) | ✅ Granular |
-| T3: Category + Tag | 2 small related types (2 files) | ⚠️ Acceptable — both are classification types, cohesive |
-| T4: Account model | 1 type (1 file) | ✅ Granular |
-| T5: Transaction model | 1 type (1 file) | ✅ Granular |
-| T6: Balance + Snapshot | 2 related functions (1 file) | ⚠️ Acceptable — snapshot IS balance logic |
-| T7: AutoCat types | 5 type definitions (1 file) | ✅ Granular (pure types, no logic) |
-| T8: AutoCat service + learning | 2 related functions (1 file) | ⚠️ Acceptable — learning feeds suggestion |
+| Task                           | Scope                           | Status                                                  |
+| ------------------------------ | ------------------------------- | ------------------------------------------------------- |
+| T1: Scaffold app               | 1 project scaffold              | ✅ Granular                                             |
+| T2: Money type                 | 1 type + functions (1 file)     | ✅ Granular                                             |
+| T3: Category + Tag             | 2 small related types (2 files) | ⚠️ Acceptable — both are classification types, cohesive |
+| T4: Account model              | 1 type (1 file)                 | ✅ Granular                                             |
+| T5: Transaction model          | 1 type (1 file)                 | ✅ Granular                                             |
+| T6: Balance + Snapshot         | 2 related functions (1 file)    | ⚠️ Acceptable — snapshot IS balance logic               |
+| T7: AutoCat types              | 5 type definitions (1 file)     | ✅ Granular (pure types, no logic)                      |
+| T8: AutoCat service + learning | 2 related functions (1 file)    | ⚠️ Acceptable — learning feeds suggestion               |
 
 ### Diagram-Definition Cross-Check
 
-| Task | Depends On (task body) | Diagram Shows | Status |
-|------|------------------------|---------------|--------|
-| T1 | None | No incoming arrows | ✅ Match |
-| T2 | T1 | T1 → T2 | ✅ Match |
-| T3 | T1 | T1 → T3 | ✅ Match |
-| T4 | T2 | T2 → T4 | ✅ Match |
-| T5 | T2 | T2 → T5 | ✅ Match |
-| T6 | T4, T5 | T4, T5 → T6 | ✅ Match |
-| T7 | T3 | T3 → T7 | ✅ Match |
-| T8 | T5, T7 | T5, T7 → T8 | ✅ Match |
+| Task | Depends On (task body) | Diagram Shows      | Status   |
+| ---- | ---------------------- | ------------------ | -------- |
+| T1   | None                   | No incoming arrows | ✅ Match |
+| T2   | T1                     | T1 → T2            | ✅ Match |
+| T3   | T1                     | T1 → T3            | ✅ Match |
+| T4   | T2                     | T2 → T4            | ✅ Match |
+| T5   | T2                     | T2 → T5            | ✅ Match |
+| T6   | T4, T5                 | T4, T5 → T6        | ✅ Match |
+| T7   | T3                     | T3 → T7            | ✅ Match |
+| T8   | T5, T7                 | T5, T7 → T8        | ✅ Match |
 
 ### Test Co-location Validation
 
-| Task | Code Layer | Matrix Requires | Task Says | Status |
-|------|-----------|----------------|-----------|--------|
-| T1 | Scaffold | N/A | none | ✅ OK |
-| T2 | Domain type | unit | unit | ✅ OK |
-| T3 | Domain type | unit | unit | ✅ OK |
-| T4 | Domain type | unit | unit | ✅ OK |
-| T5 | Domain type | unit | unit | ✅ OK |
-| T6 | Domain service | unit | unit | ✅ OK |
-| T7 | Domain type (pure types) | none | none | ✅ OK |
-| T8 | Domain service | unit | unit | ✅ OK |
+| Task | Code Layer               | Matrix Requires | Task Says | Status |
+| ---- | ------------------------ | --------------- | --------- | ------ |
+| T1   | Scaffold                 | N/A             | none      | ✅ OK  |
+| T2   | Domain type              | unit            | unit      | ✅ OK  |
+| T3   | Domain type              | unit            | unit      | ✅ OK  |
+| T4   | Domain type              | unit            | unit      | ✅ OK  |
+| T5   | Domain type              | unit            | unit      | ✅ OK  |
+| T6   | Domain service           | unit            | unit      | ✅ OK  |
+| T7   | Domain type (pure types) | none            | none      | ✅ OK  |
+| T8   | Domain service           | unit            | unit      | ✅ OK  |

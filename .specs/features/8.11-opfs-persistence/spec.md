@@ -21,12 +21,12 @@ the test-time backend.
 
 ## Out of Scope
 
-| Feature | Reason |
-|---------|--------|
-| Auto-push on every write | Deferred — manual "Push Now" for now; performance implications need study |
-| Scheduled / periodic sync | Post-launch |
-| Migration from sql.js in-memory data | No production users; fresh OPFS database is fine |
-| Compression of OPFS database | Optimization, not correctness |
+| Feature                              | Reason                                                                    |
+| ------------------------------------ | ------------------------------------------------------------------------- |
+| Auto-push on every write             | Deferred — manual "Push Now" for now; performance implications need study |
+| Scheduled / periodic sync            | Post-launch                                                               |
+| Migration from sql.js in-memory data | No production users; fresh OPFS database is fine                          |
+| Compression of OPFS database         | Optimization, not correctness                                             |
 
 ---
 
@@ -47,14 +47,14 @@ export type Database = {
 
 **Impact:** Every call site (~90 across 18 files) must be `await`-ed.
 
-| File group | Estimated call sites |
-|------------|---------------------|
-| Repositories (8 files) | ~40 |
-| Migration runner + migrations | ~10 |
-| Sync engine + tests | ~13 |
-| Import service + tests | ~6 |
-| Init + test helpers + init tests | ~20 |
-| UI hooks (indirect via repos) | 0 (already async) |
+| File group                       | Estimated call sites |
+| -------------------------------- | -------------------- |
+| Repositories (8 files)           | ~40                  |
+| Migration runner + migrations    | ~10                  |
+| Sync engine + tests              | ~13                  |
+| Import service + tests           | ~6                   |
+| Init + test helpers + init tests | ~20                  |
+| UI hooks (indirect via repos)    | 0 (already async)    |
 
 ### OPF-02: Browser init — cr-sqlite + OPFS
 
@@ -67,7 +67,7 @@ const isBrowser = typeof window !== 'undefined';
 
 export async function initDatabase(): Promise<Database> {
   if (isBrowser) {
-    const sqlite = await initWasm(file => `/${file}`);
+    const sqlite = await initWasm((file) => `/${file}`);
     const raw = await sqlite.open('mytruetrack.db'); // OPFS-persisted
     return wrapCrSqlite(raw);
   }
@@ -97,10 +97,18 @@ Wrap sql.js's synchronous `Database` in a thin async adapter:
 ```typescript
 function wrapSqlJs(raw: SqlJsDatabase): Database {
   return {
-    async exec(sql, params) { raw.run(sql, params); },
-    async execA(sql, params) { /* ... stmt loop ... */ },
-    async execO(sql, params) { /* ... stmt loop ... */ },
-    async close() { raw.close(); },
+    async exec(sql, params) {
+      raw.run(sql, params);
+    },
+    async execA(sql, params) {
+      /* ... stmt loop ... */
+    },
+    async execO(sql, params) {
+      /* ... stmt loop ... */
+    },
+    async close() {
+      raw.close();
+    },
   };
 }
 ```
@@ -174,25 +182,25 @@ Callers (hooks, services) are already async — they just need `await` added.
 
 ## Affected Files
 
-| File | Change type |
-|------|------------|
-| `src/storage/database.ts` | Interface → async |
-| `src/storage/init.ts` | Browser: cr-sqlite; Node: sql.js async wrapper |
-| `src/storage/test-helpers.ts` | sql.js async wrapper |
-| `src/storage/migrations/runner.ts` | async |
-| `src/storage/migrations/001-initial-schema.ts` | async |
-| `src/storage/migrations/types.ts` | Migration type → async |
-| `src/storage/repositories/*.ts` (8 files) | async functions |
-| `src/storage/repositories/*.test.ts` (6 files) | add awaits |
-| `src/storage/init.test.ts` | add awaits |
-| `src/storage/test-helpers.test.ts` | add awaits |
-| `src/sync/sync-engine.ts` | async export/import |
-| `src/sync/sync-engine.test.ts` | add awaits |
-| `src/workers/import-service.ts` | add awaits |
-| `src/workers/import-service.test.ts` | add awaits |
-| `src/app/database-provider.tsx` | auto-pull on startup |
-| `public/` | add `crsqlite.wasm` |
-| `vite.config.ts` | possibly configure WASM serving / headers for OPFS |
+| File                                           | Change type                                        |
+| ---------------------------------------------- | -------------------------------------------------- |
+| `src/storage/database.ts`                      | Interface → async                                  |
+| `src/storage/init.ts`                          | Browser: cr-sqlite; Node: sql.js async wrapper     |
+| `src/storage/test-helpers.ts`                  | sql.js async wrapper                               |
+| `src/storage/migrations/runner.ts`             | async                                              |
+| `src/storage/migrations/001-initial-schema.ts` | async                                              |
+| `src/storage/migrations/types.ts`              | Migration type → async                             |
+| `src/storage/repositories/*.ts` (8 files)      | async functions                                    |
+| `src/storage/repositories/*.test.ts` (6 files) | add awaits                                         |
+| `src/storage/init.test.ts`                     | add awaits                                         |
+| `src/storage/test-helpers.test.ts`             | add awaits                                         |
+| `src/sync/sync-engine.ts`                      | async export/import                                |
+| `src/sync/sync-engine.test.ts`                 | add awaits                                         |
+| `src/workers/import-service.ts`                | add awaits                                         |
+| `src/workers/import-service.test.ts`           | add awaits                                         |
+| `src/app/database-provider.tsx`                | auto-pull on startup                               |
+| `public/`                                      | add `crsqlite.wasm`                                |
+| `vite.config.ts`                               | possibly configure WASM serving / headers for OPFS |
 
 ## Risks
 
@@ -207,11 +215,11 @@ Callers (hooks, services) are already async — they just need `await` added.
 
 ## Requirement Traceability
 
-| ID | Requirement | Priority |
-|----|-------------|----------|
-| OPF-01 | Async Database interface | P1 |
-| OPF-02 | Browser init — cr-sqlite + OPFS | P1 |
-| OPF-03 | CRDT registration | P2 |
-| OPF-04 | Test-time sql.js async adapter | P1 |
-| OPF-05 | WASM files in public/ | P1 |
-| OPF-06 | Auto-pull on startup | P2 |
+| ID     | Requirement                     | Priority |
+| ------ | ------------------------------- | -------- |
+| OPF-01 | Async Database interface        | P1       |
+| OPF-02 | Browser init — cr-sqlite + OPFS | P1       |
+| OPF-03 | CRDT registration               | P2       |
+| OPF-04 | Test-time sql.js async adapter  | P1       |
+| OPF-05 | WASM files in public/           | P1       |
+| OPF-06 | Auto-pull on startup            | P2       |

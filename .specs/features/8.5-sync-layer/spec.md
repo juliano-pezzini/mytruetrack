@@ -14,14 +14,14 @@ The app must sync encrypted data across devices without a server. The sync engin
 
 ## Out of Scope
 
-| Feature | Reason |
-|---------|--------|
-| WebDAV provider | Phase 8.9 |
-| Real-time / live sync | Not needed — sync on app open + manual trigger |
-| Partial sync / selective tables | All-or-nothing changeset blob for v1 |
-| Compression of sync blobs | Post-launch optimization |
-| UI for sync status | Phase 8.7 |
-| OAuth consent screen / production verification | Deployment concern, not code |
+| Feature                                        | Reason                                         |
+| ---------------------------------------------- | ---------------------------------------------- |
+| WebDAV provider                                | Phase 8.9                                      |
+| Real-time / live sync                          | Not needed — sync on app open + manual trigger |
+| Partial sync / selective tables                | All-or-nothing changeset blob for v1           |
+| Compression of sync blobs                      | Post-launch optimization                       |
+| UI for sync status                             | Phase 8.7                                      |
+| OAuth consent screen / production verification | Deployment concern, not code                   |
 
 ---
 
@@ -111,9 +111,9 @@ The app must sync encrypted data across devices without a server. The sync engin
 
 ## Requirement Traceability
 
-| ID | Story | Priority |
-|----|-------|----------|
-| SYN-01 | CloudProvider interface | P1 |
-| SYN-02 | Sync engine | P1 |
-| SYN-03 | Google Drive provider | P1 |
-| SYN-04 | Sync state persistence | P2 |
+| ID     | Story                   | Priority |
+| ------ | ----------------------- | -------- |
+| SYN-01 | CloudProvider interface | P1       |
+| SYN-02 | Sync engine             | P1       |
+| SYN-03 | Google Drive provider   | P1       |
+| SYN-04 | Sync state persistence  | P2       |

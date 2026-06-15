@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useDatabase } from './useDatabase.ts';
+import { useAutoSync } from './useAutoSync.ts';
 import { createTagRepository } from '../../storage/repositories/tag-repository.ts';
 import type { Tag, CreateTagParams } from '../../domain/tag.ts';
 
 export function useTags() {
   const db = useDatabase();
+  const { notifyChange } = useAutoSync();
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,9 +25,10 @@ export function useTags() {
       const repo = createTagRepository(db);
       const tag = repo.create(params);
       refresh();
+      notifyChange();
       return tag;
     },
-    [db, refresh],
+    [db, refresh, notifyChange],
   );
 
   const update = useCallback(
@@ -33,9 +36,10 @@ export function useTags() {
       const repo = createTagRepository(db);
       const tag = repo.update(id, changes);
       refresh();
+      notifyChange();
       return tag;
     },
-    [db, refresh],
+    [db, refresh, notifyChange],
   );
 
   const remove = useCallback(
@@ -43,8 +47,9 @@ export function useTags() {
       const repo = createTagRepository(db);
       repo.delete(id);
       refresh();
+      notifyChange();
     },
-    [db, refresh],
+    [db, refresh, notifyChange],
   );
 
   return { tags, loading, create, update, remove, refresh };

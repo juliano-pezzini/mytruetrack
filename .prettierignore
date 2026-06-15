@@ -1,0 +1,11 @@
+# Generated / build artifacts
+dist
+coverage
+test-results
+playwright-report
+
+# Dependencies
+node_modules
+
+# Nested package (own tooling)
+spikes

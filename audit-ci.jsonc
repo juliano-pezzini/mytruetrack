@@ -12,6 +12,6 @@
 
     // xlsx (SheetJS) — ReDoS — GHSA-5pgg-2g8v-p4x9
     // Same package, same mitigation as above (Web Worker isolation, local input only).
-    "GHSA-5pgg-2g8v-p4x9"
-  ]
+    "GHSA-5pgg-2g8v-p4x9",
+  ],
 }

@@ -43,6 +43,7 @@ T1 ──┤             ├→ T4 (import service)
 **Requirement**: IMP-01, IMP-02
 
 **Done when**:
+
 - [ ] `ofx-js` added as dependency
 - [ ] `xlsx` added as dependency
 - [ ] `src/workers/**` added to vitest coverage include
@@ -63,6 +64,7 @@ T1 ──┤             ├→ T4 (import service)
 **Requirement**: IMP-01
 
 **Done when**:
+
 - [ ] `parseOfx(content: string): Promise<ParsedStatement>` implemented
 - [ ] Handles bank statements (`BANKMSGSRSV1`)
 - [ ] Handles credit card statements (`CREDITCARDMSGSRSV1`)
@@ -90,6 +92,7 @@ T1 ──┤             ├→ T4 (import service)
 **Requirement**: IMP-02
 
 **Done when**:
+
 - [ ] `parseXlsx(data: Uint8Array, options?: XlsxParseOptions): ParsedTransaction[]` implemented
 - [ ] Reads first sheet
 - [ ] Default column mapping: 0=Date, 1=Description, 2=Amount
@@ -114,6 +117,7 @@ T1 ──┤             ├→ T4 (import service)
 **Requirement**: IMP-03
 
 **Done when**:
+
 - [ ] `importTransactions(db, accountId, transactions): ImportResult` implemented
 - [ ] `ImportResult = { imported: number; skipped: number; errors: ImportError[] }`
 - [ ] Generates UUIDs for new transaction IDs
@@ -134,17 +138,17 @@ T1 ──┤             ├→ T4 (import service)
 ### Diagram-Definition Cross-Check
 
 | Task | Depends on (definition) | Depends on (diagram) | Match |
-|------|------------------------|---------------------|-------|
-| T1 | None | None | ✅ |
-| T2 | T1 | T1 | ✅ |
-| T3 | T1 | T1 | ✅ |
-| T4 | T2, T3 | T2, T3 | ✅ |
+| ---- | ----------------------- | -------------------- | ----- |
+| T1   | None                    | None                 | ✅    |
+| T2   | T1                      | T1                   | ✅    |
+| T3   | T1                      | T1                   | ✅    |
+| T4   | T2, T3                  | T2, T3               | ✅    |
 
 ### Test Co-location Validation
 
-| Task | Code layer | Test type | Co-located | Valid |
-|------|-----------|-----------|------------|-------|
-| T1 | workers/types | none | N/A | ✅ |
-| T2 | workers/ofx-parser | unit | ✅ ofx-parser.test.ts | ✅ |
-| T3 | workers/xlsx-parser | unit | ✅ xlsx-parser.test.ts | ✅ |
-| T4 | workers/import-service | integration | ✅ import-service.test.ts | ✅ |
+| Task | Code layer             | Test type   | Co-located                | Valid |
+| ---- | ---------------------- | ----------- | ------------------------- | ----- |
+| T1   | workers/types          | none        | N/A                       | ✅    |
+| T2   | workers/ofx-parser     | unit        | ✅ ofx-parser.test.ts     | ✅    |
+| T3   | workers/xlsx-parser    | unit        | ✅ xlsx-parser.test.ts    | ✅    |
+| T4   | workers/import-service | integration | ✅ import-service.test.ts | ✅    |

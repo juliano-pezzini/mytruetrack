@@ -48,6 +48,7 @@ T3 ──┤           ├→ (done)
 **Requirement**: SYN-01
 
 **Done when**:
+
 - [ ] `CloudProvider` interface: `upload(filename, data)`, `download(filename)`, `list()`, `delete(filename)`, `isAuthenticated()`
 - [ ] `FileMetadata` type: `{ name: string; size: number; modifiedAt: string }`
 - [ ] `MockCloudProvider` implements the interface with in-memory Map storage
@@ -69,6 +70,7 @@ T3 ──┤           ├→ (done)
 **Requirement**: SYN-04
 
 **Done when**:
+
 - [ ] `SyncState` type: `{ lastPushedVersion: number; lastPushedAt: string | null; lastPulledAt: string | null }`
 - [ ] `getSyncState()` returns current state or defaults
 - [ ] `savePushState(version)` updates lastPushedVersion + lastPushedAt
@@ -91,6 +93,7 @@ T3 ──┤           ├→ (done)
 **Requirement**: SYN-02
 
 **Done when**:
+
 - [ ] `exportDatabaseSnapshot(db)` → serializes all table data to a `Uint8Array` (JSON of row arrays)
 - [ ] `importDatabaseSnapshot(db, data)` → deserializes and applies rows via INSERT OR REPLACE
 - [ ] `pushChanges(db, provider, dek)` → export → encrypt → upload as `sync-blob.bin`
@@ -115,6 +118,7 @@ T3 ──┤           ├→ (done)
 **Requirement**: SYN-03
 
 **Done when**:
+
 - [ ] Implements `CloudProvider` interface
 - [ ] Constructor takes `accessToken: string`
 - [ ] `upload` uses Drive v3 multipart upload to `appDataFolder`
@@ -141,6 +145,7 @@ T3 ──┤           ├→ (done)
 **Requirement**: SYN-03
 
 **Done when**:
+
 - [ ] `generateCodeVerifier()` → random string
 - [ ] `generateCodeChallenge(verifier)` → SHA-256 base64url
 - [ ] `buildAuthUrl(clientId, redirectUri, codeChallenge)` → Google OAuth URL with PKCE params
@@ -159,29 +164,29 @@ T3 ──┤           ├→ (done)
 ### Diagram-Definition Cross-Check
 
 | Task | Depends on (definition) | Depends on (diagram) | Match |
-|------|------------------------|---------------------|-------|
-| T1 | None | None | ✅ |
-| T2 | T1 | T1 | ✅ |
-| T3 | T1, T2 | T2 (→ T1 via chain) | ✅ |
-| T4 | T3 | T3 | ✅ |
-| T5 | T3 | T3 | ✅ |
+| ---- | ----------------------- | -------------------- | ----- |
+| T1   | None                    | None                 | ✅    |
+| T2   | T1                      | T1                   | ✅    |
+| T3   | T1, T2                  | T2 (→ T1 via chain)  | ✅    |
+| T4   | T3                      | T3                   | ✅    |
+| T5   | T3                      | T3                   | ✅    |
 
 ### Test Co-location Validation
 
-| Task | Code layer | Test type | Co-located | Valid |
-|------|-----------|-----------|------------|-------|
-| T1 | sync/cloud-provider | unit | ✅ mock-cloud-provider.test.ts | ✅ |
-| T2 | sync/sync-state | integration | ✅ sync-state.test.ts | ✅ |
-| T3 | sync/sync-engine | integration | ✅ sync-engine.test.ts | ✅ |
-| T4 | sync/providers | none (browser-only) | N/A | ✅ |
-| T5 | sync/providers | none (browser-only) | N/A | ✅ |
+| Task | Code layer          | Test type           | Co-located                     | Valid |
+| ---- | ------------------- | ------------------- | ------------------------------ | ----- |
+| T1   | sync/cloud-provider | unit                | ✅ mock-cloud-provider.test.ts | ✅    |
+| T2   | sync/sync-state     | integration         | ✅ sync-state.test.ts          | ✅    |
+| T3   | sync/sync-engine    | integration         | ✅ sync-engine.test.ts         | ✅    |
+| T4   | sync/providers      | none (browser-only) | N/A                            | ✅    |
+| T5   | sync/providers      | none (browser-only) | N/A                            | ✅    |
 
 ### Granularity Check
 
-| Task | Files created/modified | Single concept | Atomic |
-|------|----------------------|----------------|--------|
-| T1 | 4 (interface + mock + test + config) | CloudProvider | ✅ |
-| T2 | 2 (module + test) | Sync state | ✅ |
-| T3 | 2 (module + test) | Sync engine | ✅ |
-| T4 | 1 (provider, no test) | Google Drive | ✅ |
-| T5 | 1 (module, no test) | OAuth PKCE | ✅ |
+| Task | Files created/modified               | Single concept | Atomic |
+| ---- | ------------------------------------ | -------------- | ------ |
+| T1   | 4 (interface + mock + test + config) | CloudProvider  | ✅     |
+| T2   | 2 (module + test)                    | Sync state     | ✅     |
+| T3   | 2 (module + test)                    | Sync engine    | ✅     |
+| T4   | 1 (provider, no test)                | Google Drive   | ✅     |
+| T5   | 1 (module, no test)                  | OAuth PKCE     | ✅     |

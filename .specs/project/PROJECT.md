@@ -55,22 +55,22 @@ Build the core local-first engine and port domain logic from v1.
 
 ## Stack
 
-| Layer | Technology |
-|---|---|
-| Language | TypeScript (strict mode) |
-| UI framework | React 18+ |
-| Build tool | Vite |
-| Routing | React Router |
-| Styling | Tailwind CSS |
-| Local DB | SQLite-WASM (`@sqlite.org/sqlite-wasm`) |
-| CRDT layer | cr-sqlite (`@vlcn.io/crsqlite-wasm`) |
-| Key-value / blob store | IndexedDB (via `idb`) |
-| Crypto | Web Crypto API (AES-GCM, PBKDF2; Argon2 via WASM if needed) |
-| Auth (local unlock) | WebAuthn (platform authenticator: Touch ID, Windows Hello, Android biometric) |
-| Cloud sync | Pluggable provider interface; v1 providers: Google Drive (`appDataFolder`), WebDAV |
-| Statement parsing | `ofx-js` (or hand-rolled) for OFX; `xlsx` / `exceljs` for XLSX |
-| Testing | Vitest (unit) + Playwright (e2e) |
-| Lint / format | ESLint + Prettier |
+| Layer                  | Technology                                                                         |
+| ---------------------- | ---------------------------------------------------------------------------------- |
+| Language               | TypeScript (strict mode)                                                           |
+| UI framework           | React 18+                                                                          |
+| Build tool             | Vite                                                                               |
+| Routing                | React Router                                                                       |
+| Styling                | Tailwind CSS                                                                       |
+| Local DB               | SQLite-WASM (`@sqlite.org/sqlite-wasm`)                                            |
+| CRDT layer             | cr-sqlite (`@vlcn.io/crsqlite-wasm`)                                               |
+| Key-value / blob store | IndexedDB (via `idb`)                                                              |
+| Crypto                 | Web Crypto API (AES-GCM, PBKDF2; Argon2 via WASM if needed)                        |
+| Auth (local unlock)    | WebAuthn (platform authenticator: Touch ID, Windows Hello, Android biometric)      |
+| Cloud sync             | Pluggable provider interface; v1 providers: Google Drive (`appDataFolder`), WebDAV |
+| Statement parsing      | `ofx-js` (or hand-rolled) for OFX; `xlsx` / `exceljs` for XLSX                     |
+| Testing                | Vitest (unit) + Playwright (e2e)                                                   |
+| Lint / format          | ESLint + Prettier                                                                  |
 
 ## Domain Knowledge Carried From v1
 

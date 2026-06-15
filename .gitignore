@@ -4,6 +4,7 @@ build/
 coverage/
 .vite/
 .cache/
+*.tsbuildinfo
 
 .env
 .env.local

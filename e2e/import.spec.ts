@@ -68,5 +68,8 @@ test.skip('unsupported file type shows error', async ({ page }) => {
   // so we test via the OFX path — if needed a .txt fixture would be added.
   // For now verify error message handling path exists by checking the UI structure.
   await expect(page.getByLabel('Statement File')).toBeVisible();
-  await expect(page.locator('input[type="file"][accept=".ofx,.xlsx"]')).toHaveAttribute('accept', '.ofx,.xlsx');
+  await expect(page.locator('input[type="file"][accept=".ofx,.xlsx"]')).toHaveAttribute(
+    'accept',
+    '.ofx,.xlsx',
+  );
 });

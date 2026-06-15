@@ -1,7 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { setupLocalOnly } from './helpers.ts';
 
-async function createAccount(page: import('@playwright/test').Page, name: string, initialBalance = '1000.00') {
+async function createAccount(
+  page: import('@playwright/test').Page,
+  name: string,
+  initialBalance = '1000.00',
+) {
   await page.getByRole('link', { name: /Accounts/i }).click();
   await page.getByRole('button', { name: '+ New Account' }).click();
   await page.getByLabel('Name').fill(name);

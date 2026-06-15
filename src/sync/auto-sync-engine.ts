@@ -80,7 +80,12 @@ export function createAutoSyncController(deps: AutoSyncDeps): AutoSyncController
     emitStatus();
     try {
       const provider = await deps.getProvider();
-      if (!provider) return; // nothing configured — bail
+      if (!provider) {
+        // Nothing configured (provider removed/tokens cleared) — not a failure.
+        // Clear any stale pending flag so status can settle back to idle.
+        pending = false;
+        return;
+      }
       await deps.push(provider);
       pending = false;
     } catch (err) {

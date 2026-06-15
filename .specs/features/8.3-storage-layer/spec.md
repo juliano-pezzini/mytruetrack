@@ -14,14 +14,14 @@ Domain types from Phase 8.2 exist only in memory. The app needs persistent local
 
 ## Out of Scope
 
-| Feature | Reason |
-|---------|--------|
-| Encryption of stored data | Phase 8.4 (Crypto Layer) |
-| Sync engine / cloud push-pull | Phase 8.5 (Sync Layer) |
-| UI components consuming repositories | Phase 8.7 |
-| React hooks wrapping repositories | Phase 8.7 |
-| Full-text search on transactions | Post-Phase 8; not in v1 |
-| `user_id` columns | v2 is single-user; no user table |
+| Feature                              | Reason                           |
+| ------------------------------------ | -------------------------------- |
+| Encryption of stored data            | Phase 8.4 (Crypto Layer)         |
+| Sync engine / cloud push-pull        | Phase 8.5 (Sync Layer)           |
+| UI components consuming repositories | Phase 8.7                        |
+| React hooks wrapping repositories    | Phase 8.7                        |
+| Full-text search on transactions     | Post-Phase 8; not in v1          |
+| `user_id` columns                    | v2 is single-user; no user table |
 
 ---
 
@@ -178,13 +178,13 @@ Domain types from Phase 8.2 exist only in memory. The app needs persistent local
 
 ## Requirement Traceability
 
-| ID | Story | Priority |
-|----|-------|----------|
-| STR-01 | SQLite schema + CRDT setup | P1 |
-| STR-02 | Account repository | P1 |
-| STR-03 | Transaction repository | P1 |
-| STR-04 | Category + Tag repositories | P1 |
-| STR-05 | Account balance repository | P1 |
-| STR-06 | Migration framework | P1 |
-| STR-07 | Auto-categorization repositories | P2 |
-| STR-08 | Database initialization + lifecycle | P2 |
+| ID     | Story                               | Priority |
+| ------ | ----------------------------------- | -------- |
+| STR-01 | SQLite schema + CRDT setup          | P1       |
+| STR-02 | Account repository                  | P1       |
+| STR-03 | Transaction repository              | P1       |
+| STR-04 | Category + Tag repositories         | P1       |
+| STR-05 | Account balance repository          | P1       |
+| STR-06 | Migration framework                 | P1       |
+| STR-07 | Auto-categorization repositories    | P2       |
+| STR-08 | Database initialization + lifecycle | P2       |

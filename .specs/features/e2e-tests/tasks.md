@@ -21,12 +21,14 @@
 ## Setup
 
 ### Install
+
 ```bash
 npm install -D @playwright/test
 npx playwright install chromium
 ```
 
 ### Config (`playwright.config.ts`)
+
 ```ts
 - baseURL: http://localhost:5173
 - webServer: { command: 'npx vite dev', port: 5173 }
@@ -35,6 +37,7 @@ npx playwright install chromium
 ```
 
 ### Scripts (`package.json`)
+
 ```json
 "test:e2e": "npx playwright test",
 "test:e2e:headed": "npx playwright test --headed"
@@ -55,6 +58,7 @@ T1 (setup) → T2 (onboarding) → [T3, T4, T5] parallel → [T6] → T7 (gate)
 ### T1: Install + Config
 
 **Done when**:
+
 - [ ] `@playwright/test` installed as devDep
 - [ ] `playwright.config.ts` created
 - [ ] `e2e/` directory created
@@ -69,6 +73,7 @@ T1 (setup) → T2 (onboarding) → [T3, T4, T5] parallel → [T6] → T7 (gate)
 **File**: `e2e/setup-and-unlock.spec.ts`
 
 **Tests**:
+
 - [ ] Setup wizard: local-only path (skip passphrase) → dashboard loads
 - [ ] Setup wizard: passphrase path → create passphrase → recovery step → done → dashboard
 - [ ] Unlock: create vault → reload page → enter passphrase → dashboard loads
@@ -82,6 +87,7 @@ T1 (setup) → T2 (onboarding) → [T3, T4, T5] parallel → [T6] → T7 (gate)
 **File**: `e2e/accounts.spec.ts`
 
 **Tests**:
+
 - [ ] Create account (bank) → visible in table with correct type badge
 - [ ] Create account (credit card) → visible with type badge
 - [ ] Edit account name → table updates
@@ -95,6 +101,7 @@ T1 (setup) → T2 (onboarding) → [T3, T4, T5] parallel → [T6] → T7 (gate)
 **File**: `e2e/transactions.spec.ts`
 
 **Tests**:
+
 - [ ] Create debit transaction → visible in table, running balance decreases
 - [ ] Create credit transaction → running balance increases
 - [ ] Month navigation (prev/next) → table filters correctly
@@ -108,6 +115,7 @@ T1 (setup) → T2 (onboarding) → [T3, T4, T5] parallel → [T6] → T7 (gate)
 **File**: `e2e/categories-tags.spec.ts`
 
 **Tests**:
+
 - [ ] Create parent category → visible in list
 - [ ] Create child category → indented under parent
 - [ ] Edit category name → updates
@@ -121,12 +129,15 @@ T1 (setup) → T2 (onboarding) → [T3, T4, T5] parallel → [T6] → T7 (gate)
 ### T6: Dashboard + Import + Navigation
 
 **File**: `e2e/dashboard.spec.ts`
+
 - [ ] Create account + transactions → dashboard shows net worth, account card, monthly summary, recent transactions
 
 **File**: `e2e/import.spec.ts`
+
 - [ ] Select account → upload .ofx fixture → preview shows transactions → import → success result
 
 **File**: `e2e/navigation.spec.ts`
+
 - [ ] Sidebar links navigate to correct pages
 - [ ] Page titles update per route
 - [ ] Mobile viewport: hamburger opens/closes sidebar
@@ -136,6 +147,7 @@ T1 (setup) → T2 (onboarding) → [T3, T4, T5] parallel → [T6] → T7 (gate)
 ### T7: Final gate
 
 **Done when**:
+
 - [ ] `npx playwright test` — all tests pass
 - [ ] `npx tsc --noEmit && npx vite build && npx vitest run` — existing 266 tests still pass
 - [ ] Update STATE.md, ROADMAP.md

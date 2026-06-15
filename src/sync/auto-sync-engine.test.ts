@@ -161,10 +161,7 @@ describe('createAutoSyncController', () => {
 
   it('schedules a follow-up push when a write arrives during an in-flight push', async () => {
     const first = deferred();
-    const push = vi
-      .fn()
-      .mockReturnValueOnce(first.promise)
-      .mockResolvedValueOnce(undefined);
+    const push = vi.fn().mockReturnValueOnce(first.promise).mockResolvedValueOnce(undefined);
     const c = createAutoSyncController({
       getProvider: async () => fakeProvider,
       push,

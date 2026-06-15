@@ -57,6 +57,7 @@ dynamically to preserve offline-first boot.
 ### AD-005: GitHub Actions PR pipeline — quality, tests, build, SAST (2026-06-07)
 
 **Decision:** Add two workflows triggered on every PR targeting `main`:
+
 - **`pr-checks.yml`** — 3 parallel jobs: (1) Prettier format check + ESLint + tsc typecheck; (2) Vitest with 80% coverage thresholds; (3) production Vite build + `npm audit --audit-level=high`.
 - **`codeql.yml`** — GitHub CodeQL SAST (`javascript-typescript`, `security-and-quality` query suite). Also runs on pushes to `main` and weekly.
 

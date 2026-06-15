@@ -13,12 +13,12 @@ Sync is currently manual — users must navigate to Settings and click Push/Pull
 
 ## Out of Scope
 
-| Feature | Reason |
-|---|---|
-| Lock/logout action | User chose to defer (no lock vault button for now) |
+| Feature                                    | Reason                                                               |
+| ------------------------------------------ | -------------------------------------------------------------------- |
+| Lock/logout action                         | User chose to defer (no lock vault button for now)                   |
 | Real-time multi-device conflict resolution | CRDT handles conflicts; auto-sync just triggers push/pull more often |
-| Periodic background sync (timers) | Debounced-on-write + pull-on-load is sufficient |
-| Push on browser close/`beforeunload` | Unreliable in browsers; debounced push covers it |
+| Periodic background sync (timers)          | Debounced-on-write + pull-on-load is sufficient                      |
+| Push on browser close/`beforeunload`       | Unreliable in browsers; debounced push covers it                     |
 
 ---
 
@@ -104,15 +104,15 @@ Sync is currently manual — users must navigate to Settings and click Push/Pull
 
 ## Requirement Traceability
 
-| Requirement ID | Story | Phase | Status |
-|---|---|---|---|
-| ASYNC-01 | P1: Auto-pull on app load | Execute | Done |
-| ASYNC-02 | P1: Auto-pull error handling | Execute | Done |
-| ASYNC-03 | P1: Debounced auto-push | Execute | Done |
-| ASYNC-04 | P1: Push coalescing | Execute | Done |
-| ASYNC-05 | P1: Pending push on failure | Execute | Done |
-| ASYNC-06 | P1: Online retry | Execute | Done |
-| ASYNC-07 | P2: Sync status indicator | Execute | Done |
+| Requirement ID | Story                        | Phase   | Status |
+| -------------- | ---------------------------- | ------- | ------ |
+| ASYNC-01       | P1: Auto-pull on app load    | Execute | Done   |
+| ASYNC-02       | P1: Auto-pull error handling | Execute | Done   |
+| ASYNC-03       | P1: Debounced auto-push      | Execute | Done   |
+| ASYNC-04       | P1: Push coalescing          | Execute | Done   |
+| ASYNC-05       | P1: Pending push on failure  | Execute | Done   |
+| ASYNC-06       | P1: Online retry             | Execute | Done   |
+| ASYNC-07       | P2: Sync status indicator    | Execute | Done   |
 
 **Coverage:** 7 total, 7 mapped to tasks, 0 unmapped
 

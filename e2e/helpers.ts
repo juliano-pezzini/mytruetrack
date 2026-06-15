@@ -45,8 +45,8 @@ export async function gotoApp(page: Page): Promise<void> {
  * Leaves the page on the Dashboard.
  */
 export async function setupLocalOnly(page: Page): Promise<void> {
-  await clearStorage(page);   // navigate to '/' and wipe all storage
-  await gotoApp(page);        // reload with empty storage → vault shows needs-setup
+  await clearStorage(page); // navigate to '/' and wipe all storage
+  await gotoApp(page); // reload with empty storage → vault shows needs-setup
   // Welcome → Get Started
   await page.getByRole('button', { name: 'Get Started' }).click();
   // Choice → Skip (local-only)

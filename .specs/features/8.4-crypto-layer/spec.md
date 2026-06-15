@@ -15,14 +15,14 @@ All data synced to cloud must be encrypted. The user's passphrase is the only pa
 
 ## Out of Scope
 
-| Feature | Reason |
-|---------|--------|
-| Argon2-WASM | Deferred (AD-004); PBKDF2 600k iterations is sufficient for launch |
-| WebAuthn PRF extension | Not yet supported on platforms (AD-004); fallback architecture covers it |
-| Cloud sync integration | Phase 8.5 |
-| Onboarding UI | Phase 8.8 |
-| Key rotation / passphrase change | Post-launch; requires re-wrapping DEK with new KEK |
-| Multi-device key distribution | Handled by sync layer — encrypted blob contains wrapped DEK |
+| Feature                          | Reason                                                                   |
+| -------------------------------- | ------------------------------------------------------------------------ |
+| Argon2-WASM                      | Deferred (AD-004); PBKDF2 600k iterations is sufficient for launch       |
+| WebAuthn PRF extension           | Not yet supported on platforms (AD-004); fallback architecture covers it |
+| Cloud sync integration           | Phase 8.5                                                                |
+| Onboarding UI                    | Phase 8.8                                                                |
+| Key rotation / passphrase change | Post-launch; requires re-wrapping DEK with new KEK                       |
+| Multi-device key distribution    | Handled by sync layer — encrypted blob contains wrapped DEK              |
 
 ---
 
@@ -128,10 +128,10 @@ All data synced to cloud must be encrypted. The user's passphrase is the only pa
 
 ## Requirement Traceability
 
-| ID | Story | Priority |
-|----|-------|----------|
-| CRY-01 | Key derivation + DEK lifecycle | P1 |
-| CRY-02 | Encrypt/decrypt blob primitives | P1 |
-| CRY-03 | Key store persistence (IndexedDB) | P1 |
-| CRY-04 | WebAuthn biometric session unlock | P2 |
-| CRY-05 | Recovery sheet generator | P2 |
+| ID     | Story                             | Priority |
+| ------ | --------------------------------- | -------- |
+| CRY-01 | Key derivation + DEK lifecycle    | P1       |
+| CRY-02 | Encrypt/decrypt blob primitives   | P1       |
+| CRY-03 | Key store persistence (IndexedDB) | P1       |
+| CRY-04 | WebAuthn biometric session unlock | P2       |
+| CRY-05 | Recovery sheet generator          | P2       |

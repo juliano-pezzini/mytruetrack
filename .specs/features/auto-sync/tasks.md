@@ -1,13 +1,13 @@
 # Auto-Sync Tasks
 
-| Task | Requirement | Status |
-|---|---|---|
-| T1 | `resolveActiveProvider` + test | Done |
-| T2 | `createAutoSyncController` engine + test | Done |
-| T3 | `AutoSyncProvider` + `useAutoSync` hook | Done |
-| T4 | Wire provider into `App`, refactor `SyncSection` to reuse resolver | Done |
-| T5 | Wire `notifyChange` into data hooks | Done |
-| T6 | `SyncStatusIndicator` in `Layout` | Done |
+| Task | Requirement                                                        | Status |
+| ---- | ------------------------------------------------------------------ | ------ |
+| T1   | `resolveActiveProvider` + test                                     | Done   |
+| T2   | `createAutoSyncController` engine + test                           | Done   |
+| T3   | `AutoSyncProvider` + `useAutoSync` hook                            | Done   |
+| T4   | Wire provider into `App`, refactor `SyncSection` to reuse resolver | Done   |
+| T5   | Wire `notifyChange` into data hooks                                | Done   |
+| T6   | `SyncStatusIndicator` in `Layout`                                  | Done   |
 
 ---
 

@@ -3,6 +3,7 @@
 ## Goal
 
 Onboard users with optional passphrase-based encryption. New users choose between:
+
 - **Passphrase mode**: creates an encrypted vault (passphrase → KEK → DEK). Cloud sync encrypts data before upload.
 - **Local-only mode**: skip passphrase entirely. No encryption, no unlock screen. Cloud sync is still allowed but uploads **plaintext** — a strong warning is shown before enabling.
 
@@ -15,6 +16,7 @@ Returning users with a vault unlock with their passphrase. Optional biometric en
 ### ONB-01: App gate — three states on launch
 
 The app checks `hasKeyData()` on launch:
+
 - **Key data exists** → show unlock screen (passphrase required)
 - **No key data, first visit** → show setup wizard (choose passphrase or skip)
 - **No key data, "skipped" flag in localStorage** → go straight to main app (local-only mode)
@@ -56,20 +58,24 @@ Key derivation on step 3 completion: `generateSalt()` → `deriveKek(passphrase,
 ### ONB-04: App context — VaultContext
 
 Create a `VaultContext` that holds:
+
 - `dek: CryptoKey | null` — available after passphrase unlock, null in local-only mode
 - `mode: 'encrypted' | 'local-only'` — determines whether sync encrypts data
 
 The `DatabaseProvider` + router render when either:
+
 - DEK is available (encrypted mode), OR
 - User is in local-only mode (no DEK needed)
 
 Sync engine behavior based on mode:
+
 - `'encrypted'` → encrypt before upload, decrypt after download (uses DEK)
 - `'local-only'` → upload/download plaintext snapshots (no crypto step)
 
 ### ONB-05: Re-encryption on passphrase set/change
 
 When a passphrase is **set for the first time** (local-only → encrypted) or **changed**:
+
 1. Derive new KEK + generate new DEK (or re-wrap existing DEK with new KEK)
 2. Export full database snapshot
 3. Encrypt snapshot with new DEK
@@ -104,14 +110,14 @@ App.tsx
 
 ## Files
 
-| File | Purpose |
-|------|---------|
-| `src/app/vault-provider.tsx` | VaultContext + VaultProvider (gate component) |
-| `src/ui/hooks/useVault.ts` | Hook to access DEK from context |
-| `src/ui/pages/UnlockPage.tsx` | Passphrase input for returning users |
-| `src/ui/pages/SetupWizard.tsx` | Multi-step new-user onboarding |
+| File                                    | Purpose                                         |
+| --------------------------------------- | ----------------------------------------------- |
+| `src/app/vault-provider.tsx`            | VaultContext + VaultProvider (gate component)   |
+| `src/ui/hooks/useVault.ts`              | Hook to access DEK from context                 |
+| `src/ui/pages/UnlockPage.tsx`           | Passphrase input for returning users            |
+| `src/ui/pages/SetupWizard.tsx`          | Multi-step new-user onboarding                  |
 | `src/ui/components/PassphraseInput.tsx` | Reusable passphrase field with show/hide toggle |
-| `src/ui/components/StrengthMeter.tsx` | Visual passphrase strength indicator |
+| `src/ui/components/StrengthMeter.tsx`   | Visual passphrase strength indicator            |
 
 ## Testing
 

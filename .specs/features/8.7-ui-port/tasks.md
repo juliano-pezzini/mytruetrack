@@ -37,6 +37,7 @@ Sequential — each task builds on the previous. T5–T8 are independent pages b
 **Requirement**: UI-01
 
 **Done when**:
+
 - [ ] `tailwindcss` + `@tailwindcss/vite` installed
 - [ ] Vite config includes `@tailwindcss/vite` plugin
 - [ ] `src/ui/styles/index.css` created with `@import "tailwindcss"`
@@ -59,6 +60,7 @@ Sequential — each task builds on the previous. T5–T8 are independent pages b
 **Requirement**: UI-02
 
 **Done when**:
+
 - [ ] `DatabaseContext` created with `Database | null`
 - [ ] `DatabaseProvider` calls `initDatabase()` in `useEffect`, stores result
 - [ ] Shows loading state while initializing
@@ -79,6 +81,7 @@ Sequential — each task builds on the previous. T5–T8 are independent pages b
 **Requirement**: UI-01
 
 **Done when**:
+
 - [ ] Routes defined: `/` (Dashboard), `/accounts`, `/transactions`, `/categories`, `/settings`
 - [ ] `Layout` component wraps all routes (sidebar + header + `<Outlet />`)
 - [ ] `Sidebar` with nav links, active route highlighting
@@ -101,6 +104,7 @@ Sequential — each task builds on the previous. T5–T8 are independent pages b
 **Requirement**: UI-03
 
 **Done when**:
+
 - [ ] `useAccounts()` → `{ accounts, create, update, remove, refresh, loading }`
 - [ ] `useTransactions(accountId, dateRange?)` → `{ transactions, create, update, remove, refresh, loading }`
 - [ ] `useCategories()` → `{ categories, create, update, remove, refresh, loading }`
@@ -122,6 +126,7 @@ Sequential — each task builds on the previous. T5–T8 are independent pages b
 **Requirement**: UI-04
 
 **Done when**:
+
 - [ ] Account list table: name, type badge, balance
 - [ ] "New Account" button opens form (inline or modal)
 - [ ] Account form: name (text), type (select), initial balance (number), description (text)
@@ -145,6 +150,7 @@ Sequential — each task builds on the previous. T5–T8 are independent pages b
 **Requirement**: UI-05
 
 **Done when**:
+
 - [ ] Account selector (dropdown) at top
 - [ ] Date range filter (month/year picker, defaults to current month)
 - [ ] Transaction list: date, description, amount (green credit / red debit), category
@@ -167,6 +173,7 @@ Sequential — each task builds on the previous. T5–T8 are independent pages b
 **Requirement**: UI-06
 
 **Done when**:
+
 - [ ] Tab switcher: Categories | Tags
 - [ ] Category list with parent/child indentation
 - [ ] Category CRUD form: name, type (income/expense), parent (select), description
@@ -188,6 +195,7 @@ Sequential — each task builds on the previous. T5–T8 are independent pages b
 **Requirement**: UI-07
 
 **Done when**:
+
 - [ ] Account cards: name + type badge + balance
 - [ ] Net worth card: sum of all active account balances
 - [ ] Recent transactions: last 10 across all accounts
@@ -208,6 +216,7 @@ Sequential — each task builds on the previous. T5–T8 are independent pages b
 **Requirement**: UI-08
 
 **Done when**:
+
 - [ ] Import section: file picker (accept .ofx, .xlsx)
 - [ ] Parse preview: show parsed transaction count + first few rows
 - [ ] Account selector for import target
@@ -225,27 +234,27 @@ Sequential — each task builds on the previous. T5–T8 are independent pages b
 ### Diagram-Definition Cross-Check
 
 | Task | Depends on (definition) | Depends on (diagram) | Match |
-|------|------------------------|---------------------|-------|
-| T1 | None | None | ✅ |
-| T2 | T1 | T1 | ✅ |
-| T3 | T2 | T2 | ✅ |
-| T4 | T2 | T2 | ✅ |
-| T5 | T3, T4 | T4 | ✅ |
-| T6 | T5 | T5 | ✅ |
-| T7 | T5 | T5 | ✅ |
-| T8 | T5, T4 | T5 | ✅ |
-| T9 | T4 | T4 | ✅ |
+| ---- | ----------------------- | -------------------- | ----- |
+| T1   | None                    | None                 | ✅    |
+| T2   | T1                      | T1                   | ✅    |
+| T3   | T2                      | T2                   | ✅    |
+| T4   | T2                      | T2                   | ✅    |
+| T5   | T3, T4                  | T4                   | ✅    |
+| T6   | T5                      | T5                   | ✅    |
+| T7   | T5                      | T5                   | ✅    |
+| T8   | T5, T4                  | T5                   | ✅    |
+| T9   | T4                      | T4                   | ✅    |
 
 ### Granularity Check
 
-| Task | Files created/modified | Single concept | Atomic |
-|------|----------------------|----------------|--------|
-| T1 | 4 (deps + config + css + main) | Tailwind setup | ✅ |
-| T2 | 2 (provider + hook) | DB context | ✅ |
-| T3 | 4 (router + layout + sidebar + main) | App shell | ✅ |
-| T4 | 5 (one hook per entity) | Data hooks | ✅ |
-| T5 | 3 (page + form + shared components) | Accounts UI | ✅ |
-| T6 | 2 (page + form) | Transactions UI | ✅ |
-| T7 | 3 (page + 2 forms) | Categories/Tags UI | ✅ |
-| T8 | 1 (page) | Dashboard UI | ✅ |
-| T9 | 2 (page + import section) | Settings UI | ✅ |
+| Task | Files created/modified               | Single concept     | Atomic |
+| ---- | ------------------------------------ | ------------------ | ------ |
+| T1   | 4 (deps + config + css + main)       | Tailwind setup     | ✅     |
+| T2   | 2 (provider + hook)                  | DB context         | ✅     |
+| T3   | 4 (router + layout + sidebar + main) | App shell          | ✅     |
+| T4   | 5 (one hook per entity)              | Data hooks         | ✅     |
+| T5   | 3 (page + form + shared components)  | Accounts UI        | ✅     |
+| T6   | 2 (page + form)                      | Transactions UI    | ✅     |
+| T7   | 3 (page + 2 forms)                   | Categories/Tags UI | ✅     |
+| T8   | 1 (page)                             | Dashboard UI       | ✅     |
+| T9   | 2 (page + import section)            | Settings UI        | ✅     |

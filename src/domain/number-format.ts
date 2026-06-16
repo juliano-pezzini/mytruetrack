@@ -98,5 +98,5 @@ export function parseAmount(raw: string, format: NumberFormat): Money {
   }
 
   const money = fromDecimal(digits);
-  return (isNegative ? (-money as Money) : money);
+  return isNegative ? (-money as Money) : money;
 }

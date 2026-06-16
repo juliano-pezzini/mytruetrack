@@ -110,7 +110,8 @@ function extractAmountAndType(
     case 'separate': {
       const debitRaw = cellAt(row, mapping.debitColumn);
       const creditRaw = cellAt(row, mapping.creditColumn);
-      const debit = debitRaw === '' ? (0 as Money) : moneyAbs(parseAmount(debitRaw, mapping.numberFormat));
+      const debit =
+        debitRaw === '' ? (0 as Money) : moneyAbs(parseAmount(debitRaw, mapping.numberFormat));
       const credit =
         creditRaw === '' ? (0 as Money) : moneyAbs(parseAmount(creditRaw, mapping.numberFormat));
       const hasDebit = !isZero(debit);

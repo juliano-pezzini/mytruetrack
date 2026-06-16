@@ -76,7 +76,8 @@ export function ImportWizard({ db, accountId, grid, fileName, onComplete }: Impo
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-700">
-        <strong>{fileName}</strong> — {grid.rows.length} row{grid.rows.length !== 1 ? 's' : ''} found
+        <strong>{fileName}</strong> — {grid.rows.length} row{grid.rows.length !== 1 ? 's' : ''}{' '}
+        found
       </p>
 
       <ColumnMapper headers={grid.headers} mapping={mapping} onChange={setMapping} />

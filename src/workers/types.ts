@@ -60,7 +60,8 @@ export type AmountStrategy = 'single' | 'separate' | 'type_column';
 
 /**
  * User-configurable mapping from file columns to transaction fields.
- * Column references are zero-based indices into a row; `null` means "not mapped".
+ * Column references are zero-based indices into a row. Date and description are
+ * always mapped; amount/debit/credit/type are `null` when not used by the chosen strategy.
  */
 export type ColumnMapping = {
   readonly dateColumn: number;

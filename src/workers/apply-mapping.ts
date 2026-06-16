@@ -46,7 +46,14 @@ function parseDateValue(raw: string): string {
 
   // ISO (optionally with a time component).
   const iso = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  if (iso) {
+    const month = Number(iso[2]);
+    const day = Number(iso[3]);
+    if (month < 1 || month > 12 || day < 1 || day > 31) {
+      throw new Error(`invalid date: "${raw}"`);
+    }
+    return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  }
 
   // D/M/Y or M/D/Y with '/', '-' or '.' separators and a 4-digit year.
   const dmy = trimmed.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})$/);

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAccounts } from '../hooks/useAccounts.ts';
 import { useAccountBalance } from '../hooks/useAccountBalance.ts';
 import { useDatabase } from '../hooks/useDatabase.ts';
@@ -28,7 +28,13 @@ function AccountCard({
   const today = new Date().toISOString().slice(0, 10);
   const { balance, refresh } = useAccountBalance(account.id, today);
 
+  // useAccountBalance already refreshes on mount; only react to later refreshKey bumps.
+  const didMount = useRef(false);
   useEffect(() => {
+    if (!didMount.current) {
+      didMount.current = true;
+      return;
+    }
     refresh();
   }, [refreshKey, refresh]);
 

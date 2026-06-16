@@ -103,6 +103,21 @@ describe('apply-mapping', () => {
     expect(transactions[0]!.description).toBe('Unknown');
   });
 
+  it('warns on an out-of-range ISO date instead of persisting it', () => {
+    const grid: ImportGrid = {
+      headers: ['Date', 'Description', 'Amount'],
+      rows: [
+        ['2026-99-99', 'Impossible', '10.00'],
+        ['2026-01-15', 'Good', '20.00'],
+      ],
+    };
+    const { transactions, warnings } = applyMapping(grid, baseMapping);
+    expect(transactions).toHaveLength(1);
+    expect(transactions[0]).toMatchObject({ date: '2026-01-15' });
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]!.row).toBe(0);
+  });
+
   it('warns when a separate row has neither debit nor credit', () => {
     const grid: ImportGrid = {
       headers: ['Date', 'Desc', 'Debit', 'Credit'],

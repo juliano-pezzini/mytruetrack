@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAccounts } from '../hooks/useAccounts.ts';
 import { useAccountBalance } from '../hooks/useAccountBalance.ts';
 import { useDatabase } from '../hooks/useDatabase.ts';
@@ -19,12 +19,18 @@ const TYPE_BADGES: Record<AccountType, { label: string; className: string }> = {
 function AccountCard({
   account,
   onImport,
+  refreshKey,
 }: {
   account: Account;
   onImport: (account: Account) => void;
+  refreshKey: number;
 }) {
   const today = new Date().toISOString().slice(0, 10);
-  const { balance } = useAccountBalance(account.id, today);
+  const { balance, refresh } = useAccountBalance(account.id, today);
+
+  useEffect(() => {
+    refresh();
+  }, [refreshKey, refresh]);
 
   return (
     <div className="bg-mtt-surface rounded-xl border border-mtt-border p-5 flex flex-col gap-3">
@@ -66,6 +72,7 @@ export function DashboardPage() {
   const db = useDatabase();
   const { accounts } = useAccounts();
   const [importTarget, setImportTarget] = useState<Account | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Net worth: sum of all account balances (computed inline since we need all)
   const netWorth = useMemo(() => {
@@ -86,7 +93,7 @@ export function DashboardPage() {
       total = add(total, balance);
     }
     return total;
-  }, [accounts, db]);
+  }, [accounts, db, refreshKey]);
 
   // Recent transactions (last 10 across all accounts)
   const recentTxns = useMemo(() => {
@@ -96,7 +103,7 @@ export function DashboardPage() {
       all.push(...repo.getByAccount(account.id));
     }
     return all.sort((a, b) => b.transactionDate.localeCompare(a.transactionDate)).slice(0, 10);
-  }, [accounts, db]);
+  }, [accounts, db, refreshKey]);
 
   // Monthly summary: current month income vs expenses
   const monthlySummary = useMemo(() => {
@@ -122,7 +129,7 @@ export function DashboardPage() {
       }
     }
     return { income, expenses };
-  }, [accounts, db]);
+  }, [accounts, db, refreshKey]);
 
   // Account name lookup for recent transactions
   const accountMap = useMemo(() => {
@@ -198,7 +205,12 @@ export function DashboardPage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {accounts.map((a) => (
-              <AccountCard key={a.id} account={a} onImport={setImportTarget} />
+              <AccountCard
+                key={a.id}
+                account={a}
+                onImport={setImportTarget}
+                refreshKey={refreshKey}
+              />
             ))}
           </div>
         </div>
@@ -284,6 +296,7 @@ export function DashboardPage() {
           accountId={importTarget.id}
           accountName={importTarget.name}
           onClose={() => setImportTarget(null)}
+          onImported={() => setRefreshKey((k) => k + 1)}
         />
       )}
     </div>

@@ -8,7 +8,7 @@ type MoneyDisplayProps = {
 
 export function MoneyDisplay({ amount, className = '' }: MoneyDisplayProps) {
   const cents = toCents(amount);
-  const colorClass = cents < 0 ? 'text-red-600' : 'text-gray-900';
+  const colorClass = cents < 0 ? 'text-mtt-negative' : 'text-mtt-fg';
 
   return (
     <span className={`font-mono tabular-nums ${colorClass} ${className}`}>{format(amount)}</span>

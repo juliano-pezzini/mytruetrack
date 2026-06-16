@@ -108,12 +108,12 @@ test('month navigation changes displayed period', async ({ page }) => {
   await expect(page.getByText(currentLabel, { exact: true })).toBeVisible();
 
   // Navigate to previous month
-  await page.getByRole('button', { name: '◀' }).click();
+  await page.getByRole('button', { name: 'Previous month' }).click();
   const prevDate = new Date(now.getFullYear(), now.getMonth() - 1);
   const prevLabel = prevDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
   await expect(page.getByText(prevLabel, { exact: true })).toBeVisible();
 
   // Navigate back to current
-  await page.getByRole('button', { name: '▶' }).click();
+  await page.getByRole('button', { name: 'Next month' }).click();
   await expect(page.getByText(currentLabel, { exact: true })).toBeVisible();
 });

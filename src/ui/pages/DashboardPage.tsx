@@ -10,10 +10,10 @@ import type { Account, AccountType } from '../../domain/account.ts';
 import type { Transaction } from '../../domain/transaction.ts';
 
 const TYPE_BADGES: Record<AccountType, { label: string; className: string }> = {
-  bank: { label: 'Bank', className: 'bg-blue-100 text-blue-700' },
-  credit_card: { label: 'Credit Card', className: 'bg-purple-100 text-purple-700' },
-  wallet: { label: 'Wallet', className: 'bg-green-100 text-green-700' },
-  transitional: { label: 'Transitional', className: 'bg-gray-100 text-gray-600' },
+  bank: { label: 'Bank', className: 'bg-mtt-accent-pale text-mtt-accent' },
+  credit_card: { label: 'Credit Card', className: 'bg-mtt-negative-pale text-mtt-negative' },
+  wallet: { label: 'Wallet', className: 'bg-mtt-positive-pale text-mtt-positive' },
+  transitional: { label: 'Transitional', className: 'bg-gray-100 text-gray-500' },
 };
 
 function AccountCard({
@@ -27,21 +27,25 @@ function AccountCard({
   const { balance } = useAccountBalance(account.id, today);
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="font-medium text-gray-900 text-sm">{account.name}</h3>
-        <span
-          className={`px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_BADGES[account.type].className}`}
-        >
+    <div className="bg-mtt-surface rounded-xl border border-mtt-border p-5 flex flex-col gap-3">
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-mtt-muted mb-1">
           {TYPE_BADGES[account.type].label}
-        </span>
+        </p>
+        <div
+          className={`text-2xl font-extrabold tabular-nums tracking-tight ${
+            account.type === 'credit_card' ? 'text-mtt-negative' : 'text-mtt-fg'
+          }`}
+        >
+          <MoneyDisplay amount={balance} className="" />
+        </div>
+        <p className="text-sm font-medium text-mtt-fg mt-0.5">{account.name}</p>
       </div>
-      <MoneyDisplay amount={balance} className="text-xl" />
-      <div className="mt-3 flex justify-end">
+      <div className="flex justify-end pt-1 border-t border-mtt-border">
         <button
           type="button"
           onClick={() => onImport(account)}
-          className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 transition-colors"
+          className="text-xs text-mtt-accent hover:text-mtt-accent/80 font-medium flex items-center gap-1 transition-colors"
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -129,18 +133,75 @@ export function DashboardPage() {
 
   const monthLabel = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
 
+  const incomeVal = toCents(monthlySummary.income) / 100;
+  const expensesVal = toCents(monthlySummary.expenses) / 100;
+  const ratioTotal = incomeVal + expensesVal;
+  const incomeRatio = ratioTotal > 0 ? (incomeVal / ratioTotal) * 100 : 50;
+
   return (
     <div className="space-y-6">
-      {/* Net Worth */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <p className="text-sm text-gray-500 mb-1">Net Worth</p>
-        <MoneyDisplay amount={netWorth} className="text-3xl" />
+      {/* Net Worth hero */}
+      <div
+        className="rounded-xl p-7 relative overflow-hidden"
+        style={{ background: 'oklch(16% 0.018 245)' }}
+      >
+        {/* ambient glow */}
+        <div
+          className="absolute -top-16 -right-16 w-56 h-56 rounded-full pointer-events-none"
+          style={{
+            background: 'radial-gradient(circle, oklch(58% 0.17 240 / 0.15), transparent 70%)',
+          }}
+        />
+        <p
+          className="text-[10px] font-semibold uppercase tracking-widest mb-2"
+          style={{ color: 'rgba(255,255,255,0.4)' }}
+        >
+          Net Worth
+        </p>
+        <div className="flex items-baseline gap-4 flex-wrap">
+          <MoneyDisplay
+            amount={netWorth}
+            className="text-4xl font-extrabold tabular-nums tracking-tight text-white"
+          />
+          <span
+            className="text-xs font-medium px-2 py-0.5 rounded"
+            style={{ color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.08)' }}
+          >
+            {monthLabel}
+          </span>
+        </div>
+
+        {/* Income / expense ratio bar */}
+        {ratioTotal > 0 && (
+          <div className="mt-5 flex items-center gap-3">
+            <span className="text-[10px] font-medium" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              Income
+            </span>
+            <div
+              className="flex-1 h-1 rounded-full overflow-hidden"
+              style={{ background: 'rgba(255,255,255,0.1)' }}
+            >
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${incomeRatio}%`,
+                  background: 'oklch(54% 0.14 155)',
+                }}
+              />
+            </div>
+            <span className="text-[10px] font-medium" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              Expenses
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Account Cards */}
       {accounts.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">Accounts</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-mtt-muted mb-3">
+            Accounts
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {accounts.map((a) => (
               <AccountCard key={a.id} account={a} onImport={setImportTarget} />
@@ -150,19 +211,21 @@ export function DashboardPage() {
       )}
 
       {/* Monthly Summary */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-4">{monthLabel}</h2>
+      <div className="bg-mtt-surface rounded-xl border border-mtt-border p-6">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-mtt-muted mb-5">
+          {monthLabel}
+        </h2>
         <div className="grid grid-cols-2 gap-6">
           <div>
-            <p className="text-xs text-gray-500 mb-1">Income</p>
-            <span className="text-lg font-mono tabular-nums text-green-600">
-              +{(toCents(monthlySummary.income) / 100).toFixed(2)}
+            <p className="text-[10px] uppercase tracking-widest text-mtt-muted mb-1.5">Income</p>
+            <span className="text-xl font-extrabold tabular-nums text-mtt-positive">
+              +{incomeVal.toFixed(2)}
             </span>
           </div>
           <div>
-            <p className="text-xs text-gray-500 mb-1">Expenses</p>
-            <span className="text-lg font-mono tabular-nums text-red-600">
-              −{(toCents(monthlySummary.expenses) / 100).toFixed(2)}
+            <p className="text-[10px] uppercase tracking-widest text-mtt-muted mb-1.5">Expenses</p>
+            <span className="text-xl font-extrabold tabular-nums text-mtt-negative">
+              −{expensesVal.toFixed(2)}
             </span>
           </div>
         </div>
@@ -171,28 +234,30 @@ export function DashboardPage() {
       {/* Recent Transactions */}
       {recentTxns.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">Recent Transactions</h2>
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-mtt-muted mb-3">
+            Recent Transactions
+          </h2>
+          <div className="bg-mtt-surface rounded-xl border border-mtt-border overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="text-left px-4 py-2 font-medium text-gray-600">Date</th>
-                  <th className="text-left px-4 py-2 font-medium text-gray-600">Description</th>
-                  <th className="text-left px-4 py-2 font-medium text-gray-600">Account</th>
-                  <th className="text-right px-4 py-2 font-medium text-gray-600">Amount</th>
+                <tr className="border-b border-mtt-border bg-mtt-bg">
+                  <th className="text-left px-4 py-2.5 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">Date</th>
+                  <th className="text-left px-4 py-2.5 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">Description</th>
+                  <th className="text-left px-4 py-2.5 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">Account</th>
+                  <th className="text-right px-4 py-2.5 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">Amount</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-mtt-border">
                 {recentTxns.map((txn) => (
-                  <tr key={txn.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-2 text-gray-600">{txn.transactionDate}</td>
-                    <td className="px-4 py-2 text-gray-900">{txn.description}</td>
-                    <td className="px-4 py-2 text-gray-500">
+                  <tr key={txn.id} className="hover:bg-mtt-bg transition-colors">
+                    <td className="px-4 py-3 text-mtt-muted text-xs font-mono">{txn.transactionDate}</td>
+                    <td className="px-4 py-3 text-mtt-fg font-medium">{txn.description}</td>
+                    <td className="px-4 py-3 text-mtt-muted text-sm">
                       {accountMap.get(txn.accountId) ?? '—'}
                     </td>
-                    <td className="px-4 py-2 text-right">
+                    <td className="px-4 py-3 text-right">
                       <span
-                        className={`font-mono tabular-nums ${txn.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}
+                        className={`font-mono tabular-nums font-semibold ${txn.type === 'credit' ? 'text-mtt-positive' : 'text-mtt-negative'}`}
                       >
                         {txn.type === 'credit' ? '+' : '−'}
                         {(toCents(txn.amount) / 100).toFixed(2)}
@@ -207,7 +272,7 @@ export function DashboardPage() {
       )}
 
       {accounts.length === 0 && (
-        <p className="text-gray-500 text-sm py-8 text-center">Create an account to get started.</p>
+        <p className="text-mtt-muted text-sm py-8 text-center">Create an account to get started.</p>
       )}
 
       {importTarget && (

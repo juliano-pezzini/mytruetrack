@@ -109,11 +109,11 @@ export function TransactionsPage() {
     <div className="space-y-6">
       {/* Controls */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <select
             value={accountId ?? ''}
             onChange={(e) => setSelectedAccountId(e.target.value || null)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-mtt-border rounded-lg px-3 py-2 text-sm bg-mtt-surface text-mtt-fg focus:outline-none focus:ring-2 focus:ring-mtt-accent"
           >
             {accounts.length === 0 && <option value="">No accounts</option>}
             {accounts.map((a) => (
@@ -123,23 +123,29 @@ export function TransactionsPage() {
             ))}
           </select>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={prevMonth}
-              className="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded"
+              className="p-1.5 text-mtt-muted hover:bg-mtt-border/50 rounded-md transition-colors"
+              aria-label="Previous month"
             >
-              ◀
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
             </button>
-            <span className="text-sm font-medium text-gray-700 min-w-[140px] text-center">
+            <span className="text-sm font-medium text-mtt-fg min-w-[140px] text-center">
               {monthLabel}
             </span>
             <button
               type="button"
               onClick={nextMonth}
-              className="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded"
+              className="p-1.5 text-mtt-muted hover:bg-mtt-border/50 rounded-md transition-colors"
+              aria-label="Next month"
             >
-              ▶
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 18l6-6-6-6" />
+              </svg>
             </button>
           </div>
         </div>
@@ -151,7 +157,7 @@ export function TransactionsPage() {
               setShowForm(true);
               setEditingId(null);
             }}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            className="px-4 py-2 text-sm font-semibold text-white bg-mtt-accent rounded-lg hover:opacity-90 transition-opacity"
           >
             + New Transaction
           </button>
@@ -160,8 +166,8 @@ export function TransactionsPage() {
 
       {/* Create form */}
       {showForm && accountId && (
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">New Transaction</h3>
+        <div className="bg-mtt-surface rounded-xl border border-mtt-border p-5">
+          <h3 className="text-sm font-semibold text-mtt-fg mb-3">New Transaction</h3>
           <TransactionForm
             onSubmit={handleCreate}
             onCancel={() => setShowForm(false)}
@@ -173,27 +179,27 @@ export function TransactionsPage() {
 
       {/* Transactions list */}
       {!accountId ? (
-        <p className="text-gray-500 text-sm py-8 text-center">
+        <p className="text-mtt-muted text-sm py-8 text-center">
           Create an account first to add transactions.
         </p>
       ) : sortedTxns.length === 0 ? (
-        <p className="text-gray-500 text-sm py-8 text-center">No transactions for {monthLabel}.</p>
+        <p className="text-mtt-muted text-sm py-8 text-center">No transactions for {monthLabel}.</p>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-mtt-surface rounded-xl border border-mtt-border overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Date</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Description</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Category</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600">Amount</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600">Balance</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600 w-28">Actions</th>
+              <tr className="border-b border-mtt-border bg-mtt-bg">
+                <th className="text-left px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">Date</th>
+                <th className="text-left px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">Description</th>
+                <th className="text-left px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">Category</th>
+                <th className="text-right px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">Amount</th>
+                <th className="text-right px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">Balance</th>
+                <th className="text-right px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted w-28">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-mtt-border">
               {sortedTxns.map((txn, i) => (
-                <tr key={txn.id} className="hover:bg-gray-50">
+                <tr key={txn.id} className="hover:bg-mtt-bg transition-colors">
                   {editingId === txn.id ? (
                     <td colSpan={6} className="px-4 py-3">
                       <TransactionForm
@@ -221,34 +227,41 @@ export function TransactionsPage() {
                     </td>
                   ) : (
                     <>
-                      <td className="px-4 py-3 text-gray-600">{txn.transactionDate}</td>
-                      <td className="px-4 py-3 text-gray-900">{txn.description}</td>
-                      <td className="px-4 py-3 text-gray-500">
-                        {txn.categoryId ? (categoryMap.get(txn.categoryId) ?? '—') : '—'}
+                      <td className="px-4 py-3 text-mtt-muted text-xs font-mono">{txn.transactionDate}</td>
+                      <td className="px-4 py-3 text-mtt-fg font-medium">{txn.description}</td>
+                      <td className="px-4 py-3">
+                        {txn.categoryId && categoryMap.has(txn.categoryId) ? (
+                          <span className="inline-flex items-center gap-1.5 text-xs text-mtt-muted bg-mtt-bg px-2 py-0.5 rounded">
+                            <span className="w-1.5 h-1.5 rounded-full bg-mtt-accent flex-shrink-0" />
+                            {categoryMap.get(txn.categoryId)}
+                          </span>
+                        ) : (
+                          <span className="text-mtt-border">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <span
-                          className={`font-mono tabular-nums ${txn.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}
+                          className={`font-mono tabular-nums font-semibold ${txn.type === 'credit' ? 'text-mtt-positive' : 'text-mtt-negative'}`}
                         >
                           {txn.type === 'credit' ? '+' : '−'}
                           {(toCents(txn.amount) / 100).toFixed(2)}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <MoneyDisplay amount={runningBalances[i]!} />
+                        <MoneyDisplay amount={runningBalances[i]!} className="text-xs text-mtt-muted" />
                       </td>
                       <td className="px-4 py-3 text-right">
                         <button
                           type="button"
                           onClick={() => setEditingId(txn.id)}
-                          className="text-blue-600 hover:text-blue-800 text-xs font-medium mr-3"
+                          className="text-mtt-accent hover:opacity-70 text-xs font-medium mr-3 transition-opacity"
                         >
                           Edit
                         </button>
                         <button
                           type="button"
                           onClick={() => setDeleteTarget(txn)}
-                          className="text-red-600 hover:text-red-800 text-xs font-medium"
+                          className="text-mtt-negative hover:opacity-70 text-xs font-medium transition-opacity"
                         >
                           Delete
                         </button>

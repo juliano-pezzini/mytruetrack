@@ -13,12 +13,12 @@ export function SyncStatusIndicator() {
   if (status === 'syncing') {
     return (
       <span
-        className="flex items-center gap-1.5 text-xs text-gray-500"
+        className="flex items-center gap-1.5 text-xs text-mtt-muted"
         role="status"
         aria-live="polite"
       >
         <span
-          className="h-3 w-3 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"
+          className="h-3 w-3 animate-spin rounded-full border-2 border-mtt-border border-t-mtt-accent"
           aria-hidden="true"
         />
         Syncing…

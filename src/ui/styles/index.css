@@ -1,1 +1,19 @@
 @import 'tailwindcss';
+
+@theme {
+  /* MyTrueTrack design tokens */
+  --color-mtt-bg: oklch(99% 0.002 240);
+  --color-mtt-sidebar: oklch(16% 0.018 245);
+  --color-mtt-sidebar-hover: oklch(22% 0.018 245);
+  --color-mtt-sidebar-active: oklch(26% 0.022 245);
+  --color-mtt-surface: oklch(100% 0 0);
+  --color-mtt-fg: oklch(18% 0.012 250);
+  --color-mtt-muted: oklch(52% 0.012 250);
+  --color-mtt-border: oklch(92% 0.005 250);
+  --color-mtt-accent: oklch(58% 0.17 240);
+  --color-mtt-accent-pale: oklch(95% 0.04 240);
+  --color-mtt-positive: oklch(54% 0.14 155);
+  --color-mtt-positive-pale: oklch(95% 0.04 155);
+  --color-mtt-negative: oklch(56% 0.18 22);
+  --color-mtt-negative-pale: oklch(96% 0.04 22);
+}

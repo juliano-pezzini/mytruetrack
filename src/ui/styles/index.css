@@ -19,7 +19,7 @@
 }
 
 /* ─── Aero theme: Vista-inspired dark glass with ice-blue ─────────────────── */
-[data-theme="aero"] {
+[data-theme='aero'] {
   --color-mtt-bg: oklch(14% 0.025 235);
   --color-mtt-sidebar: oklch(9% 0.022 228 / 0.82);
   --color-mtt-sidebar-hover: oklch(20% 0.03 225 / 0.7);
@@ -37,7 +37,7 @@
 }
 
 /* Aero atmospheric background gradient */
-[data-theme="aero"] .app-shell {
+[data-theme='aero'] .app-shell {
   background:
     radial-gradient(ellipse 60% 80% at 10% 50%, oklch(20% 0.05 215 / 0.5), transparent),
     radial-gradient(ellipse 50% 60% at 90% 15%, oklch(16% 0.04 245 / 0.4), transparent),
@@ -45,19 +45,21 @@
 }
 
 /* Aero sidebar glass effect */
-[data-theme="aero"] aside {
+[data-theme='aero'] aside {
   backdrop-filter: blur(28px) saturate(180%);
-  box-shadow: 1px 0 0 oklch(55% 0.12 215 / 0.18), 4px 0 32px oklch(8% 0.02 235 / 0.6);
+  box-shadow:
+    1px 0 0 oklch(55% 0.12 215 / 0.18),
+    4px 0 32px oklch(8% 0.02 235 / 0.6);
 }
 
 /* Aero header glass */
-[data-theme="aero"] header {
+[data-theme='aero'] header {
   backdrop-filter: blur(16px) saturate(160%);
   background: oklch(14% 0.025 235 / 0.75) !important;
 }
 
 /* ─── Midnight theme: OLED dark with deep indigo ──────────────────────────── */
-[data-theme="midnight"] {
+[data-theme='midnight'] {
   --color-mtt-bg: oklch(10% 0.015 280);
   --color-mtt-sidebar: oklch(7% 0.012 280);
   --color-mtt-sidebar-hover: oklch(14% 0.02 280);

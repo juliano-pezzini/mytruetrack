@@ -2,7 +2,13 @@ import { SyncSection } from '../components/SyncSection.tsx';
 import { SecuritySection } from '../components/SecuritySection.tsx';
 import { THEMES, useTheme, type ThemeId } from '../context/ThemeContext.tsx';
 
-function ThemeCard({ label, description, preview, selected, onSelect }: {
+function ThemeCard({
+  label,
+  description,
+  preview,
+  selected,
+  onSelect,
+}: {
   id: ThemeId;
   label: string;
   description: string;
@@ -16,15 +22,16 @@ function ThemeCard({ label, description, preview, selected, onSelect }: {
       onClick={onSelect}
       aria-pressed={selected}
       className={`relative flex flex-col gap-0 rounded-xl border-2 overflow-hidden text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-mtt-accent ${
-        selected
-          ? 'border-mtt-accent shadow-md'
-          : 'border-mtt-border hover:border-mtt-muted'
+        selected ? 'border-mtt-accent shadow-md' : 'border-mtt-border hover:border-mtt-muted'
       }`}
     >
       {/* Mini preview */}
       <div className="flex h-20 w-full" style={{ background: preview.surface }}>
         {/* Sidebar strip */}
-        <div className="w-10 h-full flex flex-col gap-1.5 items-center pt-3" style={{ background: preview.sidebar }}>
+        <div
+          className="w-10 h-full flex flex-col gap-1.5 items-center pt-3"
+          style={{ background: preview.sidebar }}
+        >
           {[0, 1, 2, 3].map((i) => (
             <div
               key={i}
@@ -44,8 +51,14 @@ function ThemeCard({ label, description, preview, selected, onSelect }: {
             <div className="h-8 rounded flex-1" style={{ background: preview.sidebar + '10' }} />
           </div>
           <div className="mt-auto flex items-center gap-1.5">
-            <div className="h-2 rounded-full" style={{ background: preview.accent, width: '40%' }} />
-            <div className="h-2 rounded-full" style={{ background: preview.accent + '30', width: '20%' }} />
+            <div
+              className="h-2 rounded-full"
+              style={{ background: preview.accent, width: '40%' }}
+            />
+            <div
+              className="h-2 rounded-full"
+              style={{ background: preview.accent + '30', width: '20%' }}
+            />
           </div>
         </div>
       </div>
@@ -56,8 +69,21 @@ function ThemeCard({ label, description, preview, selected, onSelect }: {
       </div>
       {/* Selected checkmark */}
       {selected && (
-        <span className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: preview.accent }}>
-          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <span
+          className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center"
+          style={{ background: preview.accent }}
+        >
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 12 12"
+            fill="none"
+            stroke="white"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
             <path d="M2 6l3 3 5-5" />
           </svg>
         </span>

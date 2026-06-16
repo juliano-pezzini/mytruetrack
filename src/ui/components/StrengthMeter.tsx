@@ -7,7 +7,7 @@ type StrengthLevel = 0 | 1 | 2 | 3 | 4;
 function getStrengthLevel(passphrase: string): { level: StrengthLevel; label: string } {
   const len = passphrase.length;
   if (len === 0) return { level: 0, label: '' };
-  if (len < 8)  return { level: 1, label: 'Too short' };
+  if (len < 8) return { level: 1, label: 'Too short' };
   if (len < 12) return { level: 2, label: 'Weak' };
   if (len < 16) return { level: 3, label: 'Fair' };
   return { level: 4, label: 'Strong' };

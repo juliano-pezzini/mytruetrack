@@ -235,16 +235,26 @@ export function DashboardPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-mtt-border bg-mtt-bg">
-                  <th className="text-left px-4 py-2.5 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">Date</th>
-                  <th className="text-left px-4 py-2.5 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">Description</th>
-                  <th className="text-left px-4 py-2.5 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">Account</th>
-                  <th className="text-right px-4 py-2.5 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">Amount</th>
+                  <th className="text-left px-4 py-2.5 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">
+                    Date
+                  </th>
+                  <th className="text-left px-4 py-2.5 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">
+                    Description
+                  </th>
+                  <th className="text-left px-4 py-2.5 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">
+                    Account
+                  </th>
+                  <th className="text-right px-4 py-2.5 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">
+                    Amount
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-mtt-border">
                 {recentTxns.map((txn) => (
                   <tr key={txn.id} className="hover:bg-mtt-bg transition-colors">
-                    <td className="px-4 py-3 text-mtt-muted text-xs font-mono">{txn.transactionDate}</td>
+                    <td className="px-4 py-3 text-mtt-muted text-xs font-mono">
+                      {txn.transactionDate}
+                    </td>
                     <td className="px-4 py-3 text-mtt-fg font-medium">{txn.description}</td>
                     <td className="px-4 py-3 text-mtt-muted text-sm">
                       {accountMap.get(txn.accountId) ?? '—'}

@@ -130,7 +130,16 @@ export function TransactionsPage() {
               className="p-1.5 text-mtt-muted hover:bg-mtt-border/50 rounded-md transition-colors"
               aria-label="Previous month"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M15 18l-6-6 6-6" />
               </svg>
             </button>
@@ -143,7 +152,16 @@ export function TransactionsPage() {
               className="p-1.5 text-mtt-muted hover:bg-mtt-border/50 rounded-md transition-colors"
               aria-label="Next month"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M9 18l6-6-6-6" />
               </svg>
             </button>
@@ -189,12 +207,24 @@ export function TransactionsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-mtt-border bg-mtt-bg">
-                <th className="text-left px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">Date</th>
-                <th className="text-left px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">Description</th>
-                <th className="text-left px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">Category</th>
-                <th className="text-right px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">Amount</th>
-                <th className="text-right px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">Balance</th>
-                <th className="text-right px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted w-28">Actions</th>
+                <th className="text-left px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">
+                  Date
+                </th>
+                <th className="text-left px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">
+                  Description
+                </th>
+                <th className="text-left px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">
+                  Category
+                </th>
+                <th className="text-right px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">
+                  Amount
+                </th>
+                <th className="text-right px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">
+                  Balance
+                </th>
+                <th className="text-right px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted w-28">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-mtt-border">
@@ -227,7 +257,9 @@ export function TransactionsPage() {
                     </td>
                   ) : (
                     <>
-                      <td className="px-4 py-3 text-mtt-muted text-xs font-mono">{txn.transactionDate}</td>
+                      <td className="px-4 py-3 text-mtt-muted text-xs font-mono">
+                        {txn.transactionDate}
+                      </td>
                       <td className="px-4 py-3 text-mtt-fg font-medium">{txn.description}</td>
                       <td className="px-4 py-3">
                         {txn.categoryId && categoryMap.has(txn.categoryId) ? (
@@ -248,7 +280,10 @@ export function TransactionsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <MoneyDisplay amount={runningBalances[i]!} className="text-xs text-mtt-muted" />
+                        <MoneyDisplay
+                          amount={runningBalances[i]!}
+                          className="text-xs text-mtt-muted"
+                        />
                       </td>
                       <td className="px-4 py-3 text-right">
                         <button

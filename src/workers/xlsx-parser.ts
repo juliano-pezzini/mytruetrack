@@ -9,6 +9,8 @@ import * as XLSX from 'xlsx';
 import { fromDecimal, abs as moneyAbs, isNegative } from '../domain/money.ts';
 import type { TransactionType } from '../domain/transaction.ts';
 import type { ParsedTransaction, XlsxParseOptions } from './types.ts';
+import { gridFromRows } from './grid.ts';
+import type { ImportGrid } from './types.ts';
 
 const DEFAULTS: Required<XlsxParseOptions> = {
   dateColumn: 0,
@@ -17,6 +19,45 @@ const DEFAULTS: Required<XlsxParseOptions> = {
   typeColumn: -1, // -1 = not set, infer from sign
   headerRow: true,
 };
+
+/** Convert a single cell to a trimmed string, normalising dates to ISO YYYY-MM-DD. */
+function cellToString(cell: XLSX.CellObject | undefined): string {
+  if (!cell || cell.v == null) return '';
+  if (cell.t === 'd' && cell.v instanceof Date) {
+    return cell.v.toISOString().slice(0, 10);
+  }
+  return String(cell.v).trim();
+}
+
+/**
+ * Read the first sheet of an XLSX file into a raw {@link ImportGrid} (header row +
+ * data rows as strings) for the configurable column-mapping flow.
+ */
+export function readXlsxGrid(data: Uint8Array): ImportGrid {
+  const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+  const sheetName = workbook.SheetNames[0];
+  if (!sheetName) {
+    throw new Error('XLSX file has no sheets');
+  }
+
+  const sheet = workbook.Sheets[sheetName]!;
+  const ref = sheet['!ref'];
+  if (!ref) {
+    return { headers: [], rows: [] };
+  }
+
+  const range = XLSX.utils.decode_range(ref);
+  const allRows: string[][] = [];
+  for (let r = range.s.r; r <= range.e.r; r++) {
+    const row: string[] = [];
+    for (let c = range.s.c; c <= range.e.c; c++) {
+      row.push(cellToString(sheet[XLSX.utils.encode_cell({ r, c })]));
+    }
+    allRows.push(row);
+  }
+
+  return gridFromRows(allRows);
+}
 
 /** Convert an Excel serial date number to ISO YYYY-MM-DD. */
 function excelDateToIso(serial: number): string {

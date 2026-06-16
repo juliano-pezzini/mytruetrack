@@ -2,11 +2,12 @@ import { useState, useCallback } from 'react';
 import { useDatabase } from '../hooks/useDatabase.ts';
 import { useAccounts } from '../hooks/useAccounts.ts';
 import { parseOfx } from '../../workers/ofx-parser.ts';
-import { parseXlsx } from '../../workers/xlsx-parser.ts';
+import { readXlsxGrid } from '../../workers/xlsx-parser.ts';
+import { readCsvGrid } from '../../workers/csv-parser.ts';
 import { importTransactions } from '../../workers/import-service.ts';
-import type { ParsedTransaction } from '../../workers/types.ts';
-import type { ImportResult } from '../../workers/types.ts';
+import type { ParsedTransaction, ImportResult, ImportGrid } from '../../workers/types.ts';
 import { toCents } from '../../domain/money.ts';
+import { ImportWizard } from './import/ImportWizard.tsx';
 
 type ImportSectionProps = {
   initialAccountId?: string;
@@ -17,7 +18,8 @@ export function ImportSection({ initialAccountId, onImportComplete }: ImportSect
   const db = useDatabase();
   const { accounts } = useAccounts();
   const [accountId, setAccountId] = useState(initialAccountId ?? '');
-  const [parsed, setParsed] = useState<ParsedTransaction[] | null>(null);
+  const [ofxParsed, setOfxParsed] = useState<ParsedTransaction[] | null>(null);
+  const [grid, setGrid] = useState<ImportGrid | null>(null);
   const [fileName, setFileName] = useState('');
   const [parseError, setParseError] = useState<string | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
@@ -27,35 +29,38 @@ export function ImportSection({ initialAccountId, onImportComplete }: ImportSect
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setParsed(null);
+    setOfxParsed(null);
+    setGrid(null);
     setResult(null);
     setParseError(null);
     setFileName(file.name);
 
     try {
-      if (file.name.endsWith('.ofx')) {
+      const name = file.name.toLowerCase();
+      if (name.endsWith('.ofx')) {
         const text = await file.text();
         const statement = await parseOfx(text);
-        setParsed([...statement.transactions]);
-      } else if (file.name.endsWith('.xlsx')) {
+        setOfxParsed([...statement.transactions]);
+      } else if (name.endsWith('.xlsx')) {
         const buffer = await file.arrayBuffer();
-        const txns = parseXlsx(new Uint8Array(buffer));
-        setParsed(txns);
+        setGrid(readXlsxGrid(new Uint8Array(buffer)));
+      } else if (name.endsWith('.csv')) {
+        const text = await file.text();
+        setGrid(readCsvGrid(text));
       } else {
-        setParseError('Unsupported file type. Use .ofx or .xlsx');
+        setParseError('Unsupported file type. Use .ofx, .xlsx or .csv');
       }
     } catch (err) {
       setParseError(err instanceof Error ? err.message : String(err));
     }
   }, []);
 
-  function handleImport() {
-    if (!parsed || !accountId) return;
+  function handleOfxImport() {
+    if (!ofxParsed || !accountId) return;
     setImporting(true);
     try {
-      const importResult = importTransactions(db, accountId, parsed);
-      setResult(importResult);
-      setParsed(null);
+      setResult(importTransactions(db, accountId, ofxParsed));
+      setOfxParsed(null);
       onImportComplete?.();
     } catch (err) {
       setParseError(err instanceof Error ? err.message : String(err));
@@ -70,6 +75,7 @@ export function ImportSection({ initialAccountId, onImportComplete }: ImportSect
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Target Account</label>
           <select
+            aria-label="Target Account"
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full max-w-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -91,7 +97,7 @@ export function ImportSection({ initialAccountId, onImportComplete }: ImportSect
         <input
           id="import-file"
           type="file"
-          accept=".ofx,.xlsx"
+          accept=".ofx,.xlsx,.csv"
           onChange={handleFileChange}
           className="block text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
         />
@@ -101,14 +107,30 @@ export function ImportSection({ initialAccountId, onImportComplete }: ImportSect
         <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{parseError}</div>
       )}
 
-      {/* Preview */}
-      {parsed && (
+      {/* XLSX / CSV column-mapping wizard */}
+      {grid && accountId && (
+        <ImportWizard
+          db={db}
+          accountId={accountId}
+          grid={grid}
+          fileName={fileName}
+          onComplete={() => onImportComplete?.()}
+        />
+      )}
+      {grid && !accountId && (
+        <p className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg">
+          Select a target account to map and import this file.
+        </p>
+      )}
+
+      {/* OFX preview (no column mapping needed) */}
+      {ofxParsed && (
         <div className="bg-gray-50 rounded-lg p-4 space-y-3">
           <p className="text-sm text-gray-700">
-            <strong>{fileName}</strong> — {parsed.length} transaction
-            {parsed.length !== 1 ? 's' : ''} found
+            <strong>{fileName}</strong> — {ofxParsed.length} transaction
+            {ofxParsed.length !== 1 ? 's' : ''} found
           </p>
-          {parsed.length > 0 && (
+          {ofxParsed.length > 0 && (
             <table className="w-full text-xs">
               <thead>
                 <tr className="text-left text-gray-500">
@@ -119,7 +141,7 @@ export function ImportSection({ initialAccountId, onImportComplete }: ImportSect
                 </tr>
               </thead>
               <tbody>
-                {parsed.slice(0, 5).map((txn, i) => (
+                {ofxParsed.slice(0, 5).map((txn, i) => (
                   <tr key={i} className="border-t border-gray-200">
                     <td className="py-1 text-gray-600">{txn.date}</td>
                     <td className="py-1 text-gray-900">{txn.description}</td>
@@ -133,10 +155,10 @@ export function ImportSection({ initialAccountId, onImportComplete }: ImportSect
                     </td>
                   </tr>
                 ))}
-                {parsed.length > 5 && (
+                {ofxParsed.length > 5 && (
                   <tr>
                     <td colSpan={4} className="py-1 text-gray-400 text-center">
-                      …and {parsed.length - 5} more
+                      …and {ofxParsed.length - 5} more
                     </td>
                   </tr>
                 )}
@@ -145,11 +167,11 @@ export function ImportSection({ initialAccountId, onImportComplete }: ImportSect
           )}
           <button
             type="button"
-            onClick={handleImport}
+            onClick={handleOfxImport}
             disabled={!accountId || importing}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {importing ? 'Importing…' : `Import ${parsed.length} Transactions`}
+            {importing ? 'Importing…' : `Import ${ofxParsed.length} Transactions`}
           </button>
         </div>
       )}

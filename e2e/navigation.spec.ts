@@ -42,9 +42,9 @@ test('active nav link is highlighted', async ({ page }) => {
   await page.getByRole('link', { name: 'Accounts' }).click();
   await page.getByRole('heading', { name: 'Accounts' }).waitFor();
 
-  // The active link should have the blue styling class
+  // The active link should have the active styling class
   const accountsLink = page.getByRole('link', { name: 'Accounts' });
-  await expect(accountsLink).toHaveClass(/text-blue-700/);
+  await expect(accountsLink).toHaveClass(/bg-mtt-sidebar-active/);
 });
 
 test('mobile: hamburger button is visible at small viewport', async ({ page }) => {

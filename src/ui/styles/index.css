@@ -37,7 +37,7 @@
 }
 
 /* Aero atmospheric background gradient */
-[data-theme="aero"] body {
+[data-theme="aero"] .app-shell {
   background:
     radial-gradient(ellipse 60% 80% at 10% 50%, oklch(20% 0.05 215 / 0.5), transparent),
     radial-gradient(ellipse 50% 60% at 90% 15%, oklch(16% 0.04 245 / 0.4), transparent),

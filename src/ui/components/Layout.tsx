@@ -16,7 +16,7 @@ export function Layout() {
   const title = PAGE_TITLES[pathname] ?? 'mytruetrack';
 
   return (
-    <div className="min-h-screen flex flex-col bg-mtt-bg">
+    <div className="app-shell min-h-screen flex flex-col bg-mtt-bg">
       <OfflineBanner />
       <div className="flex-1 flex min-h-0">
         <Sidebar />

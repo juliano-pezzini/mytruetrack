@@ -13,7 +13,7 @@ const TYPE_BADGES: Record<AccountType, { label: string; className: string }> = {
   bank: { label: 'Bank', className: 'bg-mtt-accent-pale text-mtt-accent' },
   credit_card: { label: 'Credit Card', className: 'bg-mtt-negative-pale text-mtt-negative' },
   wallet: { label: 'Wallet', className: 'bg-mtt-positive-pale text-mtt-positive' },
-  transitional: { label: 'Transitional', className: 'bg-gray-100 text-gray-500' },
+  transitional: { label: 'Transitional', className: 'bg-mtt-border text-mtt-muted' },
 };
 
 function AccountCard({
@@ -141,10 +141,7 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Net Worth hero */}
-      <div
-        className="rounded-xl p-7 relative overflow-hidden"
-        style={{ background: 'oklch(16% 0.018 245)' }}
-      >
+      <div className="rounded-xl p-7 relative overflow-hidden bg-mtt-sidebar">
         {/* ambient glow */}
         <div
           className="absolute -top-16 -right-16 w-56 h-56 rounded-full pointer-events-none"
@@ -182,11 +179,8 @@ export function DashboardPage() {
               style={{ background: 'rgba(255,255,255,0.1)' }}
             >
               <div
-                className="h-full rounded-full"
-                style={{
-                  width: `${incomeRatio}%`,
-                  background: 'oklch(54% 0.14 155)',
-                }}
+                className="h-full rounded-full bg-mtt-positive"
+                style={{ width: `${incomeRatio}%` }}
               />
             </div>
             <span className="text-[10px] font-medium" style={{ color: 'rgba(255,255,255,0.4)' }}>

@@ -14,7 +14,7 @@ function getStrengthLevel(passphrase: string): { level: StrengthLevel; label: st
 }
 
 const SEGMENT_COLORS: Record<StrengthLevel, string> = {
-  0: 'bg-gray-200',
+  0: 'bg-mtt-border',
   1: 'bg-red-500',
   2: 'bg-orange-400',
   3: 'bg-yellow-400',
@@ -41,7 +41,7 @@ export function StrengthMeter({ passphrase }: StrengthMeterProps) {
           <div
             key={seg}
             className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
-              seg <= level ? SEGMENT_COLORS[level] : 'bg-gray-200'
+              seg <= level ? SEGMENT_COLORS[level] : 'bg-mtt-border'
             }`}
           />
         ))}

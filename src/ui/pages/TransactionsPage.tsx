@@ -236,7 +236,7 @@ export function TransactionsPage() {
                             {categoryMap.get(txn.categoryId)}
                           </span>
                         ) : (
-                          <span className="text-mtt-border">—</span>
+                          <span className="text-mtt-muted">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right">

@@ -14,6 +14,7 @@ function ThemeCard({ label, description, preview, selected, onSelect }: {
     <button
       type="button"
       onClick={onSelect}
+      aria-pressed={selected}
       className={`relative flex flex-col gap-0 rounded-xl border-2 overflow-hidden text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-mtt-accent ${
         selected
           ? 'border-mtt-accent shadow-md'

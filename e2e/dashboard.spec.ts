@@ -50,14 +50,14 @@ test('dashboard shows Net Worth section', async ({ page }) => {
 
 test('dashboard shows account card', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Accounts', exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Dashboard Bank' })).toBeVisible();
+  await expect(page.getByText('Dashboard Bank').first()).toBeVisible();
 });
 
 test('dashboard shows monthly income and expenses', async ({ page }) => {
   const monthLabel = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
-  await expect(page.getByText(monthLabel)).toBeVisible();
-  await expect(page.getByText('Income', { exact: true })).toBeVisible();
-  await expect(page.getByText('Expenses', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: monthLabel })).toBeVisible();
+  await expect(page.getByText('Income', { exact: true }).last()).toBeVisible();
+  await expect(page.getByText('Expenses', { exact: true }).last()).toBeVisible();
   await expect(page.getByText('+1000.00').first()).toBeVisible();
   await expect(page.getByText('−200.00').first()).toBeVisible();
 });

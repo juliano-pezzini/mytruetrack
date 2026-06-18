@@ -117,6 +117,21 @@ Installable PWA with offline support, app icons, service worker.
 - [x] Playwright E2E test suite (46 tests: onboarding, CRUD, dashboard, import, navigation — all passing)
 - [ ] Release v2.0.0
 
+### 8.11 — OPFS persistence + CRDT delta sync ✅
+
+cr-sqlite on an OPFS-backed file with per-site `crsql_changes` delta sync (AD-008).
++37 unit tests, +9 e2e tests.
+
+- [x] Async `Database` interface (`exec`/`execA`/`execO`/`close` return Promises); shared sql.js async adapter for Node tests
+- [x] Browser DB = cr-sqlite + OPFS (`mytruetrack.db`, main thread, WASM via `?url`); single shared connection (StrictMode-safe)
+- [x] Migration 001 PKs made `NOT NULL` (cr-sqlite rejects nullable primary keys)
+- [x] `crsql_as_crr` registration for all 9 syncable tables
+- [x] Per-site delta sync: `changes-<siteid>.bin` push/pull + `INSERT INTO crsql_changes` merge (`src/sync/crsql-changes.ts`)
+- [x] Binary/bigint-safe JSON codec for `crsql_changes` rows
+- [x] COOP `same-origin` + COEP `require-corp` headers; GIS/Drive verified to load under COEP
+- [x] E2E: OPFS persistence across reload + `crossOriginIsolated`
+- [ ] E2E: two-device convergence (deferred — needs shared WebDAV test server; logic covered by unit + spike)
+
 ---
 
 ## Future Considerations (post-Phase 8)

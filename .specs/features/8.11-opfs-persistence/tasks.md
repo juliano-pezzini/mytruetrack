@@ -72,6 +72,19 @@ Each task = one atomic commit. `[P]` = parallelizable with siblings.
 - **Where:** `e2e/persistence.spec.ts`, `e2e/sync-convergence.spec.ts`.
 - **Done when:** all unit + e2e green; build clean; audit clean.
 
+### Status (DONE, except convergence e2e deferred)
+
+- ✅ `e2e/persistence.spec.ts`: `crossOriginIsolated === true`; account + transaction survive a
+  full page reload (OPFS durability).
+- ✅ GIS/Drive verified to **load + initialize under COEP `require-corp`** (throwaway probe).
+- ✅ Full gate green: 330 unit, 50 e2e, typecheck, lint, build, `audit-ci`.
+- ⏸️ **Deferred:** real two-context convergence e2e (`e2e/sync-convergence.spec.ts`). Needs a
+  shared cloud HTTP/WebDAV test server (mock providers can't be shared across Playwright
+  contexts). Convergence is covered by `src/sync/crsql-changes.test.ts` (multi-peer apply,
+  own-file skip, encryption round-trip) + the spike-verified real `crsql_changes` merge.
+  Follow-up: stand up a WebDAV test server in Playwright `globalSetup` for an end-to-end
+  two-device test.
+
 ---
 
 ## Dependency order

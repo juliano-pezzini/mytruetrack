@@ -9,12 +9,28 @@ const isBrowser = typeof window !== 'undefined';
 const OPFS_DB_FILE = 'mytruetrack.db';
 
 /**
+ * In the browser there is exactly one OPFS-backed database file, so all callers must
+ * share a single connection. React StrictMode (dev) and concurrent consumers would
+ * otherwise open it twice and race the migrations against the same file. Node/test runs
+ * skip this cache so each `initDatabase()` yields an independent in-memory database.
+ */
+let browserDbPromise: Promise<Database> | null = null;
+
+/**
  * Initialize the database: open a connection, run pending migrations, return the handle.
  *
  * Browser: cr-sqlite (`@vlcn.io/crsqlite-wasm`) with OPFS-backed persistence + CRDT.
  * Node.js (tests): sql.js, in-memory.
  */
 export async function initDatabase(): Promise<Database> {
+  if (isBrowser) {
+    browserDbPromise ??= openAndMigrate();
+    return browserDbPromise;
+  }
+  return openAndMigrate();
+}
+
+async function openAndMigrate(): Promise<Database> {
   const db = isBrowser ? await createCrSqliteDatabase() : await createSqlJsDatabase();
 
   await runMigrations(db, allMigrations);
@@ -111,5 +127,9 @@ export function wrapSqlJs(raw: SqlJsDatabase): Database {
  * Close the database connection cleanly.
  */
 export async function closeDatabase(db: Database): Promise<void> {
+  if (isBrowser && browserDbPromise) {
+    // Allow a future initDatabase() to reopen the shared OPFS connection.
+    browserDbPromise = null;
+  }
   await db.close();
 }

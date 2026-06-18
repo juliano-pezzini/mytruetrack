@@ -221,5 +221,42 @@ Callers (hooks, services) are already async — they just need `await` added.
 | OPF-02 | Browser init — cr-sqlite + OPFS | P1       |
 | OPF-03 | CRDT registration               | P2       |
 | OPF-04 | Test-time sql.js async adapter  | P1       |
-| OPF-05 | WASM files in public/           | P1       |
+| OPF-05 | WASM served to the browser      | P1       |
 | OPF-06 | Auto-pull on startup            | P2       |
+| OPF-07 | `crsql_changes` delta sync      | P2       |
+
+---
+
+## Spike Verdict (2026-06-17)
+
+A throwaway Playwright spike (`spike-opfs.html` + `src/spike-opfs.ts` + a temporary e2e
+spec, since removed) verified the riskiest assumptions in real Chromium under the current
+Vite 8 toolchain. **All green:**
+
+- `crossOriginIsolated === true` with COOP `same-origin` + COEP `require-corp` set via
+  `vite.config.ts` (`server.headers` + `preview.headers`). Production hosting must send the
+  same two headers.
+- `@vlcn.io/crsqlite-wasm` 0.16 `initWasm()` loads under Vite 8. The WASM is resolved with
+  `import wasmUrl from '@vlcn.io/crsqlite-wasm/crsqlite.wasm?url'` — **no manual copy to
+  `public/` needed** (supersedes the original OPF-05 wording).
+- `sqlite.open('file.db')` opens an **OPFS-backed** DB **on the main thread** — no Web Worker
+  required. Data survived `close()` → reopen **and** a full page reload.
+- `crsql_as_crr()` and the `crsql_changes` virtual table both work.
+
+Decision: proceed with Scope **B** (persistence + CRR registration + delta-sync rewrite).
+No sql.js+IndexedDB fallback required.
+
+## OPF-07: `crsql_changes` delta sync (Scope B)
+
+Replace the full-snapshot JSON sync with conflict-free CRDT delta exchange. To avoid the
+last-writer-wins file-overwrite race of a single shared blob, each device writes its **own**
+change file keyed by its cr-sqlite site id:
+
+- **Push:** `SELECT * FROM crsql_changes` for this site → encrypt → upload as
+  `changes-<siteid>.bin` (overwriting only this device's own file).
+- **Pull:** `list()` the sync folder, download every `changes-*.bin` **except this device's
+  own**, decrypt, and apply each row via `INSERT INTO crsql_changes ...`. cr-sqlite merges
+  conflict-free.
+
+This converges across N devices with no merge prompts and no cross-device overwrite. Snapshot
+import/export is retained only for the local encrypted backup/export path (not cloud sync).

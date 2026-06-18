@@ -6,8 +6,11 @@ import type { Migration } from './types.ts';
  * Tracks applied versions in a `_migrations` table.
  * Throws on failure with version + message.
  */
-export function runMigrations(db: Database, migrations: readonly Migration[]): void {
-  db.exec(`
+export async function runMigrations(
+  db: Database,
+  migrations: readonly Migration[],
+): Promise<void> {
+  await db.exec(`
     CREATE TABLE IF NOT EXISTS _migrations (
       version INTEGER PRIMARY KEY,
       name    TEXT NOT NULL,
@@ -16,7 +19,7 @@ export function runMigrations(db: Database, migrations: readonly Migration[]): v
   `);
 
   const applied = new Set(
-    db.execA('SELECT version FROM _migrations').map((row) => row[0] as number),
+    (await db.execA('SELECT version FROM _migrations')).map((row) => row[0] as number),
   );
 
   const sorted = [...migrations].sort((a, b) => a.version - b.version);
@@ -28,7 +31,7 @@ export function runMigrations(db: Database, migrations: readonly Migration[]): v
 
     try {
       for (const sql of statements) {
-        db.exec(sql);
+        await db.exec(sql);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -37,7 +40,7 @@ export function runMigrations(db: Database, migrations: readonly Migration[]): v
       });
     }
 
-    db.exec('INSERT INTO _migrations (version, name, applied_at) VALUES (?, ?, ?)', [
+    await db.exec('INSERT INTO _migrations (version, name, applied_at) VALUES (?, ?, ?)', [
       migration.version,
       migration.name,
       new Date().toISOString(),

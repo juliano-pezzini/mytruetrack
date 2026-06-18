@@ -10,21 +10,22 @@ export function useTags() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const refresh = useCallback(() => {
+  const refresh = useCallback(async () => {
     const repo = createTagRepository(db);
-    setTags(repo.getAll());
+    const rows = await repo.getAll();
+    setTags(rows);
     setLoading(false);
   }, [db]);
 
   useEffect(() => {
-    refresh();
+    void refresh();
   }, [refresh]);
 
   const create = useCallback(
-    (params: CreateTagParams) => {
+    async (params: CreateTagParams) => {
       const repo = createTagRepository(db);
-      const tag = repo.create(params);
-      refresh();
+      const tag = await repo.create(params);
+      await refresh();
       notifyChange();
       return tag;
     },
@@ -32,10 +33,10 @@ export function useTags() {
   );
 
   const update = useCallback(
-    (id: string, changes: Partial<Pick<Tag, 'name' | 'color'>>) => {
+    async (id: string, changes: Partial<Pick<Tag, 'name' | 'color'>>) => {
       const repo = createTagRepository(db);
-      const tag = repo.update(id, changes);
-      refresh();
+      const tag = await repo.update(id, changes);
+      await refresh();
       notifyChange();
       return tag;
     },
@@ -43,10 +44,10 @@ export function useTags() {
   );
 
   const remove = useCallback(
-    (id: string) => {
+    async (id: string) => {
       const repo = createTagRepository(db);
-      repo.delete(id);
-      refresh();
+      await repo.delete(id);
+      await refresh();
       notifyChange();
     },
     [db, refresh, notifyChange],

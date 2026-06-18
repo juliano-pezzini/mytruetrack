@@ -12,42 +12,42 @@ function rowToRule(row: Row): AutoCategoryRule {
 }
 
 export type AutoCategoryRuleRepository = {
-  create(rule: AutoCategoryRule): AutoCategoryRule;
-  getActive(): AutoCategoryRule[];
-  getById(id: string): AutoCategoryRule | null;
+  create(rule: AutoCategoryRule): Promise<AutoCategoryRule>;
+  getActive(): Promise<AutoCategoryRule[]>;
+  getById(id: string): Promise<AutoCategoryRule | null>;
   update(
     id: string,
     changes: Partial<Pick<AutoCategoryRule, 'pattern' | 'categoryId' | 'priority' | 'isActive'>>,
-  ): AutoCategoryRule;
+  ): Promise<AutoCategoryRule>;
 };
 
 export function createAutoCategoryRuleRepository(db: Database): AutoCategoryRuleRepository {
   return {
-    create(rule: AutoCategoryRule): AutoCategoryRule {
-      db.exec(
+    async create(rule: AutoCategoryRule): Promise<AutoCategoryRule> {
+      await db.exec(
         'INSERT INTO auto_category_rules (id, pattern, category_id, priority, is_active) VALUES (?, ?, ?, ?, ?)',
         [rule.id, rule.pattern, rule.categoryId, rule.priority, rule.isActive ? 1 : 0],
       );
       return rule;
     },
 
-    getActive(): AutoCategoryRule[] {
-      return db
-        .execO('SELECT * FROM auto_category_rules WHERE is_active = 1 ORDER BY priority DESC')
-        .map(rowToRule);
+    async getActive(): Promise<AutoCategoryRule[]> {
+      return (
+        await db.execO('SELECT * FROM auto_category_rules WHERE is_active = 1 ORDER BY priority DESC')
+      ).map(rowToRule);
     },
 
-    getById(id: string): AutoCategoryRule | null {
-      const rows = db.execO('SELECT * FROM auto_category_rules WHERE id = ?', [id]);
+    async getById(id: string): Promise<AutoCategoryRule | null> {
+      const rows = await db.execO('SELECT * FROM auto_category_rules WHERE id = ?', [id]);
       if (rows.length === 0) return null;
       return rowToRule(rows[0]!);
     },
 
-    update(
+    async update(
       id: string,
       changes: Partial<Pick<AutoCategoryRule, 'pattern' | 'categoryId' | 'priority' | 'isActive'>>,
-    ): AutoCategoryRule {
-      const existing = this.getById(id);
+    ): Promise<AutoCategoryRule> {
+      const existing = await this.getById(id);
       if (!existing) throw new Error(`AutoCategoryRule not found: ${id}`);
 
       const sets: string[] = [];
@@ -72,10 +72,10 @@ export function createAutoCategoryRuleRepository(db: Database): AutoCategoryRule
 
       if (sets.length > 0) {
         values.push(id);
-        db.exec(`UPDATE auto_category_rules SET ${sets.join(', ')} WHERE id = ?`, values);
+        await db.exec(`UPDATE auto_category_rules SET ${sets.join(', ')} WHERE id = ?`, values);
       }
 
-      return this.getById(id)!;
+      return (await this.getById(id))!;
     },
   };
 }

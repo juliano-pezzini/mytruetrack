@@ -19,9 +19,11 @@ describe('AutoCategoryRuleRepository', () => {
     repo = createAutoCategoryRuleRepository(db);
   });
 
-  afterEach(() => closeDatabase(db));
+  afterEach(async () => {
+    await closeDatabase(db);
+  });
 
-  it('creates and retrieves a rule', () => {
+  it('creates and retrieves a rule', async () => {
     const rule: AutoCategoryRule = {
       id: 'r1',
       pattern: 'WALMART',
@@ -29,18 +31,18 @@ describe('AutoCategoryRuleRepository', () => {
       priority: 10,
       isActive: true,
     };
-    repo.create(rule);
+    await repo.create(rule);
 
-    const fetched = repo.getById('r1');
+    const fetched = await repo.getById('r1');
     expect(fetched).not.toBeNull();
     expect(fetched!.pattern).toBe('WALMART');
     expect(fetched!.priority).toBe(10);
   });
 
-  it('getActive returns only active rules ordered by priority DESC', () => {
-    repo.create({ id: 'r1', pattern: 'LOW', categoryId: 'c1', priority: 1, isActive: true });
-    repo.create({ id: 'r2', pattern: 'HIGH', categoryId: 'c2', priority: 10, isActive: true });
-    repo.create({
+  it('getActive returns only active rules ordered by priority DESC', async () => {
+    await repo.create({ id: 'r1', pattern: 'LOW', categoryId: 'c1', priority: 1, isActive: true });
+    await repo.create({ id: 'r2', pattern: 'HIGH', categoryId: 'c2', priority: 10, isActive: true });
+    await repo.create({
       id: 'r3',
       pattern: 'INACTIVE',
       categoryId: 'c3',
@@ -48,22 +50,22 @@ describe('AutoCategoryRuleRepository', () => {
       isActive: false,
     });
 
-    const active = repo.getActive();
+    const active = await repo.getActive();
     expect(active).toHaveLength(2);
     expect(active[0]!.pattern).toBe('HIGH');
     expect(active[1]!.pattern).toBe('LOW');
   });
 
-  it('updates rule fields', () => {
-    repo.create({ id: 'r1', pattern: 'OLD', categoryId: 'c1', priority: 1, isActive: true });
-    const updated = repo.update('r1', { pattern: 'NEW', isActive: false });
+  it('updates rule fields', async () => {
+    await repo.create({ id: 'r1', pattern: 'OLD', categoryId: 'c1', priority: 1, isActive: true });
+    const updated = await repo.update('r1', { pattern: 'NEW', isActive: false });
     expect(updated.pattern).toBe('NEW');
     expect(updated.isActive).toBe(false);
   });
 
-  it('updates categoryId and priority', () => {
-    repo.create({ id: 'r2', pattern: 'STORE', categoryId: 'c1', priority: 1, isActive: true });
-    const updated = repo.update('r2', { categoryId: 'c2', priority: 50 });
+  it('updates categoryId and priority', async () => {
+    await repo.create({ id: 'r2', pattern: 'STORE', categoryId: 'c1', priority: 1, isActive: true });
+    const updated = await repo.update('r2', { categoryId: 'c2', priority: 50 });
     expect(updated.categoryId).toBe('c2');
     expect(updated.priority).toBe(50);
     expect(updated.pattern).toBe('STORE'); // unchanged
@@ -79,7 +81,9 @@ describe('LearnedPatternRepository', () => {
     repo = createLearnedPatternRepository(db);
   });
 
-  afterEach(() => closeDatabase(db));
+  afterEach(async () => {
+    await closeDatabase(db);
+  });
 
   const basePattern: LearnedCategoryPattern = {
     id: 'p1',
@@ -92,25 +96,25 @@ describe('LearnedPatternRepository', () => {
     isActive: true,
   };
 
-  it('creates and retrieves by keyword', () => {
-    repo.create(basePattern);
+  it('creates and retrieves by keyword', async () => {
+    await repo.create(basePattern);
 
-    const results = repo.getByKeyword('pizza');
+    const results = await repo.getByKeyword('pizza');
     expect(results).toHaveLength(1);
     expect(results[0]!.categoryId).toBe('cat-food');
     expect(results[0]!.confidenceScore).toBe(75);
   });
 
-  it('getByKeyword returns only active patterns', () => {
-    repo.create(basePattern);
-    repo.create({ ...basePattern, id: 'p2', isActive: false, categoryId: 'cat-other' });
+  it('getByKeyword returns only active patterns', async () => {
+    await repo.create(basePattern);
+    await repo.create({ ...basePattern, id: 'p2', isActive: false, categoryId: 'cat-other' });
 
-    const results = repo.getByKeyword('pizza');
+    const results = await repo.getByKeyword('pizza');
     expect(results).toHaveLength(1);
   });
 
-  it('upsert updates existing pattern with same keyword+categoryId', () => {
-    repo.create(basePattern);
+  it('upsert updates existing pattern with same keyword+categoryId', async () => {
+    await repo.create(basePattern);
 
     const updated: LearnedCategoryPattern = {
       ...basePattern,
@@ -119,17 +123,17 @@ describe('LearnedPatternRepository', () => {
       confidenceScore: 90,
     };
 
-    const result = repo.upsert(updated);
+    const result = await repo.upsert(updated);
     expect(result.occurrenceCount).toBe(10);
     expect(result.confidenceScore).toBe(90);
 
     // Should still be one row, not two
-    const all = repo.getByKeyword('pizza');
+    const all = await repo.getByKeyword('pizza');
     expect(all).toHaveLength(1);
   });
 
-  it('upsert inserts new pattern when keyword+categoryId is novel', () => {
-    repo.create(basePattern);
+  it('upsert inserts new pattern when keyword+categoryId is novel', async () => {
+    await repo.create(basePattern);
 
     const newPattern: LearnedCategoryPattern = {
       ...basePattern,
@@ -137,9 +141,9 @@ describe('LearnedPatternRepository', () => {
       categoryId: 'cat-different',
     };
 
-    repo.upsert(newPattern);
+    await repo.upsert(newPattern);
 
-    const results = repo.getByKeyword('pizza');
+    const results = await repo.getByKeyword('pizza');
     expect(results).toHaveLength(2);
   });
 });
@@ -153,9 +157,11 @@ describe('AutoCategoryCorrectionRepository', () => {
     repo = createAutoCategoryCorrectionRepository(db);
   });
 
-  afterEach(() => closeDatabase(db));
+  afterEach(async () => {
+    await closeDatabase(db);
+  });
 
-  it('creates and retrieves corrections by transaction', () => {
+  it('creates and retrieves corrections by transaction', async () => {
     const correction: AutoCategoryCorrection = {
       id: 'corr1',
       transactionId: 'txn-1',
@@ -166,16 +172,16 @@ describe('AutoCategoryCorrectionRepository', () => {
       confidenceAtCorrection: 60,
     };
 
-    repo.create(correction);
+    await repo.create(correction);
 
-    const results = repo.getByTransactionId('txn-1');
+    const results = await repo.getByTransactionId('txn-1');
     expect(results).toHaveLength(1);
     expect(results[0]!.correctedCategoryId).toBe('cat-new');
     expect(results[0]!.correctionType).toBe('override');
     expect(results[0]!.confidenceAtCorrection).toBe(60);
   });
 
-  it('handles null originalCategoryId', () => {
+  it('handles null originalCategoryId', async () => {
     const correction: AutoCategoryCorrection = {
       id: 'corr2',
       transactionId: 'txn-2',
@@ -186,9 +192,9 @@ describe('AutoCategoryCorrectionRepository', () => {
       confidenceAtCorrection: null,
     };
 
-    repo.create(correction);
+    await repo.create(correction);
 
-    const results = repo.getByTransactionId('txn-2');
+    const results = await repo.getByTransactionId('txn-2');
     expect(results[0]!.originalCategoryId).toBeNull();
     expect(results[0]!.confidenceAtCorrection).toBeNull();
   });

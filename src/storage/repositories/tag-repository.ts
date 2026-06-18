@@ -11,33 +11,33 @@ function rowToTag(row: Row): Tag {
 }
 
 export type TagRepository = {
-  create(params: CreateTagParams): Tag;
-  getById(id: string): Tag | null;
-  getAll(): Tag[];
-  update(id: string, changes: Partial<Pick<Tag, 'name' | 'color'>>): Tag;
-  delete(id: string): void;
+  create(params: CreateTagParams): Promise<Tag>;
+  getById(id: string): Promise<Tag | null>;
+  getAll(): Promise<Tag[]>;
+  update(id: string, changes: Partial<Pick<Tag, 'name' | 'color'>>): Promise<Tag>;
+  delete(id: string): Promise<void>;
 };
 
 export function createTagRepository(db: Database): TagRepository {
   return {
-    create(params: CreateTagParams): Tag {
+    async create(params: CreateTagParams): Promise<Tag> {
       const tag = createTag(params);
-      db.exec('INSERT INTO tags (id, name, color) VALUES (?, ?, ?)', [tag.id, tag.name, tag.color]);
+      await db.exec('INSERT INTO tags (id, name, color) VALUES (?, ?, ?)', [tag.id, tag.name, tag.color]);
       return tag;
     },
 
-    getById(id: string): Tag | null {
-      const rows = db.execO('SELECT * FROM tags WHERE id = ?', [id]);
+    async getById(id: string): Promise<Tag | null> {
+      const rows = await db.execO('SELECT * FROM tags WHERE id = ?', [id]);
       if (rows.length === 0) return null;
       return rowToTag(rows[0]!);
     },
 
-    getAll(): Tag[] {
-      return db.execO('SELECT * FROM tags ORDER BY name').map(rowToTag);
+    async getAll(): Promise<Tag[]> {
+      return (await db.execO('SELECT * FROM tags ORDER BY name')).map(rowToTag);
     },
 
-    update(id: string, changes: Partial<Pick<Tag, 'name' | 'color'>>): Tag {
-      const existing = this.getById(id);
+    async update(id: string, changes: Partial<Pick<Tag, 'name' | 'color'>>): Promise<Tag> {
+      const existing = await this.getById(id);
       if (!existing) throw new Error(`Tag not found: ${id}`);
 
       const sets: string[] = [];
@@ -54,15 +54,15 @@ export function createTagRepository(db: Database): TagRepository {
 
       if (sets.length > 0) {
         values.push(id);
-        db.exec(`UPDATE tags SET ${sets.join(', ')} WHERE id = ?`, values);
+        await db.exec(`UPDATE tags SET ${sets.join(', ')} WHERE id = ?`, values);
       }
 
-      return this.getById(id)!;
+      return (await this.getById(id))!;
     },
 
-    delete(id: string): void {
-      db.exec('DELETE FROM transaction_tags WHERE tag_id = ?', [id]);
-      db.exec('DELETE FROM tags WHERE id = ?', [id]);
+    async delete(id: string): Promise<void> {
+      await db.exec('DELETE FROM transaction_tags WHERE tag_id = ?', [id]);
+      await db.exec('DELETE FROM tags WHERE id = ?', [id]);
     },
   };
 }

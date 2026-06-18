@@ -13,21 +13,21 @@ function rowToCategory(row: Row): Category {
 }
 
 export type CategoryRepository = {
-  create(params: CreateCategoryParams): Category;
-  getById(id: string): Category | null;
-  getAll(): Category[];
+  create(params: CreateCategoryParams): Promise<Category>;
+  getById(id: string): Promise<Category | null>;
+  getAll(): Promise<Category[]>;
   update(
     id: string,
     changes: Partial<Pick<Category, 'name' | 'type' | 'parentId' | 'description'>>,
-  ): Category;
-  delete(id: string): void;
+  ): Promise<Category>;
+  delete(id: string): Promise<void>;
 };
 
 export function createCategoryRepository(db: Database): CategoryRepository {
   return {
-    create(params: CreateCategoryParams): Category {
+    async create(params: CreateCategoryParams): Promise<Category> {
       const category = createCategory(params);
-      db.exec(
+      await db.exec(
         'INSERT INTO categories (id, parent_id, name, type, description) VALUES (?, ?, ?, ?, ?)',
         [
           category.id,
@@ -40,21 +40,21 @@ export function createCategoryRepository(db: Database): CategoryRepository {
       return category;
     },
 
-    getById(id: string): Category | null {
-      const rows = db.execO('SELECT * FROM categories WHERE id = ?', [id]);
+    async getById(id: string): Promise<Category | null> {
+      const rows = await db.execO('SELECT * FROM categories WHERE id = ?', [id]);
       if (rows.length === 0) return null;
       return rowToCategory(rows[0]!);
     },
 
-    getAll(): Category[] {
-      return db.execO('SELECT * FROM categories ORDER BY name').map(rowToCategory);
+    async getAll(): Promise<Category[]> {
+      return (await db.execO('SELECT * FROM categories ORDER BY name')).map(rowToCategory);
     },
 
-    update(
+    async update(
       id: string,
       changes: Partial<Pick<Category, 'name' | 'type' | 'parentId' | 'description'>>,
-    ): Category {
-      const existing = this.getById(id);
+    ): Promise<Category> {
+      const existing = await this.getById(id);
       if (!existing) throw new Error(`Category not found: ${id}`);
 
       const sets: string[] = [];
@@ -79,18 +79,18 @@ export function createCategoryRepository(db: Database): CategoryRepository {
 
       if (sets.length > 0) {
         values.push(id);
-        db.exec(`UPDATE categories SET ${sets.join(', ')} WHERE id = ?`, values);
+        await db.exec(`UPDATE categories SET ${sets.join(', ')} WHERE id = ?`, values);
       }
 
-      return this.getById(id)!;
+      return (await this.getById(id))!;
     },
 
-    delete(id: string): void {
-      const children = db.execO('SELECT id FROM categories WHERE parent_id = ?', [id]);
+    async delete(id: string): Promise<void> {
+      const children = await db.execO('SELECT id FROM categories WHERE parent_id = ?', [id]);
       if (children.length > 0) {
         throw new Error(`Cannot delete category ${id}: has ${children.length} child categories`);
       }
-      db.exec('DELETE FROM categories WHERE id = ?', [id]);
+      await db.exec('DELETE FROM categories WHERE id = ?', [id]);
     },
   };
 }

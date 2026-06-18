@@ -12,7 +12,7 @@ export function useAccountBalance(accountId: string | null, date: string) {
   const [balance, setBalance] = useState<Money>(fromCents(0));
   const [loading, setLoading] = useState(true);
 
-  const refresh = useCallback(() => {
+  const refresh = useCallback(async () => {
     if (!accountId) {
       setBalance(fromCents(0));
       setLoading(false);
@@ -22,22 +22,22 @@ export function useAccountBalance(accountId: string | null, date: string) {
     const txnRepo = createTransactionRepository(db);
     const balRepo = createAccountBalanceRepository(db);
 
-    const account = accountRepo.getById(accountId);
+    const account = await accountRepo.getById(accountId);
     if (!account) {
       setBalance(fromCents(0));
       setLoading(false);
       return;
     }
 
-    const transactions = txnRepo.getByAccount(accountId);
-    const snapshots = balRepo.getByAccount(accountId);
+    const transactions = await txnRepo.getByAccount(accountId);
+    const snapshots = await balRepo.getByAccount(accountId);
     const result = calculateBalance(account, transactions, snapshots, date);
     setBalance(result);
     setLoading(false);
   }, [db, accountId, date]);
 
   useEffect(() => {
-    refresh();
+    void refresh();
   }, [refresh]);
 
   return { balance, loading, refresh };

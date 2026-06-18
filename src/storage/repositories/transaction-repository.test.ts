@@ -14,10 +14,12 @@ describe('TransactionRepository', () => {
     repo = createTransactionRepository(db);
   });
 
-  afterEach(() => closeDatabase(db));
+  afterEach(async () => {
+    await closeDatabase(db);
+  });
 
-  it('creates and reads back a transaction', () => {
-    const txn = repo.create({
+  it('creates and reads back a transaction', async () => {
+    const txn = await repo.create({
       id: 'txn-1',
       accountId: 'acc-1',
       amount: fromCents(5000),
@@ -30,7 +32,7 @@ describe('TransactionRepository', () => {
     expect(toCents(txn.amount)).toBe(5000);
     expect(txn.type).toBe('debit');
 
-    const fetched = repo.getById('txn-1');
+    const fetched = await repo.getById('txn-1');
     expect(fetched).not.toBeNull();
     expect(toCents(fetched!.amount)).toBe(5000);
     expect(fetched!.description).toBe('Coffee');
@@ -38,12 +40,12 @@ describe('TransactionRepository', () => {
     expect(fetched!.externalId).toBeNull();
   });
 
-  it('returns null for non-existent id', () => {
-    expect(repo.getById('no-such')).toBeNull();
+  it('returns null for non-existent id', async () => {
+    expect(await repo.getById('no-such')).toBeNull();
   });
 
-  it('queries by account with date range', () => {
-    repo.create({
+  it('queries by account with date range', async () => {
+    await repo.create({
       id: 't1',
       accountId: 'a1',
       amount: fromCents(100),
@@ -51,7 +53,7 @@ describe('TransactionRepository', () => {
       transactionDate: '2026-01-15',
       type: 'debit',
     });
-    repo.create({
+    await repo.create({
       id: 't2',
       accountId: 'a1',
       amount: fromCents(200),
@@ -59,7 +61,7 @@ describe('TransactionRepository', () => {
       transactionDate: '2026-02-15',
       type: 'credit',
     });
-    repo.create({
+    await repo.create({
       id: 't3',
       accountId: 'a1',
       amount: fromCents(300),
@@ -67,7 +69,7 @@ describe('TransactionRepository', () => {
       transactionDate: '2026-03-15',
       type: 'debit',
     });
-    repo.create({
+    await repo.create({
       id: 't4',
       accountId: 'a2',
       amount: fromCents(400),
@@ -77,22 +79,22 @@ describe('TransactionRepository', () => {
     });
 
     // All for a1
-    const all = repo.getByAccount('a1');
+    const all = await repo.getByAccount('a1');
     expect(all).toHaveLength(3);
     // Ordered by date DESC
     expect(all[0]!.description).toBe('Mar');
 
     // With date range
-    const feb = repo.getByAccount('a1', { from: '2026-02-01', to: '2026-02-28' });
+    const feb = await repo.getByAccount('a1', { from: '2026-02-01', to: '2026-02-28' });
     expect(feb).toHaveLength(1);
     expect(feb[0]!.description).toBe('Feb');
 
     // Other account
-    expect(repo.getByAccount('a2')).toHaveLength(1);
+    expect(await repo.getByAccount('a2')).toHaveLength(1);
   });
 
-  it('updates only provided fields', () => {
-    repo.create({
+  it('updates only provided fields', async () => {
+    await repo.create({
       id: 'u1',
       accountId: 'a1',
       amount: fromCents(1000),
@@ -101,14 +103,14 @@ describe('TransactionRepository', () => {
       type: 'debit',
     });
 
-    const updated = repo.update('u1', { description: 'New', categoryId: 'cat-1' });
+    const updated = await repo.update('u1', { description: 'New', categoryId: 'cat-1' });
     expect(updated.description).toBe('New');
     expect(updated.categoryId).toBe('cat-1');
     expect(updated.type).toBe('debit'); // unchanged
   });
 
-  it('updates all supported fields at once', () => {
-    repo.create({
+  it('updates all supported fields at once', async () => {
+    await repo.create({
       id: 'u2',
       accountId: 'a1',
       amount: fromCents(1000),
@@ -117,7 +119,7 @@ describe('TransactionRepository', () => {
       type: 'debit',
     });
 
-    const updated = repo.update('u2', {
+    const updated = await repo.update('u2', {
       description: 'Changed',
       categoryId: 'cat-2',
       transactionDate: '2026-02-01',
@@ -131,12 +133,14 @@ describe('TransactionRepository', () => {
     expect(updated.type).toBe('credit');
   });
 
-  it('throws when updating non-existent transaction', () => {
-    expect(() => repo.update('nope', { description: 'X' })).toThrow('Transaction not found');
+  it('throws when updating non-existent transaction', async () => {
+    await expect(repo.update('nope', { description: 'X' })).rejects.toThrow(
+      'Transaction not found',
+    );
   });
 
-  it('hard-deletes a transaction and its tags', () => {
-    repo.create({
+  it('hard-deletes a transaction and its tags', async () => {
+    await repo.create({
       id: 'del-1',
       accountId: 'a1',
       amount: fromCents(100),
@@ -144,16 +148,16 @@ describe('TransactionRepository', () => {
       transactionDate: '2026-01-01',
       type: 'debit',
     });
-    repo.addTags('del-1', ['t1', 't2']);
+    await repo.addTags('del-1', ['t1', 't2']);
 
-    repo.delete('del-1');
+    await repo.delete('del-1');
 
-    expect(repo.getById('del-1')).toBeNull();
-    expect(repo.getTagIds('del-1')).toHaveLength(0);
+    expect(await repo.getById('del-1')).toBeNull();
+    expect(await repo.getTagIds('del-1')).toHaveLength(0);
   });
 
-  it('manages tags via addTags, removeTags, getTagIds', () => {
-    repo.create({
+  it('manages tags via addTags, removeTags, getTagIds', async () => {
+    await repo.create({
       id: 'tag-txn',
       accountId: 'a1',
       amount: fromCents(100),
@@ -162,14 +166,14 @@ describe('TransactionRepository', () => {
       type: 'debit',
     });
 
-    repo.addTags('tag-txn', ['t1', 't2', 't3']);
-    expect(repo.getTagIds('tag-txn')).toEqual(['t1', 't2', 't3']);
+    await repo.addTags('tag-txn', ['t1', 't2', 't3']);
+    expect(await repo.getTagIds('tag-txn')).toEqual(['t1', 't2', 't3']);
 
     // Duplicate add is ignored
-    repo.addTags('tag-txn', ['t1']);
-    expect(repo.getTagIds('tag-txn')).toEqual(['t1', 't2', 't3']);
+    await repo.addTags('tag-txn', ['t1']);
+    expect(await repo.getTagIds('tag-txn')).toEqual(['t1', 't2', 't3']);
 
-    repo.removeTags('tag-txn', ['t2']);
-    expect(repo.getTagIds('tag-txn')).toEqual(['t1', 't3']);
+    await repo.removeTags('tag-txn', ['t2']);
+    expect(await repo.getTagIds('tag-txn')).toEqual(['t1', 't3']);
   });
 });

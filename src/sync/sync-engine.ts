@@ -14,7 +14,7 @@ import { savePushState, savePullState, getSyncState } from './sync-state.ts';
 const SYNC_FILENAME = 'sync-blob.bin';
 
 /** Tables to sync, in dependency-safe insertion order. */
-const SYNC_TABLES = [
+export const SYNC_TABLES = [
   'accounts',
   'categories',
   'tags',
@@ -36,10 +36,10 @@ type DatabaseSnapshot = readonly TableSnapshot[];
 /**
  * Export all syncable table data from the database as a Uint8Array (JSON).
  */
-export function exportDatabaseSnapshot(db: Database): Uint8Array {
+export async function exportDatabaseSnapshot(db: Database): Promise<Uint8Array> {
   const snapshot: TableSnapshot[] = [];
   for (const table of SYNC_TABLES) {
-    const rows = db.execO(`SELECT * FROM ${table}`);
+    const rows = await db.execO(`SELECT * FROM ${table}`);
     snapshot.push({ table, rows });
   }
   const json = JSON.stringify(snapshot);
@@ -49,7 +49,7 @@ export function exportDatabaseSnapshot(db: Database): Uint8Array {
 /**
  * Import a snapshot into the database using INSERT OR REPLACE.
  */
-export function importDatabaseSnapshot(db: Database, data: Uint8Array): void {
+export async function importDatabaseSnapshot(db: Database, data: Uint8Array): Promise<void> {
   const json = new TextDecoder().decode(data);
   const snapshot: DatabaseSnapshot = JSON.parse(json) as DatabaseSnapshot;
 
@@ -62,7 +62,7 @@ export function importDatabaseSnapshot(db: Database, data: Uint8Array): void {
       if (columns.length === 0) continue;
       const placeholders = columns.map(() => '?').join(', ');
       const values = columns.map((col) => row[col] ?? null);
-      db.exec(
+      await db.exec(
         `INSERT OR REPLACE INTO ${table} (${columns.join(', ')}) VALUES (${placeholders})`,
         values,
       );
@@ -80,7 +80,7 @@ export async function pushChanges(
   provider: CloudProvider,
   dek: CryptoKey | null,
 ): Promise<void> {
-  const plaintext = exportDatabaseSnapshot(db);
+  const plaintext = await exportDatabaseSnapshot(db);
 
   let payload: Uint8Array;
   if (dek) {
@@ -129,7 +129,7 @@ export async function pullChanges(
     plaintext = packed;
   }
 
-  importDatabaseSnapshot(db, plaintext);
+  await importDatabaseSnapshot(db, plaintext);
 
   await savePullState();
 }

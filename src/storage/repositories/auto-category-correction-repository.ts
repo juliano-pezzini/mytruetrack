@@ -14,16 +14,16 @@ function rowToCorrection(row: Row): AutoCategoryCorrection {
 }
 
 export type AutoCategoryCorrectionRepository = {
-  create(correction: AutoCategoryCorrection): AutoCategoryCorrection;
-  getByTransactionId(transactionId: string): AutoCategoryCorrection[];
+  create(correction: AutoCategoryCorrection): Promise<AutoCategoryCorrection>;
+  getByTransactionId(transactionId: string): Promise<AutoCategoryCorrection[]>;
 };
 
 export function createAutoCategoryCorrectionRepository(
   db: Database,
 ): AutoCategoryCorrectionRepository {
   return {
-    create(correction: AutoCategoryCorrection): AutoCategoryCorrection {
-      db.exec(
+    async create(correction: AutoCategoryCorrection): Promise<AutoCategoryCorrection> {
+      await db.exec(
         `INSERT INTO auto_category_corrections
          (id, transaction_id, original_category_id, corrected_category_id, description_text, correction_type, confidence_at_correction)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -40,10 +40,12 @@ export function createAutoCategoryCorrectionRepository(
       return correction;
     },
 
-    getByTransactionId(transactionId: string): AutoCategoryCorrection[] {
-      return db
-        .execO('SELECT * FROM auto_category_corrections WHERE transaction_id = ?', [transactionId])
-        .map(rowToCorrection);
+    async getByTransactionId(transactionId: string): Promise<AutoCategoryCorrection[]> {
+      return (
+        await db.execO('SELECT * FROM auto_category_corrections WHERE transaction_id = ?', [
+          transactionId,
+        ])
+      ).map(rowToCorrection);
     },
   };
 }

@@ -88,10 +88,14 @@ export function DashboardPage() {
     void (async () => {
       const repo = createTransactionRepository(db);
       let total = fromCents(0);
-      // This is a simplified calculation — in production we'd use the balance hook per account
-      // For now, iterate accounts and query each
-      for (const account of accounts) {
-        const txns = await repo.getByAccount(account.id);
+      // Fetch each account's transactions in parallel to avoid serial DB round-trips.
+      const perAccount = await Promise.all(
+        accounts.map(async (account) => ({
+          account,
+          txns: await repo.getByAccount(account.id),
+        })),
+      );
+      for (const { account, txns } of perAccount) {
         let balance = account.initialBalance;
         for (const txn of txns) {
           if (txn.type === 'credit') {
@@ -115,10 +119,10 @@ export function DashboardPage() {
     let cancelled = false;
     void (async () => {
       const repo = createTransactionRepository(db);
-      const all: Transaction[] = [];
-      for (const account of accounts) {
-        all.push(...(await repo.getByAccount(account.id)));
-      }
+      const perAccount = await Promise.all(
+        accounts.map((account) => repo.getByAccount(account.id)),
+      );
+      const all: Transaction[] = perAccount.flat();
       const sorted = all
         .sort((a, b) => b.transactionDate.localeCompare(a.transactionDate))
         .slice(0, 10);
@@ -148,8 +152,10 @@ export function DashboardPage() {
       let income = fromCents(0);
       let expenses = fromCents(0);
 
-      for (const account of accounts) {
-        const txns = await repo.getByAccount(account.id, { from, to });
+      const perAccount = await Promise.all(
+        accounts.map((account) => repo.getByAccount(account.id, { from, to })),
+      );
+      for (const txns of perAccount) {
         for (const txn of txns) {
           if (txn.type === 'credit') {
             income = add(income, txn.amount);

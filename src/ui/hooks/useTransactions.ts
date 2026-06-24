@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useDatabase } from './useDatabase.ts';
 import { useAutoSync } from './useAutoSync.ts';
 import {
@@ -12,8 +12,10 @@ export function useTransactions(accountId: string | null, dateRange?: DateRange)
   const { notifyChange } = useAutoSync();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const requestId = useRef(0);
 
   const refresh = useCallback(async () => {
+    const current = ++requestId.current;
     if (!accountId) {
       setTransactions([]);
       setLoading(false);
@@ -21,6 +23,8 @@ export function useTransactions(accountId: string | null, dateRange?: DateRange)
     }
     const repo = createTransactionRepository(db);
     const rows = await repo.getByAccount(accountId, dateRange);
+    // Ignore results from a refresh that was superseded while this query was in flight.
+    if (current !== requestId.current) return;
     setTransactions(rows);
     setLoading(false);
   }, [db, accountId, dateRange?.from, dateRange?.to]);

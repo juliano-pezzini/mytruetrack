@@ -10,19 +10,9 @@
 import type { Database, Row } from '../storage/database.ts';
 import type { CloudProvider } from './cloud-provider.ts';
 import { pushDeltas, pullDeltas } from './crsql-changes.ts';
+import { SYNC_TABLES } from './sync-tables.ts';
 
-/** Tables to sync, in dependency-safe insertion order. */
-export const SYNC_TABLES = [
-  'accounts',
-  'categories',
-  'tags',
-  'transactions',
-  'transaction_tags',
-  'account_balances',
-  'auto_category_rules',
-  'learned_category_patterns',
-  'auto_category_corrections',
-] as const;
+export { SYNC_TABLES };
 
 type TableSnapshot = {
   readonly table: string;

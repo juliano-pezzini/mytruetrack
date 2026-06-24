@@ -80,7 +80,13 @@ export function deserializeChanges(data: Uint8Array): ChangeRow[] {
 export async function getSiteId(db: Database): Promise<string> {
   const rows = await db.execA('SELECT lower(hex(crsql_site_id()))');
   const id = rows[0]?.[0];
-  return typeof id === 'string' ? id : String(id ?? '');
+  if (typeof id !== 'string' || id.length === 0) {
+    throw new Error(
+      'Could not determine the cr-sqlite site id (crsql_site_id() returned no value). ' +
+        'Delta sync cannot proceed without it — peer change files would collide on "changes-.bin".',
+    );
+  }
+  return id;
 }
 
 /** Export the full local CRDT change-log. */
@@ -90,11 +96,21 @@ export async function exportLocalChanges(db: Database): Promise<ChangeRow[]> {
 
 /** Replay peer change rows into the local database; cr-sqlite merges conflict-free. */
 export async function applyRemoteChanges(db: Database, rows: readonly ChangeRow[]): Promise<void> {
-  for (const row of rows) {
-    await db.exec(
-      `INSERT INTO crsql_changes (${CHANGE_COLUMNS}) VALUES (${CHANGE_PLACEHOLDERS})`,
-      row as SqlValue[],
-    );
+  if (rows.length === 0) return;
+  // Wrap the replay in a single transaction: far faster than per-row autocommit and
+  // atomic, so a mid-stream failure rolls back instead of leaving a partial merge.
+  await db.exec('BEGIN');
+  try {
+    for (const row of rows) {
+      await db.exec(
+        `INSERT INTO crsql_changes (${CHANGE_COLUMNS}) VALUES (${CHANGE_PLACEHOLDERS})`,
+        row as SqlValue[],
+      );
+    }
+    await db.exec('COMMIT');
+  } catch (err) {
+    await db.exec('ROLLBACK');
+    throw err;
   }
 }
 
@@ -151,18 +167,25 @@ export async function pullDeltas(
     if (dek) {
       plaintext = await decrypt(dek, decodeBlob(packed));
     } else {
-      // A plaintext change file is a JSON array; encrypted blobs start with a random IV.
-      const head = new TextDecoder().decode(packed.subarray(0, 8));
-      if (!head.startsWith('[')) {
-        throw new Error(
-          'The remote data appears to be encrypted, but no passphrase is set. ' +
-            'Please set up a passphrase to decrypt the synced data.',
-        );
-      }
       plaintext = packed;
     }
 
-    await applyRemoteChanges(db, deserializeChanges(plaintext));
+    // In local-only mode the file is plaintext JSON; if it's actually an encrypted blob,
+    // parsing fails — surface the actionable "set a passphrase" message rather than a raw
+    // JSON parse error. (A leading-byte check is unreliable: ~1/256 encrypted blobs start
+    // with '['.)
+    let changes: ChangeRow[];
+    try {
+      changes = deserializeChanges(plaintext);
+    } catch {
+      if (dek) throw new Error('Failed to decode synced change data.');
+      throw new Error(
+        'The remote data appears to be encrypted, but no passphrase is set. ' +
+          'Please set up a passphrase to decrypt the synced data.',
+      );
+    }
+
+    await applyRemoteChanges(db, changes);
     appliedAny = true;
   }
 

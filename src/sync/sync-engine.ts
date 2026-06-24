@@ -1,30 +1,18 @@
 /**
- * Sync engine — export/import database snapshots, push/pull via CloudProvider.
+ * Sync engine — CRDT delta sync via cr-sqlite + local snapshot serialization.
  *
- * Design: In Node.js tests we serialize all table rows as JSON → encrypt → upload.
- * In production, cr-sqlite's `crsql_changes` will be used instead. This module
- * provides the encrypt-upload / download-decrypt plumbing that both approaches share.
+ * Cloud sync (`pushChanges` / `pullChanges`) exchanges conflict-free `crsql_changes`
+ * deltas — see `crsql-changes.ts`. The JSON snapshot helpers below are retained for the
+ * local encrypted backup/export path only (they also run under sql.js in tests, where
+ * cr-sqlite's `crsql_changes` is unavailable).
  */
 
 import type { Database, Row } from '../storage/database.ts';
 import type { CloudProvider } from './cloud-provider.ts';
-import { encrypt, decrypt, encodeBlob, decodeBlob } from '../crypto/encryption.ts';
-import { savePushState, savePullState, getSyncState } from './sync-state.ts';
+import { pushDeltas, pullDeltas } from './crsql-changes.ts';
+import { SYNC_TABLES } from './sync-tables.ts';
 
-const SYNC_FILENAME = 'sync-blob.bin';
-
-/** Tables to sync, in dependency-safe insertion order. */
-const SYNC_TABLES = [
-  'accounts',
-  'categories',
-  'tags',
-  'transactions',
-  'transaction_tags',
-  'account_balances',
-  'auto_category_rules',
-  'learned_category_patterns',
-  'auto_category_corrections',
-] as const;
+export { SYNC_TABLES };
 
 type TableSnapshot = {
   readonly table: string;
@@ -35,11 +23,12 @@ type DatabaseSnapshot = readonly TableSnapshot[];
 
 /**
  * Export all syncable table data from the database as a Uint8Array (JSON).
+ * Used for the local encrypted backup/export path.
  */
-export function exportDatabaseSnapshot(db: Database): Uint8Array {
+export async function exportDatabaseSnapshot(db: Database): Promise<Uint8Array> {
   const snapshot: TableSnapshot[] = [];
   for (const table of SYNC_TABLES) {
-    const rows = db.execO(`SELECT * FROM ${table}`);
+    const rows = await db.execO(`SELECT * FROM ${table}`);
     snapshot.push({ table, rows });
   }
   const json = JSON.stringify(snapshot);
@@ -48,8 +37,9 @@ export function exportDatabaseSnapshot(db: Database): Uint8Array {
 
 /**
  * Import a snapshot into the database using INSERT OR REPLACE.
+ * Used for the local encrypted backup/restore path.
  */
-export function importDatabaseSnapshot(db: Database, data: Uint8Array): void {
+export async function importDatabaseSnapshot(db: Database, data: Uint8Array): Promise<void> {
   const json = new TextDecoder().decode(data);
   const snapshot: DatabaseSnapshot = JSON.parse(json) as DatabaseSnapshot;
 
@@ -62,7 +52,7 @@ export function importDatabaseSnapshot(db: Database, data: Uint8Array): void {
       if (columns.length === 0) continue;
       const placeholders = columns.map(() => '?').join(', ');
       const values = columns.map((col) => row[col] ?? null);
-      db.exec(
+      await db.exec(
         `INSERT OR REPLACE INTO ${table} (${columns.join(', ')}) VALUES (${placeholders})`,
         values,
       );
@@ -71,65 +61,25 @@ export function importDatabaseSnapshot(db: Database, data: Uint8Array): void {
 }
 
 /**
- * Push local database state to the cloud provider.
- * Exports all data, optionally encrypts it, and uploads as a single blob.
- * When dek is null, uploads plaintext (unencrypted sync).
+ * Push local CRDT changes to the cloud provider as a per-device delta file.
+ * Encrypts when a DEK is provided; uploads plaintext when `dek` is null.
  */
 export async function pushChanges(
   db: Database,
   provider: CloudProvider,
   dek: CryptoKey | null,
 ): Promise<void> {
-  const plaintext = exportDatabaseSnapshot(db);
-
-  let payload: Uint8Array;
-  if (dek) {
-    const blob = await encrypt(dek, plaintext);
-    payload = encodeBlob(blob);
-  } else {
-    payload = plaintext;
-  }
-
-  await provider.upload(SYNC_FILENAME, payload);
-
-  const state = await getSyncState();
-  await savePushState(state.lastPushedVersion + 1);
+  await pushDeltas(db, provider, dek);
 }
 
 /**
- * Pull remote database state from the cloud provider.
- * Downloads, optionally decrypts, and merges into the local database.
- * When dek is null, expects plaintext snapshot (unencrypted sync).
- * No-op if no remote blob exists.
+ * Pull and merge every peer's CRDT changes from the cloud provider.
+ * Conflict-free (cr-sqlite merge); no-op when there are no peer delta files.
  */
 export async function pullChanges(
   db: Database,
   provider: CloudProvider,
   dek: CryptoKey | null,
 ): Promise<void> {
-  const packed = await provider.download(SYNC_FILENAME);
-  if (!packed) return; // nothing to pull
-
-  let plaintext: Uint8Array;
-  if (dek) {
-    const blob = decodeBlob(packed);
-    plaintext = await decrypt(dek, blob);
-  } else {
-    // Sanity-check: a plaintext snapshot is a JSON array of {table, rows} objects.
-    // Encrypted blobs start with random IV bytes, so checking only the first byte
-    // ('[') misclassifies ~1/256 of encrypted blobs as plaintext. Decode the head
-    // and require both the leading '[' and a `"table"` key before trusting it.
-    const head = new TextDecoder().decode(packed.subarray(0, 256));
-    if (!(head.startsWith('[') && head.includes('"table"'))) {
-      throw new Error(
-        'The remote data appears to be encrypted, but no passphrase is set. ' +
-          'Please set up a passphrase to decrypt the synced data.',
-      );
-    }
-    plaintext = packed;
-  }
-
-  importDatabaseSnapshot(db, plaintext);
-
-  await savePullState();
+  await pullDeltas(db, provider, dek);
 }

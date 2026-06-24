@@ -47,12 +47,12 @@ export function ImportWizard({ db, accountId, grid, fileName, onComplete }: Impo
     [grid, mapping, complete],
   );
 
-  function handleImport() {
+  async function handleImport() {
     if (!complete || !accountId || preview.transactions.length === 0) return;
     setImporting(true);
     setError(null);
     try {
-      setResult(importTransactions(db, accountId, preview.transactions));
+      setResult(await importTransactions(db, accountId, preview.transactions));
       onComplete();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));

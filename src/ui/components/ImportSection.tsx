@@ -55,11 +55,11 @@ export function ImportSection({ initialAccountId, onImportComplete }: ImportSect
     }
   }, []);
 
-  function handleOfxImport() {
+  async function handleOfxImport() {
     if (!ofxParsed || !accountId) return;
     setImporting(true);
     try {
-      setResult(importTransactions(db, accountId, ofxParsed));
+      setResult(await importTransactions(db, accountId, ofxParsed));
       setOfxParsed(null);
       onImportComplete?.();
     } catch (err) {

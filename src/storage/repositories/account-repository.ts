@@ -15,18 +15,21 @@ function rowToAccount(row: Row): Account {
 }
 
 export type AccountRepository = {
-  create(params: CreateAccountParams): Account;
-  getById(id: string): Account | null;
-  getAll(options?: { includeInactive?: boolean }): Account[];
-  update(id: string, changes: Partial<Pick<Account, 'name' | 'type' | 'description'>>): Account;
-  softDelete(id: string): void;
+  create(params: CreateAccountParams): Promise<Account>;
+  getById(id: string): Promise<Account | null>;
+  getAll(options?: { includeInactive?: boolean }): Promise<Account[]>;
+  update(
+    id: string,
+    changes: Partial<Pick<Account, 'name' | 'type' | 'description'>>,
+  ): Promise<Account>;
+  softDelete(id: string): Promise<void>;
 };
 
 export function createAccountRepository(db: Database): AccountRepository {
   return {
-    create(params: CreateAccountParams): Account {
+    async create(params: CreateAccountParams): Promise<Account> {
       const account = createAccount(params);
-      db.exec(
+      await db.exec(
         'INSERT INTO accounts (id, name, type, initial_balance, is_active, description) VALUES (?, ?, ?, ?, ?, ?)',
         [
           account.id,
@@ -40,21 +43,24 @@ export function createAccountRepository(db: Database): AccountRepository {
       return account;
     },
 
-    getById(id: string): Account | null {
-      const rows = db.execO('SELECT * FROM accounts WHERE id = ?', [id]);
+    async getById(id: string): Promise<Account | null> {
+      const rows = await db.execO('SELECT * FROM accounts WHERE id = ?', [id]);
       if (rows.length === 0) return null;
       return rowToAccount(rows[0]!);
     },
 
-    getAll(options?: { includeInactive?: boolean }): Account[] {
+    async getAll(options?: { includeInactive?: boolean }): Promise<Account[]> {
       const sql = options?.includeInactive
         ? 'SELECT * FROM accounts ORDER BY name'
         : 'SELECT * FROM accounts WHERE is_active = 1 ORDER BY name';
-      return db.execO(sql).map(rowToAccount);
+      return (await db.execO(sql)).map(rowToAccount);
     },
 
-    update(id: string, changes: Partial<Pick<Account, 'name' | 'type' | 'description'>>): Account {
-      const existing = this.getById(id);
+    async update(
+      id: string,
+      changes: Partial<Pick<Account, 'name' | 'type' | 'description'>>,
+    ): Promise<Account> {
+      const existing = await this.getById(id);
       if (!existing) throw new Error(`Account not found: ${id}`);
 
       const sets: string[] = [];
@@ -75,14 +81,14 @@ export function createAccountRepository(db: Database): AccountRepository {
 
       if (sets.length > 0) {
         values.push(id);
-        db.exec(`UPDATE accounts SET ${sets.join(', ')} WHERE id = ?`, values);
+        await db.exec(`UPDATE accounts SET ${sets.join(', ')} WHERE id = ?`, values);
       }
 
-      return this.getById(id)!;
+      return (await this.getById(id))!;
     },
 
-    softDelete(id: string): void {
-      db.exec('UPDATE accounts SET is_active = 0 WHERE id = ?', [id]);
+    async softDelete(id: string): Promise<void> {
+      await db.exec('UPDATE accounts SET is_active = 0 WHERE id = ?', [id]);
     },
   };
 }

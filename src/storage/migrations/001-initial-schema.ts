@@ -6,7 +6,7 @@ export const migration001: Migration = {
   up: [
     // accounts
     `CREATE TABLE accounts (
-      id              TEXT PRIMARY KEY,
+      id              TEXT PRIMARY KEY NOT NULL,
       name            TEXT NOT NULL DEFAULT '',
       type            TEXT NOT NULL DEFAULT 'bank',
       initial_balance INTEGER NOT NULL DEFAULT 0,
@@ -16,7 +16,7 @@ export const migration001: Migration = {
 
     // categories
     `CREATE TABLE categories (
-      id          TEXT PRIMARY KEY,
+      id          TEXT PRIMARY KEY NOT NULL,
       parent_id   TEXT DEFAULT '',
       name        TEXT NOT NULL DEFAULT '',
       type        TEXT NOT NULL DEFAULT 'expense',
@@ -25,14 +25,14 @@ export const migration001: Migration = {
 
     // tags
     `CREATE TABLE tags (
-      id    TEXT PRIMARY KEY,
+      id    TEXT PRIMARY KEY NOT NULL,
       name  TEXT NOT NULL DEFAULT '',
       color TEXT NOT NULL DEFAULT '#808080'
     )`,
 
     // transactions
     `CREATE TABLE transactions (
-      id               TEXT PRIMARY KEY,
+      id               TEXT PRIMARY KEY NOT NULL,
       account_id       TEXT NOT NULL DEFAULT '',
       category_id      TEXT DEFAULT '',
       amount           INTEGER NOT NULL DEFAULT 0,
@@ -61,7 +61,7 @@ export const migration001: Migration = {
 
     // auto-categorization rules
     `CREATE TABLE auto_category_rules (
-      id          TEXT PRIMARY KEY,
+      id          TEXT PRIMARY KEY NOT NULL,
       pattern     TEXT NOT NULL DEFAULT '',
       category_id TEXT NOT NULL DEFAULT '',
       priority    INTEGER NOT NULL DEFAULT 0,
@@ -70,7 +70,7 @@ export const migration001: Migration = {
 
     // learned categorization patterns
     `CREATE TABLE learned_category_patterns (
-      id               TEXT PRIMARY KEY,
+      id               TEXT PRIMARY KEY NOT NULL,
       category_id      TEXT NOT NULL DEFAULT '',
       keyword          TEXT NOT NULL DEFAULT '',
       occurrence_count INTEGER NOT NULL DEFAULT 0,
@@ -82,7 +82,7 @@ export const migration001: Migration = {
 
     // auto-categorization corrections
     `CREATE TABLE auto_category_corrections (
-      id                      TEXT PRIMARY KEY,
+      id                      TEXT PRIMARY KEY NOT NULL,
       transaction_id          TEXT NOT NULL DEFAULT '',
       original_category_id    TEXT DEFAULT '',
       corrected_category_id   TEXT NOT NULL DEFAULT '',

@@ -5,13 +5,15 @@ import { type Page } from '@playwright/test';
  * starts with a clean slate. Navigates to the app first to operate in the right origin.
  */
 export async function clearStorage(page: Page): Promise<void> {
-  // Must be on the app origin to access its IndexedDB
-  await page.goto('/');
+  // Navigate to a static asset (NOT the SPA entry) so the app never boots and never opens
+  // the persisted database — otherwise cr-sqlite holds the DB file open and clearing
+  // storage can race against an active connection.
+  await page.goto('/manifest.json');
   await page.waitForLoadState('domcontentloaded');
   await page.evaluate(async () => {
     localStorage.clear();
     sessionStorage.clear();
-    // Delete all IndexedDB databases (SQLite-WASM stores data here)
+    // Delete all IndexedDB databases (sync state, key store, etc.)
     const dbs = await indexedDB.databases();
     await Promise.all(
       dbs.map((db) =>
@@ -25,6 +27,26 @@ export async function clearStorage(page: Page): Promise<void> {
           : Promise.resolve(),
       ),
     );
+    // Wipe OPFS (cr-sqlite persists the SQLite database file here).
+    const storage = navigator.storage as StorageManager & {
+      getDirectory?: () => Promise<FileSystemDirectoryHandle>;
+    };
+    if (storage.getDirectory) {
+      try {
+        const root = await storage.getDirectory();
+        const names: string[] = [];
+        for await (const name of (
+          root as FileSystemDirectoryHandle & { keys: () => AsyncIterable<string> }
+        ).keys()) {
+          names.push(name);
+        }
+        await Promise.all(
+          names.map((name) => root.removeEntry(name, { recursive: true }).catch(() => {})),
+        );
+      } catch {
+        // OPFS unavailable or busy — ignore.
+      }
+    }
     // Brief pause to let deletions propagate
     await new Promise<void>((r) => setTimeout(r, 50));
   });

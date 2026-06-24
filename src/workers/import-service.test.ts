@@ -11,7 +11,7 @@ describe('import-service', () => {
   beforeEach(async () => {
     db = await initDatabase();
     // Create a target account
-    db.exec(`INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`, [
+    await db.exec(`INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`, [
       'acc-1',
       'Checking',
       'bank',
@@ -19,8 +19,8 @@ describe('import-service', () => {
     ]);
   });
 
-  afterEach(() => {
-    db.close();
+  afterEach(async () => {
+    await db.close();
   });
 
   const baseTxns: ParsedTransaction[] = [
@@ -47,29 +47,29 @@ describe('import-service', () => {
     },
   ];
 
-  it('imports 3 new transactions', () => {
-    const result = importTransactions(db, 'acc-1', baseTxns);
+  it('imports 3 new transactions', async () => {
+    const result = await importTransactions(db, 'acc-1', baseTxns);
 
     expect(result.imported).toBe(3);
     expect(result.skipped).toBe(0);
     expect(result.errors).toHaveLength(0);
 
-    const rows = db.execO('SELECT * FROM transactions WHERE account_id = ?', ['acc-1']);
+    const rows = await db.execO('SELECT * FROM transactions WHERE account_id = ?', ['acc-1']);
     expect(rows).toHaveLength(3);
   });
 
-  it('skips all on re-import (deduplication by externalId)', () => {
-    importTransactions(db, 'acc-1', baseTxns);
-    const result = importTransactions(db, 'acc-1', baseTxns);
+  it('skips all on re-import (deduplication by externalId)', async () => {
+    await importTransactions(db, 'acc-1', baseTxns);
+    const result = await importTransactions(db, 'acc-1', baseTxns);
 
     expect(result.imported).toBe(0);
     expect(result.skipped).toBe(3);
 
-    const rows = db.execO('SELECT * FROM transactions WHERE account_id = ?', ['acc-1']);
+    const rows = await db.execO('SELECT * FROM transactions WHERE account_id = ?', ['acc-1']);
     expect(rows).toHaveLength(3); // still only 3
   });
 
-  it('collects validation errors without aborting', () => {
+  it('collects validation errors without aborting', async () => {
     const txnsWithBad: ParsedTransaction[] = [
       baseTxns[0]!,
       {
@@ -82,7 +82,7 @@ describe('import-service', () => {
       baseTxns[2]!,
     ];
 
-    const result = importTransactions(db, 'acc-1', txnsWithBad);
+    const result = await importTransactions(db, 'acc-1', txnsWithBad);
 
     expect(result.imported).toBe(2);
     expect(result.errors).toHaveLength(1);
@@ -90,7 +90,7 @@ describe('import-service', () => {
     expect(result.errors[0]!.message).toContain('description');
   });
 
-  it('imports transactions without externalId (no dedup)', () => {
+  it('imports transactions without externalId (no dedup)', async () => {
     const noExtId: ParsedTransaction[] = [
       {
         date: '2026-03-01',
@@ -108,13 +108,13 @@ describe('import-service', () => {
       },
     ];
 
-    const result = importTransactions(db, 'acc-1', noExtId);
+    const result = await importTransactions(db, 'acc-1', noExtId);
 
     expect(result.imported).toBe(2); // both imported, no dedup without externalId
     expect(result.skipped).toBe(0);
   });
 
-  it('deduplicates within the same batch', () => {
+  it('deduplicates within the same batch', async () => {
     const dupes: ParsedTransaction[] = [
       {
         date: '2026-04-01',
@@ -132,22 +132,22 @@ describe('import-service', () => {
       },
     ];
 
-    const result = importTransactions(db, 'acc-1', dupes);
+    const result = await importTransactions(db, 'acc-1', dupes);
 
     expect(result.imported).toBe(1);
     expect(result.skipped).toBe(1);
   });
 
-  it('does not cross-deduplicate between different accounts', () => {
-    db.exec(`INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`, [
+  it('does not cross-deduplicate between different accounts', async () => {
+    await db.exec(`INSERT INTO accounts (id, name, type, initial_balance) VALUES (?, ?, ?, ?)`, [
       'acc-2',
       'Savings',
       'bank',
       0,
     ]);
 
-    importTransactions(db, 'acc-1', [baseTxns[0]!]);
-    const result = importTransactions(db, 'acc-2', [baseTxns[0]!]);
+    await importTransactions(db, 'acc-1', [baseTxns[0]!]);
+    const result = await importTransactions(db, 'acc-2', [baseTxns[0]!]);
 
     // Same externalId, different account — should import
     expect(result.imported).toBe(1);

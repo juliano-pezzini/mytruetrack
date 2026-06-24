@@ -10,21 +10,22 @@ export function useAccounts() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const refresh = useCallback(() => {
+  const refresh = useCallback(async () => {
     const repo = createAccountRepository(db);
-    setAccounts(repo.getAll());
+    const rows = await repo.getAll();
+    setAccounts(rows);
     setLoading(false);
   }, [db]);
 
   useEffect(() => {
-    refresh();
+    void refresh();
   }, [refresh]);
 
   const create = useCallback(
-    (params: CreateAccountParams) => {
+    async (params: CreateAccountParams) => {
       const repo = createAccountRepository(db);
-      const account = repo.create(params);
-      refresh();
+      const account = await repo.create(params);
+      await refresh();
       notifyChange();
       return account;
     },
@@ -32,10 +33,10 @@ export function useAccounts() {
   );
 
   const update = useCallback(
-    (id: string, changes: Partial<Pick<Account, 'name' | 'type' | 'description'>>) => {
+    async (id: string, changes: Partial<Pick<Account, 'name' | 'type' | 'description'>>) => {
       const repo = createAccountRepository(db);
-      const account = repo.update(id, changes);
-      refresh();
+      const account = await repo.update(id, changes);
+      await refresh();
       notifyChange();
       return account;
     },
@@ -43,10 +44,10 @@ export function useAccounts() {
   );
 
   const remove = useCallback(
-    (id: string) => {
+    async (id: string) => {
       const repo = createAccountRepository(db);
-      repo.softDelete(id);
-      refresh();
+      await repo.softDelete(id);
+      await refresh();
       notifyChange();
     },
     [db, refresh, notifyChange],

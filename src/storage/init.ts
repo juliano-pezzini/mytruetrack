@@ -2,29 +2,35 @@ import initSqlJs from 'sql.js';
 import type { Database, SqlValue, Row } from './database.ts';
 import { runMigrations } from './migrations/runner.ts';
 import { allMigrations } from './migrations/index.ts';
-import { SYNC_TABLES } from '../sync/sync-engine.ts';
+import { SYNC_TABLES } from '../sync/sync-tables.ts';
 
 const isBrowser = typeof window !== 'undefined';
 
-const OPFS_DB_FILE = 'mytruetrack.db';
+const DB_FILE = 'mytruetrack.db';
 
 /**
- * In the browser there is exactly one OPFS-backed database file, so all callers must
- * share a single connection. React StrictMode (dev) and concurrent consumers would
- * otherwise open it twice and race the migrations against the same file. Node/test runs
- * skip this cache so each `initDatabase()` yields an independent in-memory database.
+ * In the browser there is exactly one persisted database file, so all callers must share a
+ * single connection. React StrictMode (dev) and concurrent consumers would otherwise open
+ * it twice and race the migrations against the same file. Node/test runs skip this cache so
+ * each `initDatabase()` yields an independent in-memory database.
  */
 let browserDbPromise: Promise<Database> | null = null;
 
 /**
  * Initialize the database: open a connection, run pending migrations, return the handle.
  *
- * Browser: cr-sqlite (`@vlcn.io/crsqlite-wasm`) with OPFS-backed persistence + CRDT.
+ * Browser: cr-sqlite (`@vlcn.io/crsqlite-wasm`) persisting via its IndexedDB-backed
+ * `IDBBatchAtomicVFS` + CRDT (no OPFS, no SharedArrayBuffer, no cross-origin isolation).
  * Node.js (tests): sql.js, in-memory.
  */
 export async function initDatabase(): Promise<Database> {
   if (isBrowser) {
-    browserDbPromise ??= openAndMigrate();
+    // Cache the connection promise, but drop it if it rejects so a transient failure
+    // (migration error, storage hiccup) can be retried without a full page reload.
+    browserDbPromise ??= openAndMigrate().catch((err) => {
+      browserDbPromise = null;
+      throw err;
+    });
     return browserDbPromise;
   }
   return openAndMigrate();
@@ -48,14 +54,15 @@ async function openAndMigrate(): Promise<Database> {
 }
 
 /**
- * Browser: cr-sqlite + OPFS. Imported dynamically so Node/test bundling never resolves
- * the WASM artifact (the `?url` suffix only makes sense under Vite).
+ * Browser: cr-sqlite persisting via its IndexedDB-backed `IDBBatchAtomicVFS`. Imported
+ * dynamically so Node/test bundling never resolves the WASM artifact (the `?url` suffix
+ * only makes sense under Vite).
  */
 async function createCrSqliteDatabase(): Promise<Database> {
   const { default: initWasm } = await import('@vlcn.io/crsqlite-wasm');
   const { default: wasmUrl } = await import('@vlcn.io/crsqlite-wasm/crsqlite.wasm?url');
   const sqlite = await initWasm(() => wasmUrl);
-  const raw = await sqlite.open(OPFS_DB_FILE);
+  const raw = await sqlite.open(DB_FILE);
 
   return {
     async exec(sql: string, params?: SqlValue[]): Promise<void> {
@@ -128,7 +135,7 @@ export function wrapSqlJs(raw: SqlJsDatabase): Database {
  */
 export async function closeDatabase(db: Database): Promise<void> {
   if (isBrowser && browserDbPromise) {
-    // Allow a future initDatabase() to reopen the shared OPFS connection.
+    // Allow a future initDatabase() to reopen the shared connection.
     browserDbPromise = null;
   }
   await db.close();

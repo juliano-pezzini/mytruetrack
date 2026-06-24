@@ -15,16 +15,16 @@ function rowToPattern(row: Row): LearnedCategoryPattern {
 }
 
 export type LearnedPatternRepository = {
-  create(pattern: LearnedCategoryPattern): LearnedCategoryPattern;
-  getByKeyword(keyword: string): LearnedCategoryPattern[];
-  getById(id: string): LearnedCategoryPattern | null;
-  upsert(pattern: LearnedCategoryPattern): LearnedCategoryPattern;
+  create(pattern: LearnedCategoryPattern): Promise<LearnedCategoryPattern>;
+  getByKeyword(keyword: string): Promise<LearnedCategoryPattern[]>;
+  getById(id: string): Promise<LearnedCategoryPattern | null>;
+  upsert(pattern: LearnedCategoryPattern): Promise<LearnedCategoryPattern>;
 };
 
 export function createLearnedPatternRepository(db: Database): LearnedPatternRepository {
   return {
-    create(pattern: LearnedCategoryPattern): LearnedCategoryPattern {
-      db.exec(
+    async create(pattern: LearnedCategoryPattern): Promise<LearnedCategoryPattern> {
+      await db.exec(
         `INSERT INTO learned_category_patterns
          (id, category_id, keyword, occurrence_count, confidence_score, first_learned_at, last_matched_at, is_active)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -42,31 +42,31 @@ export function createLearnedPatternRepository(db: Database): LearnedPatternRepo
       return pattern;
     },
 
-    getByKeyword(keyword: string): LearnedCategoryPattern[] {
-      return db
-        .execO(
+    async getByKeyword(keyword: string): Promise<LearnedCategoryPattern[]> {
+      return (
+        await db.execO(
           'SELECT * FROM learned_category_patterns WHERE keyword = ? AND is_active = 1 ORDER BY confidence_score DESC',
           [keyword],
         )
-        .map(rowToPattern);
+      ).map(rowToPattern);
     },
 
-    getById(id: string): LearnedCategoryPattern | null {
-      const rows = db.execO('SELECT * FROM learned_category_patterns WHERE id = ?', [id]);
+    async getById(id: string): Promise<LearnedCategoryPattern | null> {
+      const rows = await db.execO('SELECT * FROM learned_category_patterns WHERE id = ?', [id]);
       if (rows.length === 0) return null;
       return rowToPattern(rows[0]!);
     },
 
-    upsert(pattern: LearnedCategoryPattern): LearnedCategoryPattern {
+    async upsert(pattern: LearnedCategoryPattern): Promise<LearnedCategoryPattern> {
       // Check if a pattern with same keyword+categoryId exists
-      const existing = db.execO(
+      const existing = await db.execO(
         'SELECT id FROM learned_category_patterns WHERE keyword = ? AND category_id = ?',
         [pattern.keyword, pattern.categoryId],
       );
 
       if (existing.length > 0) {
         const existingId = existing[0]!.id as string;
-        db.exec(
+        await db.exec(
           `UPDATE learned_category_patterns
            SET occurrence_count = ?, confidence_score = ?, last_matched_at = ?, is_active = ?
            WHERE id = ?`,
@@ -78,7 +78,7 @@ export function createLearnedPatternRepository(db: Database): LearnedPatternRepo
             existingId,
           ],
         );
-        return this.getById(existingId)!;
+        return (await this.getById(existingId))!;
       }
 
       return this.create(pattern);

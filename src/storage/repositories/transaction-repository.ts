@@ -27,26 +27,26 @@ export type DateRange = {
 };
 
 export type TransactionRepository = {
-  create(params: CreateTransactionParams): Transaction;
-  getById(id: string): Transaction | null;
-  getByAccount(accountId: string, dateRange?: DateRange): Transaction[];
+  create(params: CreateTransactionParams): Promise<Transaction>;
+  getById(id: string): Promise<Transaction | null>;
+  getByAccount(accountId: string, dateRange?: DateRange): Promise<Transaction[]>;
   update(
     id: string,
     changes: Partial<
       Pick<Transaction, 'categoryId' | 'description' | 'transactionDate' | 'settledDate' | 'type'>
     >,
-  ): Transaction;
-  delete(id: string): void;
-  addTags(transactionId: string, tagIds: readonly string[]): void;
-  removeTags(transactionId: string, tagIds: readonly string[]): void;
-  getTagIds(transactionId: string): string[];
+  ): Promise<Transaction>;
+  delete(id: string): Promise<void>;
+  addTags(transactionId: string, tagIds: readonly string[]): Promise<void>;
+  removeTags(transactionId: string, tagIds: readonly string[]): Promise<void>;
+  getTagIds(transactionId: string): Promise<string[]>;
 };
 
 export function createTransactionRepository(db: Database): TransactionRepository {
   return {
-    create(params: CreateTransactionParams): Transaction {
+    async create(params: CreateTransactionParams): Promise<Transaction> {
       const txn = createTransaction(params);
-      db.exec(
+      await db.exec(
         `INSERT INTO transactions (id, account_id, category_id, amount, description, transaction_date, settled_date, type, external_id)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
@@ -64,13 +64,13 @@ export function createTransactionRepository(db: Database): TransactionRepository
       return txn;
     },
 
-    getById(id: string): Transaction | null {
-      const rows = db.execO('SELECT * FROM transactions WHERE id = ?', [id]);
+    async getById(id: string): Promise<Transaction | null> {
+      const rows = await db.execO('SELECT * FROM transactions WHERE id = ?', [id]);
       if (rows.length === 0) return null;
       return rowToTransaction(rows[0]!);
     },
 
-    getByAccount(accountId: string, dateRange?: DateRange): Transaction[] {
+    async getByAccount(accountId: string, dateRange?: DateRange): Promise<Transaction[]> {
       const conditions = ['account_id = ?'];
       const params: (string | number)[] = [accountId];
 
@@ -84,16 +84,16 @@ export function createTransactionRepository(db: Database): TransactionRepository
       }
 
       const sql = `SELECT * FROM transactions WHERE ${conditions.join(' AND ')} ORDER BY transaction_date DESC`;
-      return db.execO(sql, params).map(rowToTransaction);
+      return (await db.execO(sql, params)).map(rowToTransaction);
     },
 
-    update(
+    async update(
       id: string,
       changes: Partial<
         Pick<Transaction, 'categoryId' | 'description' | 'transactionDate' | 'settledDate' | 'type'>
       >,
-    ): Transaction {
-      const existing = this.getById(id);
+    ): Promise<Transaction> {
+      const existing = await this.getById(id);
       if (!existing) throw new Error(`Transaction not found: ${id}`);
 
       const sets: string[] = [];
@@ -122,41 +122,42 @@ export function createTransactionRepository(db: Database): TransactionRepository
 
       if (sets.length > 0) {
         values.push(id);
-        db.exec(`UPDATE transactions SET ${sets.join(', ')} WHERE id = ?`, values);
+        await db.exec(`UPDATE transactions SET ${sets.join(', ')} WHERE id = ?`, values);
       }
 
-      return this.getById(id)!;
+      return (await this.getById(id))!;
     },
 
-    delete(id: string): void {
-      db.exec('DELETE FROM transaction_tags WHERE transaction_id = ?', [id]);
-      db.exec('DELETE FROM transactions WHERE id = ?', [id]);
+    async delete(id: string): Promise<void> {
+      await db.exec('DELETE FROM transaction_tags WHERE transaction_id = ?', [id]);
+      await db.exec('DELETE FROM transactions WHERE id = ?', [id]);
     },
 
-    addTags(transactionId: string, tagIds: readonly string[]): void {
+    async addTags(transactionId: string, tagIds: readonly string[]): Promise<void> {
       for (const tagId of tagIds) {
-        db.exec('INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)', [
+        await db.exec(
+          'INSERT OR IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)',
+          [transactionId, tagId],
+        );
+      }
+    },
+
+    async removeTags(transactionId: string, tagIds: readonly string[]): Promise<void> {
+      for (const tagId of tagIds) {
+        await db.exec('DELETE FROM transaction_tags WHERE transaction_id = ? AND tag_id = ?', [
           transactionId,
           tagId,
         ]);
       }
     },
 
-    removeTags(transactionId: string, tagIds: readonly string[]): void {
-      for (const tagId of tagIds) {
-        db.exec('DELETE FROM transaction_tags WHERE transaction_id = ? AND tag_id = ?', [
-          transactionId,
-          tagId,
-        ]);
-      }
-    },
-
-    getTagIds(transactionId: string): string[] {
-      return db
-        .execO('SELECT tag_id FROM transaction_tags WHERE transaction_id = ? ORDER BY tag_id', [
-          transactionId,
-        ])
-        .map((r) => r.tag_id as string);
+    async getTagIds(transactionId: string): Promise<string[]> {
+      return (
+        await db.execO(
+          'SELECT tag_id FROM transaction_tags WHERE transaction_id = ? ORDER BY tag_id',
+          [transactionId],
+        )
+      ).map((r) => r.tag_id as string);
     },
   };
 }

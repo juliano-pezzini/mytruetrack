@@ -12,15 +12,20 @@ function rowToAccountBalance(row: Row): AccountBalance {
 }
 
 export type AccountBalanceRepository = {
-  upsert(accountId: string, year: number, month: number, closingBalance: number): void;
-  getByAccount(accountId: string): AccountBalance[];
-  getLatest(accountId: string, beforeDate: string): AccountBalance | null;
+  upsert(accountId: string, year: number, month: number, closingBalance: number): Promise<void>;
+  getByAccount(accountId: string): Promise<AccountBalance[]>;
+  getLatest(accountId: string, beforeDate: string): Promise<AccountBalance | null>;
 };
 
 export function createAccountBalanceRepository(db: Database): AccountBalanceRepository {
   return {
-    upsert(accountId: string, year: number, month: number, closingBalance: number): void {
-      db.exec(
+    async upsert(
+      accountId: string,
+      year: number,
+      month: number,
+      closingBalance: number,
+    ): Promise<void> {
+      await db.exec(
         `INSERT INTO account_balances (account_id, year, month, closing_balance)
          VALUES (?, ?, ?, ?)
          ON CONFLICT (account_id, year, month) DO UPDATE SET closing_balance = excluded.closing_balance`,
@@ -28,22 +33,22 @@ export function createAccountBalanceRepository(db: Database): AccountBalanceRepo
       );
     },
 
-    getByAccount(accountId: string): AccountBalance[] {
-      return db
-        .execO(
+    async getByAccount(accountId: string): Promise<AccountBalance[]> {
+      return (
+        await db.execO(
           'SELECT * FROM account_balances WHERE account_id = ? ORDER BY year DESC, month DESC',
           [accountId],
         )
-        .map(rowToAccountBalance);
+      ).map(rowToAccountBalance);
     },
 
-    getLatest(accountId: string, beforeDate: string): AccountBalance | null {
+    async getLatest(accountId: string, beforeDate: string): Promise<AccountBalance | null> {
       // Parse date to get year/month boundary
       const parts = beforeDate.split('-');
       const year = Number(parts[0]);
       const month = Number(parts[1]);
 
-      const rows = db.execO(
+      const rows = await db.execO(
         `SELECT * FROM account_balances
          WHERE account_id = ? AND (year < ? OR (year = ? AND month <= ?))
          ORDER BY year DESC, month DESC

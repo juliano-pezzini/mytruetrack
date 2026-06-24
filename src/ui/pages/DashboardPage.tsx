@@ -6,6 +6,7 @@ import { MoneyDisplay } from '../components/MoneyDisplay.tsx';
 import { ImportModal } from '../components/ImportModal.tsx';
 import { createTransactionRepository } from '../../storage/repositories/transaction-repository.ts';
 import { fromCents, add, toCents, subtract } from '../../domain/money.ts';
+import type { Money } from '../../domain/money.ts';
 import type { Account, AccountType } from '../../domain/account.ts';
 import type { Transaction } from '../../domain/transaction.ts';
 
@@ -35,7 +36,7 @@ function AccountCard({
       didMount.current = true;
       return;
     }
-    refresh();
+    void refresh();
   }, [refreshKey, refresh]);
 
   return (
@@ -81,60 +82,93 @@ export function DashboardPage() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Net worth: sum of all account balances (computed inline since we need all)
-  const netWorth = useMemo(() => {
-    let total = fromCents(0);
-    // This is a simplified calculation — in production we'd use the balance hook per account
-    // For now, iterate accounts and query each
-    for (const account of accounts) {
+  const [netWorth, setNetWorth] = useState<Money>(fromCents(0));
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
       const repo = createTransactionRepository(db);
-      const txns = repo.getByAccount(account.id);
-      let balance = account.initialBalance;
-      for (const txn of txns) {
-        if (txn.type === 'credit') {
-          balance = add(balance, txn.amount);
-        } else {
-          balance = subtract(balance, txn.amount);
+      let total = fromCents(0);
+      // Fetch each account's transactions in parallel to avoid serial DB round-trips.
+      const perAccount = await Promise.all(
+        accounts.map(async (account) => ({
+          account,
+          txns: await repo.getByAccount(account.id),
+        })),
+      );
+      for (const { account, txns } of perAccount) {
+        let balance = account.initialBalance;
+        for (const txn of txns) {
+          if (txn.type === 'credit') {
+            balance = add(balance, txn.amount);
+          } else {
+            balance = subtract(balance, txn.amount);
+          }
         }
+        total = add(total, balance);
       }
-      total = add(total, balance);
-    }
-    return total;
+      if (!cancelled) setNetWorth(total);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [accounts, db, refreshKey]);
 
   // Recent transactions (last 10 across all accounts)
-  const recentTxns = useMemo(() => {
-    const repo = createTransactionRepository(db);
-    const all: Transaction[] = [];
-    for (const account of accounts) {
-      all.push(...repo.getByAccount(account.id));
-    }
-    return all.sort((a, b) => b.transactionDate.localeCompare(a.transactionDate)).slice(0, 10);
+  const [recentTxns, setRecentTxns] = useState<Transaction[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const repo = createTransactionRepository(db);
+      const perAccount = await Promise.all(
+        accounts.map((account) => repo.getByAccount(account.id)),
+      );
+      const all: Transaction[] = perAccount.flat();
+      const sorted = all
+        .sort((a, b) => b.transactionDate.localeCompare(a.transactionDate))
+        .slice(0, 10);
+      if (!cancelled) setRecentTxns(sorted);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [accounts, db, refreshKey]);
 
   // Monthly summary: current month income vs expenses
-  const monthlySummary = useMemo(() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    const from = `${year}-${String(month).padStart(2, '0')}-01`;
-    const lastDay = new Date(year, month, 0).getDate();
-    const to = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  const [monthlySummary, setMonthlySummary] = useState<{ income: Money; expenses: Money }>({
+    income: fromCents(0),
+    expenses: fromCents(0),
+  });
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+      const from = `${year}-${String(month).padStart(2, '0')}-01`;
+      const lastDay = new Date(year, month, 0).getDate();
+      const to = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
-    const repo = createTransactionRepository(db);
-    let income = fromCents(0);
-    let expenses = fromCents(0);
+      const repo = createTransactionRepository(db);
+      let income = fromCents(0);
+      let expenses = fromCents(0);
 
-    for (const account of accounts) {
-      const txns = repo.getByAccount(account.id, { from, to });
-      for (const txn of txns) {
-        if (txn.type === 'credit') {
-          income = add(income, txn.amount);
-        } else {
-          expenses = add(expenses, txn.amount);
+      const perAccount = await Promise.all(
+        accounts.map((account) => repo.getByAccount(account.id, { from, to })),
+      );
+      for (const txns of perAccount) {
+        for (const txn of txns) {
+          if (txn.type === 'credit') {
+            income = add(income, txn.amount);
+          } else {
+            expenses = add(expenses, txn.amount);
+          }
         }
       }
-    }
-    return { income, expenses };
+      if (!cancelled) setMonthlySummary({ income, expenses });
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [accounts, db, refreshKey]);
 
   // Account name lookup for recent transactions

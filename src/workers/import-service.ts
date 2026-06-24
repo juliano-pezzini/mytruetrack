@@ -15,11 +15,11 @@ import type { ParsedTransaction, ImportResult, ImportError } from './types.ts';
  * - Deduplicates by externalId (skips if already in DB for the same account)
  * - Collects validation errors without aborting
  */
-export function importTransactions(
+export async function importTransactions(
   db: Database,
   accountId: string,
   transactions: readonly ParsedTransaction[],
-): ImportResult {
+): Promise<ImportResult> {
   const repo = createTransactionRepository(db);
   let imported = 0;
   let skipped = 0;
@@ -27,7 +27,7 @@ export function importTransactions(
 
   // Pre-load existing external IDs for this account to check duplicates
   const existingExternalIds = new Set<string>();
-  const existingRows = db.execO(
+  const existingRows = await db.execO(
     `SELECT external_id FROM transactions WHERE account_id = ? AND external_id IS NOT NULL AND external_id != ''`,
     [accountId],
   );
@@ -55,7 +55,7 @@ export function importTransactions(
         externalId: txn.externalId,
       };
 
-      repo.create(params);
+      await repo.create(params);
       imported++;
 
       // Track for intra-batch dedup

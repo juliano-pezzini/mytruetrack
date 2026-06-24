@@ -10,21 +10,22 @@ export function useCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const refresh = useCallback(() => {
+  const refresh = useCallback(async () => {
     const repo = createCategoryRepository(db);
-    setCategories(repo.getAll());
+    const rows = await repo.getAll();
+    setCategories(rows);
     setLoading(false);
   }, [db]);
 
   useEffect(() => {
-    refresh();
+    void refresh();
   }, [refresh]);
 
   const create = useCallback(
-    (params: CreateCategoryParams) => {
+    async (params: CreateCategoryParams) => {
       const repo = createCategoryRepository(db);
-      const category = repo.create(params);
-      refresh();
+      const category = await repo.create(params);
+      await refresh();
       notifyChange();
       return category;
     },
@@ -32,13 +33,13 @@ export function useCategories() {
   );
 
   const update = useCallback(
-    (
+    async (
       id: string,
       changes: Partial<Pick<Category, 'name' | 'type' | 'parentId' | 'description'>>,
     ) => {
       const repo = createCategoryRepository(db);
-      const category = repo.update(id, changes);
-      refresh();
+      const category = await repo.update(id, changes);
+      await refresh();
       notifyChange();
       return category;
     },
@@ -46,10 +47,10 @@ export function useCategories() {
   );
 
   const remove = useCallback(
-    (id: string) => {
+    async (id: string) => {
       const repo = createCategoryRepository(db);
-      repo.delete(id);
-      refresh();
+      await repo.delete(id);
+      await refresh();
       notifyChange();
     },
     [db, refresh, notifyChange],

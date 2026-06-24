@@ -1,13 +1,46 @@
 # State
 
-**Last Updated:** 2026-06-12
-**Current Work:** Auto-sync feature COMPLETE (AD-007) — pull-on-load, debounced push,
-online retry, sync status indicator. 293 unit tests, 41 e2e tests, all passing. Phase 8 —
-Local-First Foundation complete prior (AD-006).
+**Last Updated:** 2026-06-23
+**Current Work:** Local persistence + CRDT delta sync COMPLETE (AD-008) — cr-sqlite via an
+IndexedDB-backed VFS, per-site `crsql_changes` delta sync. 330 unit tests, 50 e2e tests, all
+passing. Auto-sync (AD-007) and Phase 8 — Local-First Foundation complete prior.
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-008: Local persistence + cr-sqlite CRDT delta sync (Phase 8.11) (2026-06-17)
+
+**Decision:** The browser database is now `@vlcn.io/crsqlite-wasm` (cr-sqlite) opened on the
+main thread (`mytruetrack.db`) — no Web Worker, no manual WASM copy
+(`import wasmUrl from '@vlcn.io/crsqlite-wasm/crsqlite.wasm?url'`). cr-sqlite 0.16 persists
+through its **IndexedDB-backed `IDBBatchAtomicVFS`** — it does **not** use OPFS or
+`SharedArrayBuffer`, so cross-origin isolation is **not** required. Every syncable table is
+registered as a conflict-free replicated relation via `crsql_as_crr`, and cloud sync now ships
+**deltas**: each device exports its `crsql_changes` log to a per-site file `changes-<siteid>.bin`
+and, on pull, merges every peer file except its own via `INSERT INTO crsql_changes`
+(`src/sync/crsql-changes.ts`). A binary/bigint-safe JSON codec handles the blob/bigint columns.
+The `Database` interface is now fully async (Promise-returning `exec/execA/execO/close`); Node
+tests keep using sql.js (in-memory) through a shared async adapter. The snapshot
+export/import path is retained for local backup only.
+
+**Reason:** Data previously lived only in memory / a single re-uploaded snapshot blob, which
+had a last-writer-wins overwrite race across devices. cr-sqlite CRDTs give conflict-free
+multi-device convergence with no merge prompts, and the IndexedDB VFS gives durable local
+persistence.
+
+**Trade-off:** Because no cross-origin isolation is needed, the app uses COOP
+`same-origin-allow-popups` (and omits COEP) so the Google Identity Services sign-in popup can
+post its token back — COOP `same-origin` + COEP `require-corp` severed the popup's
+`window.opener` link and broke Drive sign-in. cr-sqlite is browser-only, so delta sync runs
+only in the browser; its protocol is unit-tested with a fake DB + mock provider and the real
+merge is spike-verified — a full WebDAV-backed two-device convergence e2e is deferred (needs a
+shared cloud test server).
+
+**Impact:** New `src/sync/crsql-changes.ts`; async cutover across storage/repos/hooks/pages;
+migration 001 PKs made `NOT NULL` (cr-sqlite rejects nullable PKs); single shared browser DB
+connection in `init.ts` (React StrictMode was double-opening the DB and racing migrations).
+330 unit tests (+37) and 50 e2e tests (+9) pass; build clean; `audit-ci` clean.
 
 ### AD-007: Auto-sync — pull-on-load + debounced push + online retry (2026-06-12)
 

@@ -50,6 +50,21 @@ export type GisTokenResult = {
 };
 
 /**
+ * Error thrown when a GIS token request fails. Preserves the GIS error `type`
+ * (e.g. `popup_closed`, `popup_failed_to_open`, `access_denied`) so callers can
+ * distinguish user cancellation from environmental problems.
+ */
+export class GisTokenError extends Error {
+  readonly type: string;
+
+  constructor(type: string, message: string) {
+    super(message);
+    this.name = 'GisTokenError';
+    this.type = type;
+  }
+}
+
+/**
  * Request an access token via the GIS token model.
  *
  * @param clientId  OAuth 2.0 client ID (Web application type).
@@ -69,7 +84,7 @@ export function requestAccessToken(
       prompt,
       callback: (response) => {
         if (response.error) {
-          reject(new Error(response.error_description ?? response.error));
+          reject(new GisTokenError(response.error, response.error_description ?? response.error));
           return;
         }
         resolve({
@@ -78,7 +93,7 @@ export function requestAccessToken(
         });
       },
       error_callback: (error) => {
-        reject(new Error(error.message ?? 'GIS token request failed.'));
+        reject(new GisTokenError(error.type, error.message ?? 'GIS token request failed.'));
       },
     });
 

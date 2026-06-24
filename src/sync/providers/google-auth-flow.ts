@@ -8,7 +8,7 @@
  * fall back to an interactive prompt if needed.
  */
 
-import { loadGisClient, requestAccessToken } from './google-gis.ts';
+import { loadGisClient, requestAccessToken, GisTokenError } from './google-gis.ts';
 import type { GoogleTokens } from '../sync-config.ts';
 
 const SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
@@ -34,6 +34,23 @@ function toTokens(accessToken: string, expiresIn: number): GoogleTokens {
 }
 
 /**
+ * GIS error types that indicate the popup opened and the user may have even
+ * completed sign-in, but the result never returned to the app.
+ */
+const POPUP_RESULT_LOST_TYPES = new Set(['popup_closed', 'popup_failed_to_open']);
+
+/**
+ * When the document is cross-origin isolated (COOP `same-origin`, required for
+ * OPFS-backed SQLite), the browser severs the popup's `window.opener` link, so
+ * GIS cannot deliver the token back and reports the popup as "closed" even when
+ * sign-in actually succeeded. Detect this so we can show an accurate message
+ * instead of the misleading "popup window closed".
+ */
+function isCrossOriginIsolated(): boolean {
+  return typeof globalThis !== 'undefined' && globalThis.crossOriginIsolated === true;
+}
+
+/**
  * Run the interactive connect flow. Loads the GIS library (if needed), then
  * requests an access token with `prompt:'consent'` which shows Google's
  * consent popup.
@@ -47,8 +64,27 @@ export async function connectGoogleDrive(): Promise<GoogleTokens> {
   }
 
   await loadGisClient();
-  const result = await requestAccessToken(clientId, SCOPE, 'consent');
-  return toTokens(result.accessToken, result.expiresIn);
+  try {
+    const result = await requestAccessToken(clientId, SCOPE, 'consent');
+    return toTokens(result.accessToken, result.expiresIn);
+  } catch (err) {
+    if (err instanceof GisTokenError && POPUP_RESULT_LOST_TYPES.has(err.type)) {
+      if (isCrossOriginIsolated()) {
+        throw new Error(
+          'Sign-in could not complete: this app runs in a cross-origin-isolated context ' +
+            '(required for local encrypted storage), which prevents the Google popup from ' +
+            'returning its result — even though your Google login may have succeeded. This is ' +
+            'a known limitation; Google Drive sync needs a configuration change to work here. ' +
+            'WebDAV sync is unaffected.',
+          { cause: err },
+        );
+      }
+      throw new Error('Sign-in was cancelled before it completed. Please try again.', {
+        cause: err,
+      });
+    }
+    throw err;
+  }
 }
 
 /**

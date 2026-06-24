@@ -2,18 +2,23 @@ import { test, expect } from '@playwright/test';
 import { setupLocalOnly, gotoApp } from './helpers.ts';
 
 /**
- * OPFS persistence (Phase 8.11). Verifies that data written through the cr-sqlite
- * OPFS-backed database survives a full page reload — i.e. it is persisted to disk,
+ * Local persistence (Phase 8.11). cr-sqlite 0.16 persists through its Asyncify
+ * `IDBBatchAtomicVFS` (IndexedDB) build — it does NOT use OPFS or SharedArrayBuffer,
+ * so the app intentionally does NOT require cross-origin isolation (which would
+ * otherwise break the Google sign-in popup). These tests verify that data written
+ * through the cr-sqlite database survives a full page reload — i.e. it is persisted,
  * not merely held in memory.
  */
 
-test('the app is cross-origin isolated (required for cr-sqlite OPFS)', async ({ page }) => {
+test('the app is NOT cross-origin isolated (IndexedDB VFS needs no COOP/COEP)', async ({
+  page,
+}) => {
   await gotoApp(page);
   const isolated = await page.evaluate(() => self.crossOriginIsolated);
-  expect(isolated).toBe(true);
+  expect(isolated).toBe(false);
 });
 
-test('account data survives a full page reload (OPFS)', async ({ page }) => {
+test('account data survives a full page reload', async ({ page }) => {
   await setupLocalOnly(page);
 
   await page.getByRole('link', { name: /Accounts/i }).click();
@@ -27,7 +32,7 @@ test('account data survives a full page reload (OPFS)', async ({ page }) => {
   await expect(page.getByRole('cell', { name: 'Persisted Account' })).toBeVisible();
 
   // Full reload: in local-only mode the vault auto-unlocks, and the row must reappear
-  // from OPFS — proving the write was persisted to disk.
+  // from IndexedDB — proving the write was persisted, not just held in memory.
   await page.reload();
   await page.waitForFunction(() => !document.body.textContent?.includes('Loading…'), {
     timeout: 10_000,
@@ -38,7 +43,7 @@ test('account data survives a full page reload (OPFS)', async ({ page }) => {
   await expect(page.getByRole('cell', { name: 'Persisted Account' })).toBeVisible();
 });
 
-test('a transaction survives a full page reload (OPFS)', async ({ page }) => {
+test('a transaction survives a full page reload', async ({ page }) => {
   await setupLocalOnly(page);
 
   // Create an account to hold the transaction.

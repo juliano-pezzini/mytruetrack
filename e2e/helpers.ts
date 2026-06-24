@@ -5,9 +5,9 @@ import { type Page } from '@playwright/test';
  * starts with a clean slate. Navigates to the app first to operate in the right origin.
  */
 export async function clearStorage(page: Page): Promise<void> {
-  // Navigate to a static asset (NOT the SPA entry) so the app never boots and never
-  // opens the OPFS database — otherwise cr-sqlite holds SyncAccessHandle locks and the
-  // OPFS files cannot be removed.
+  // Navigate to a static asset (NOT the SPA entry) so the app never boots and never opens
+  // the persisted database — otherwise cr-sqlite holds the DB file open and clearing
+  // storage can race against an active connection.
   await page.goto('/manifest.json');
   await page.waitForLoadState('domcontentloaded');
   await page.evaluate(async () => {

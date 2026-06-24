@@ -89,14 +89,17 @@ overlaps with the existing `AutoSyncProvider.pullOnLoad` — consolidate so pull
 
 ## 7. Headers & hosting (OPF-05)
 
-`vite.config.ts` sends COOP `same-origin` + COEP `require-corp` on dev and preview (done in spike).
-Production deployment docs must require the same. No WASM copy step — `?url` import handles dev+build.
+cr-sqlite 0.16 persists via its IndexedDB-backed `IDBBatchAtomicVFS` — no OPFS, no
+`SharedArrayBuffer`, so **cross-origin isolation is not required**. `vite.config.ts` sends COOP
+`same-origin-allow-popups` (and omits COEP) on dev and preview so the Google sign-in popup can
+return its token; production deployment docs should match. No WASM copy step — `?url` import
+handles dev+build.
 
 ## 8. Risks / mitigations
 
-| Risk | Mitigation |
-| ---- | ---------- |
-| COEP `require-corp` breaks cross-origin assets (fonts, Drive script) | Audit external loads; add `crossorigin` / proxy. GIS script load must still work under COEP — verify in e2e. |
-| `crsql_changes` insert column-order drift between versions | Capture column names on export; insert by explicit column list. |
-| Large mechanical async diff (~126 call sites) | Land in ordered tasks (interface → runner → repos → consumers → tests), gate after each. |
-| Unbounded growth of per-site change file | Acceptable for launch (full changes re-uploaded); compaction deferred. |
+| Risk                                                                                            | Mitigation                                                                                                                                     |
+| ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Re-enabling COEP `require-corp` would break the GIS sign-in popup and other cross-origin assets | Keep COOP `same-origin-allow-popups` / no COEP unless a VFS that needs isolation is adopted; then audit external loads and the GIS popup flow. |
+| `crsql_changes` insert column-order drift between versions                                      | Capture column names on export; insert by explicit column list.                                                                                |
+| Large mechanical async diff (~126 call sites)                                                   | Land in ordered tasks (interface → runner → repos → consumers → tests), gate after each.                                                       |
+| Unbounded growth of per-site change file                                                        | Acceptable for launch (full changes re-uploaded); compaction deferred.                                                                         |

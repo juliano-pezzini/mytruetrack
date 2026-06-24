@@ -32,7 +32,7 @@ test('account data survives a full page reload', async ({ page }) => {
   await expect(page.getByRole('cell', { name: 'Persisted Account' })).toBeVisible();
 
   // Full reload: in local-only mode the vault auto-unlocks, and the row must reappear
-  // from IndexedDB — proving the write was persisted, not just held in memory.
+  // from durable storage — proving the write was persisted, not just held in memory.
   await page.reload();
   await page.waitForFunction(() => !document.body.textContent?.includes('Loading…'), {
     timeout: 10_000,

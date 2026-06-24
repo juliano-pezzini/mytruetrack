@@ -40,11 +40,12 @@ function toTokens(accessToken: string, expiresIn: number): GoogleTokens {
 const POPUP_RESULT_LOST_TYPES = new Set(['popup_closed', 'popup_failed_to_open']);
 
 /**
- * When the document is cross-origin isolated (COOP `same-origin`, required for
- * OPFS-backed SQLite), the browser severs the popup's `window.opener` link, so
- * GIS cannot deliver the token back and reports the popup as "closed" even when
- * sign-in actually succeeded. Detect this so we can show an accurate message
- * instead of the misleading "popup window closed".
+ * When the document is cross-origin isolated (COOP `same-origin` + COEP `require-corp`,
+ * a possible hosting mode for some SQLite VFS variants), the browser severs the popup's
+ * `window.opener` link, so GIS cannot deliver the token back and reports the popup as
+ * "closed" even when sign-in actually succeeded. Detect this so we can show an accurate
+ * message instead of the misleading "popup window closed". This app does not enable
+ * isolation (cr-sqlite uses an IndexedDB VFS), but a host might.
  */
 function isCrossOriginIsolated(): boolean {
   return typeof globalThis !== 'undefined' && globalThis.crossOriginIsolated === true;

@@ -61,7 +61,12 @@ describe('AccountRepository', () => {
   });
 
   it('updates only the provided fields', async () => {
-    await repo.create({ id: 'u1', name: 'Old Name', type: 'bank', initialBalance: fromCents(5000) });
+    await repo.create({
+      id: 'u1',
+      name: 'Old Name',
+      type: 'bank',
+      initialBalance: fromCents(5000),
+    });
 
     const updated = await repo.update('u1', { name: 'New Name' });
     expect(updated.name).toBe('New Name');

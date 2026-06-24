@@ -12,12 +12,7 @@ function rowToAccountBalance(row: Row): AccountBalance {
 }
 
 export type AccountBalanceRepository = {
-  upsert(
-    accountId: string,
-    year: number,
-    month: number,
-    closingBalance: number,
-  ): Promise<void>;
+  upsert(accountId: string, year: number, month: number, closingBalance: number): Promise<void>;
   getByAccount(accountId: string): Promise<AccountBalance[]>;
   getLatest(accountId: string, beforeDate: string): Promise<AccountBalance | null>;
 };

@@ -41,7 +41,13 @@ describe('AutoCategoryRuleRepository', () => {
 
   it('getActive returns only active rules ordered by priority DESC', async () => {
     await repo.create({ id: 'r1', pattern: 'LOW', categoryId: 'c1', priority: 1, isActive: true });
-    await repo.create({ id: 'r2', pattern: 'HIGH', categoryId: 'c2', priority: 10, isActive: true });
+    await repo.create({
+      id: 'r2',
+      pattern: 'HIGH',
+      categoryId: 'c2',
+      priority: 10,
+      isActive: true,
+    });
     await repo.create({
       id: 'r3',
       pattern: 'INACTIVE',
@@ -64,7 +70,13 @@ describe('AutoCategoryRuleRepository', () => {
   });
 
   it('updates categoryId and priority', async () => {
-    await repo.create({ id: 'r2', pattern: 'STORE', categoryId: 'c1', priority: 1, isActive: true });
+    await repo.create({
+      id: 'r2',
+      pattern: 'STORE',
+      categoryId: 'c1',
+      priority: 1,
+      isActive: true,
+    });
     const updated = await repo.update('r2', { categoryId: 'c2', priority: 50 });
     expect(updated.categoryId).toBe('c2');
     expect(updated.priority).toBe(50);

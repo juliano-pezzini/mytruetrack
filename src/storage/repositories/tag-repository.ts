@@ -22,7 +22,11 @@ export function createTagRepository(db: Database): TagRepository {
   return {
     async create(params: CreateTagParams): Promise<Tag> {
       const tag = createTag(params);
-      await db.exec('INSERT INTO tags (id, name, color) VALUES (?, ?, ?)', [tag.id, tag.name, tag.color]);
+      await db.exec('INSERT INTO tags (id, name, color) VALUES (?, ?, ?)', [
+        tag.id,
+        tag.name,
+        tag.color,
+      ]);
       return tag;
     },
 

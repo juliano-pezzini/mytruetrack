@@ -4,12 +4,7 @@ import type { Database, SqlValue } from '../storage/database.ts';
 import { generateDek } from '../crypto/key-derivation.ts';
 import { createMockCloudProvider } from './mock-cloud-provider.ts';
 import { clearSyncState, getSyncState } from './sync-state.ts';
-import {
-  serializeChanges,
-  deserializeChanges,
-  pushDeltas,
-  pullDeltas,
-} from './crsql-changes.ts';
+import { serializeChanges, deserializeChanges, pushDeltas, pullDeltas } from './crsql-changes.ts';
 
 type ChangeValue = string | number | bigint | null | Uint8Array;
 

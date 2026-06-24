@@ -33,7 +33,9 @@ export function createAutoCategoryRuleRepository(db: Database): AutoCategoryRule
 
     async getActive(): Promise<AutoCategoryRule[]> {
       return (
-        await db.execO('SELECT * FROM auto_category_rules WHERE is_active = 1 ORDER BY priority DESC')
+        await db.execO(
+          'SELECT * FROM auto_category_rules WHERE is_active = 1 ORDER BY priority DESC',
+        )
       ).map(rowToRule);
     },
 

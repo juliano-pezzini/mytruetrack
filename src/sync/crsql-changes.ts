@@ -21,7 +21,8 @@ const CHANGES_PREFIX = 'changes-';
 const CHANGES_SUFFIX = '.bin';
 
 /** Columns of the `crsql_changes` virtual table (cr-sqlite 0.16), in fixed order. */
-const CHANGE_COLUMNS = '"table", "pk", "cid", "val", "col_version", "db_version", "site_id", "cl", "seq"';
+const CHANGE_COLUMNS =
+  '"table", "pk", "cid", "val", "col_version", "db_version", "site_id", "cl", "seq"';
 const CHANGE_PLACEHOLDERS = new Array(9).fill('?').join(', ');
 
 /** A single value within a change row — may be binary or a big integer. */

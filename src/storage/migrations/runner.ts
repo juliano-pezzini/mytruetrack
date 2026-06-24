@@ -6,10 +6,7 @@ import type { Migration } from './types.ts';
  * Tracks applied versions in a `_migrations` table.
  * Throws on failure with version + message.
  */
-export async function runMigrations(
-  db: Database,
-  migrations: readonly Migration[],
-): Promise<void> {
+export async function runMigrations(db: Database, migrations: readonly Migration[]): Promise<void> {
   await db.exec(`
     CREATE TABLE IF NOT EXISTS _migrations (
       version INTEGER PRIMARY KEY,

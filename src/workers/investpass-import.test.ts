@@ -141,6 +141,27 @@ describe('processInvestPassImport', () => {
     expect(rows[1]!.amount).toBe(27999); // 279.99 → 27999 cents
   });
 
+  it('rounds pathological floats correctly (IEEE 754 edge cases)', async () => {
+    // 19.99 * 100 = 1998.9999999999998 in IEEE 754 — without Math.round this truncates to 1998
+    // 33.33 * 100 = 3333.0000000000005 — without Math.round this could round up incorrectly
+    const txns: InvestPassTransaction[] = [
+      makeTxn({ id: 'k1111111-1111-4111-a111-111111111111', amount: 19.99 }),
+      makeTxn({ id: 'k2222222-2222-4222-a222-222222222222', amount: 33.33 }),
+      makeTxn({ id: 'k3333333-3333-4333-a333-333333333333', amount: 0.1 }),
+    ];
+
+    const result = await processInvestPassImport(db, txns, accountMap);
+
+    expect(result.perAccount['acc-nu']!.imported).toBe(3);
+    const rows = await db.execO(
+      `SELECT amount, external_id FROM transactions WHERE external_id IN (?, ?, ?) ORDER BY amount`,
+      ['k1111111-1111-4111-a111-111111111111', 'k2222222-2222-4222-a222-222222222222', 'k3333333-3333-4333-a333-333333333333'],
+    );
+    expect(rows[0]!.amount).toBe(10);    // 0.1  → 10 cents
+    expect(rows[1]!.amount).toBe(1999);  // 19.99 → 1999 cents (NOT 1998)
+    expect(rows[2]!.amount).toBe(3333);  // 33.33 → 3333 cents (NOT 3334)
+  });
+
   it('routes transactions to multiple mapped accounts', async () => {
     const txns: InvestPassTransaction[] = [
       makeTxn({

@@ -84,4 +84,3 @@ cash-flow only (not investments); no mytruetrack-operated server.
 - Publishing the extension to a browser web store.
 - Importing InvestPass "Meus Investimentos" (portfolio) data.
 - Non-Chromium browser support for the acquirer.
-</content>

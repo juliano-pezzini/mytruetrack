@@ -11,6 +11,8 @@ type ChangeValue = string | number | bigint | null | Uint8Array;
 /**
  * A fake Database that emulates just enough of cr-sqlite for the delta protocol:
  * a fixed site id, a canned `crsql_changes` export, and capture of applied INSERTs.
+ * The fake filters canned rows by `db_version` when params are provided (mirrors the
+ * real WHERE clause in `exportLocalChanges`).
  */
 function createFakeDb(siteId: string, changes: ChangeValue[][], dbVersion = 1) {
   const applied: ChangeValue[][] = [];
@@ -20,10 +22,22 @@ function createFakeDb(siteId: string, changes: ChangeValue[][], dbVersion = 1) {
         applied.push(params as ChangeValue[]);
       }
     },
-    async execA(sql: string): Promise<SqlValue[][]> {
+    async execA(sql: string, params?: SqlValue[]): Promise<SqlValue[][]> {
       if (sql.includes('crsql_site_id')) return [[siteId]];
       if (sql.includes('crsql_db_version')) return [[dbVersion]];
-      if (sql.includes('FROM crsql_changes')) return changes as SqlValue[][];
+      if (sql.includes('FROM crsql_changes')) {
+        // db_version is column index 5 in the CHANGE_COLUMNS order.
+        let filtered = changes as SqlValue[][];
+        if (params && params.length >= 1) {
+          const since = Number(params[0]);
+          filtered = filtered.filter((r) => Number(r[5]) > since);
+        }
+        if (params && params.length >= 2) {
+          const until = Number(params[1]);
+          filtered = filtered.filter((r) => Number(r[5]) <= until);
+        }
+        return filtered;
+      }
       return [];
     },
     async execO(): Promise<Record<string, SqlValue>[]> {
@@ -37,9 +51,9 @@ function createFakeDb(siteId: string, changes: ChangeValue[][], dbVersion = 1) {
 const pkBytes = new Uint8Array([1, 2, 3, 4]);
 const siteBytes = new Uint8Array([0xaa, 0xbb]);
 
-/** A representative crsql_changes row: text, blob, int, text, bigints, blob, int, bigint. */
+/** A representative crsql_changes row: table, pk, cid, val, col_version, db_version, site_id, cl, seq. */
 const rowA: ChangeValue[] = ['accounts', pkBytes, 0, 'Account A', 1n, 1n, siteBytes, 0, 1n];
-const rowB: ChangeValue[] = ['transactions', pkBytes, 0, 'From B', 2n, 2n, siteBytes, 0, 2n];
+const rowB: ChangeValue[] = ['transactions', pkBytes, 0, 'From B', 1n, 1n, siteBytes, 0, 1n];
 
 describe('crsql-changes codec', () => {
   it('round-trips strings, numbers, null, blobs, and bigints', () => {
@@ -91,6 +105,25 @@ describe('pushDeltas / pullDeltas', () => {
 
     const names = (await provider.list()).map((f) => f.name);
     expect(names).toEqual(['changes-aa-1.bin']);
+  });
+
+  it('bounds the export to the snapshot db_version (upper-bound)', async () => {
+    // Simulate rows at db_version 1 and 3 — a push at snapshot version 2 should only
+    // include version 1's rows, excluding version 3 (written after snapshot was taken).
+    const rowV1: ChangeValue[] = ['accounts', pkBytes, 0, 'V1', 1n, 1n, siteBytes, 0, 1n];
+    const rowV3: ChangeValue[] = ['accounts', pkBytes, 0, 'V3', 3n, 3n, siteBytes, 0, 3n];
+    const { db } = createFakeDb('aa', [rowV1, rowV3], 2);
+    const provider = createMockCloudProvider();
+
+    await pushDeltas(db, provider, dek);
+
+    // The segment should be named for the snapshot version (2).
+    const names = (await provider.list()).map((f) => f.name);
+    expect(names).toContain('changes-aa-2.bin');
+    expect(names).not.toContain('changes-aa-3.bin');
+
+    // Watermark should be 2, not 3.
+    expect((await getSyncState()).lastPushedVersion).toBe(2);
   });
 
   it('encrypts the uploaded payload (no plaintext leak)', async () => {

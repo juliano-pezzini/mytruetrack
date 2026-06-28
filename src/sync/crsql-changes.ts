@@ -106,9 +106,21 @@ export async function getDbVersion(db: Database): Promise<number> {
 
 /**
  * Export the local CRDT change-log for every change with `db_version` greater than
- * `sinceVersion` (0 → the full history). This is the per-push delta.
+ * `sinceVersion` and at most `untilVersion` (inclusive). When `untilVersion` is omitted the
+ * export is unbounded (useful for tests); `pushDeltas` always passes the snapshot version so
+ * the segment contents match the segment filename/watermark.
  */
-export async function exportLocalChanges(db: Database, sinceVersion = 0): Promise<ChangeRow[]> {
+export async function exportLocalChanges(
+  db: Database,
+  sinceVersion = 0,
+  untilVersion?: number,
+): Promise<ChangeRow[]> {
+  if (untilVersion !== undefined) {
+    return (await db.execA(
+      `SELECT ${CHANGE_COLUMNS} FROM crsql_changes WHERE db_version > ? AND db_version <= ?`,
+      [sinceVersion, untilVersion],
+    )) as ChangeRow[];
+  }
   return (await db.execA(`SELECT ${CHANGE_COLUMNS} FROM crsql_changes WHERE db_version > ?`, [
     sinceVersion,
   ])) as ChangeRow[];
@@ -168,7 +180,7 @@ export async function pushDeltas(
   // Nothing new since the last push — don't write an empty segment.
   if (current <= since) return;
 
-  const rows = await exportLocalChanges(db, since);
+  const rows = await exportLocalChanges(db, since, current);
   if (rows.length > 0) {
     const plaintext = serializeChanges(rows);
     const payload = dek ? encodeBlob(await encrypt(dek, plaintext)) : plaintext;

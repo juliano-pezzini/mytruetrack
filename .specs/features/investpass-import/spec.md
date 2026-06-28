@@ -232,5 +232,3 @@ derived from InvestPass's category, so I categorize less.
   validator.
 - **Record an AD** for introducing the browser-extension artifact (new to the project) and the
   bridge/trust model.
-</content>
-</invoke>

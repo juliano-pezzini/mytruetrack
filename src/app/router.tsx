@@ -5,6 +5,7 @@ import { AccountsPage } from '../ui/pages/AccountsPage.tsx';
 import { TransactionsPage } from '../ui/pages/TransactionsPage.tsx';
 import { CategoriesPage } from '../ui/pages/CategoriesPage.tsx';
 import { SettingsPage } from '../ui/pages/SettingsPage.tsx';
+import { InvestPassImportPage } from '../ui/pages/InvestPassImportPage.tsx';
 
 export const router = createBrowserRouter([
   {
@@ -15,6 +16,7 @@ export const router = createBrowserRouter([
       { path: 'transactions', element: <TransactionsPage /> },
       { path: 'categories', element: <CategoriesPage /> },
       { path: 'settings', element: <SettingsPage /> },
+      { path: 'import/investpass', element: <InvestPassImportPage /> },
     ],
   },
 ]);

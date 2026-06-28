@@ -1,11 +1,17 @@
 /**
  * cr-sqlite delta sync — conflict-free multi-device sync over a `CloudProvider`.
  *
- * Each device exports its local CRDT change-log (`crsql_changes`) and uploads it to a
- * file keyed by its own cr-sqlite site id (`changes-<siteid>.bin`). On pull, a device
- * downloads every peer's change file (all `changes-*.bin` except its own), decrypts, and
- * replays the rows via `INSERT INTO crsql_changes`. cr-sqlite merges conflict-free, so
- * no device ever overwrites another's file and no user prompt is ever required.
+ * Redo-log model: each device ships only the changes made *since its last push* as an
+ * append-only segment file `changes-<siteid>-<dbversion>.bin`, where `<dbversion>` is the
+ * highest local cr-sqlite `db_version` the segment includes. On pull, a device downloads
+ * every peer segment newer than the per-peer high-water mark it has already applied (in
+ * ascending version order), decrypts, and replays the rows via `INSERT INTO crsql_changes`.
+ * cr-sqlite merges conflict-free, so no device overwrites another's data and no user prompt
+ * is ever required.
+ *
+ * Because the export is filtered by `db_version`, a push transfers only the delta rather
+ * than the full compacted state. The bootstrap push (watermark 0) ships everything; a new
+ * peer joining later replays every retained segment to catch up.
  *
  * `crsql_changes` rows contain binary (`pk`, `val`, `site_id`) and big-integer
  * (`col_version`, `db_version`, `seq`) columns, so a typed JSON codec is used instead of
@@ -89,9 +95,35 @@ export async function getSiteId(db: Database): Promise<string> {
   return id;
 }
 
-/** Export the full local CRDT change-log. */
-export async function exportLocalChanges(db: Database): Promise<ChangeRow[]> {
-  return (await db.execA(`SELECT ${CHANGE_COLUMNS} FROM crsql_changes`)) as ChangeRow[];
+/** This database's current cr-sqlite `db_version` (the max version of any local change). */
+export async function getDbVersion(db: Database): Promise<number> {
+  const rows = await db.execA('SELECT crsql_db_version()');
+  const value = rows[0]?.[0];
+  if (typeof value === 'bigint') return Number(value);
+  if (typeof value === 'number') return value;
+  return 0;
+}
+
+/**
+ * Export the local CRDT change-log for every change with `db_version` greater than
+ * `sinceVersion` and at most `untilVersion` (inclusive). When `untilVersion` is omitted the
+ * export is unbounded (useful for tests); `pushDeltas` always passes the snapshot version so
+ * the segment contents match the segment filename/watermark.
+ */
+export async function exportLocalChanges(
+  db: Database,
+  sinceVersion = 0,
+  untilVersion?: number,
+): Promise<ChangeRow[]> {
+  if (untilVersion !== undefined) {
+    return (await db.execA(
+      `SELECT ${CHANGE_COLUMNS} FROM crsql_changes WHERE db_version > ? AND db_version <= ?`,
+      [sinceVersion, untilVersion],
+    )) as ChangeRow[];
+  }
+  return (await db.execA(`SELECT ${CHANGE_COLUMNS} FROM crsql_changes WHERE db_version > ?`, [
+    sinceVersion,
+  ])) as ChangeRow[];
 }
 
 /** Replay peer change rows into the local database; cr-sqlite merges conflict-free. */
@@ -116,17 +148,25 @@ export async function applyRemoteChanges(db: Database, rows: readonly ChangeRow[
 
 // --- cloud orchestration ----------------------------------------------------------------
 
-function changeFilename(siteId: string): string {
-  return `${CHANGES_PREFIX}${siteId}${CHANGES_SUFFIX}`;
+function segmentFilename(siteId: string, version: number): string {
+  return `${CHANGES_PREFIX}${siteId}-${version}${CHANGES_SUFFIX}`;
 }
 
-function isChangeFile(name: string): boolean {
-  return name.startsWith(CHANGES_PREFIX) && name.endsWith(CHANGES_SUFFIX);
+/** site ids are lowercase hex, so the trailing `-<digits>` segment is unambiguous. */
+const SEGMENT_RE = /^changes-([0-9a-f]+)-(\d+)\.bin$/;
+
+type Segment = { readonly siteId: string; readonly version: number };
+
+function parseSegment(name: string): Segment | null {
+  const match = SEGMENT_RE.exec(name);
+  if (!match) return null;
+  return { siteId: match[1]!, version: Number(match[2]) };
 }
 
 /**
- * Push this device's CRDT changes to the cloud as `changes-<siteid>.bin`.
- * Encrypts when a DEK is provided; uploads plaintext when `dek` is null (local-only mode).
+ * Push this device's CRDT delta since the last push as `changes-<siteid>-<dbversion>.bin`.
+ * No-op when nothing changed locally. Encrypts when a DEK is provided; uploads plaintext
+ * when `dek` is null (local-only mode).
  */
 export async function pushDeltas(
   db: Database,
@@ -134,33 +174,44 @@ export async function pushDeltas(
   dek: CryptoKey | null,
 ): Promise<void> {
   const siteId = await getSiteId(db);
-  const rows = await exportLocalChanges(db);
-  const plaintext = serializeChanges(rows);
+  const since = (await getSyncState()).lastPushedVersion;
+  const current = await getDbVersion(db);
 
-  const payload = dek ? encodeBlob(await encrypt(dek, plaintext)) : plaintext;
-  await provider.upload(changeFilename(siteId), payload);
+  // Nothing new since the last push — don't write an empty segment.
+  if (current <= since) return;
 
-  const state = await getSyncState();
-  await savePushState(state.lastPushedVersion + 1);
+  const rows = await exportLocalChanges(db, since, current);
+  if (rows.length > 0) {
+    const plaintext = serializeChanges(rows);
+    const payload = dek ? encodeBlob(await encrypt(dek, plaintext)) : plaintext;
+    await provider.upload(segmentFilename(siteId, current), payload);
+  }
+  // Advance the watermark even if the filtered range was empty, so we never re-scan it.
+  await savePushState(current);
 }
 
 /**
- * Pull every peer's CRDT changes (all `changes-*.bin` except this device's own) and
- * merge them locally. No-op when there are no peer files.
+ * Pull every peer segment newer than this device's per-peer high-water mark and merge it,
+ * oldest-first. No-op when there are no unapplied peer segments.
  */
 export async function pullDeltas(
   db: Database,
   provider: CloudProvider,
   dek: CryptoKey | null,
 ): Promise<void> {
-  const ownFile = changeFilename(await getSiteId(db));
+  const ownSiteId = await getSiteId(db);
+  const applied: Record<string, number> = { ...(await getSyncState()).appliedPeerVersions };
   const files = await provider.list();
 
-  let appliedAny = false;
-  for (const file of files) {
-    if (!isChangeFile(file.name) || file.name === ownFile) continue;
+  const segments = files
+    .map((file) => parseSegment(file.name))
+    .filter((seg): seg is Segment => seg !== null && seg.siteId !== ownSiteId)
+    .filter((seg) => seg.version > (applied[seg.siteId] ?? 0))
+    .sort((a, b) => a.version - b.version);
 
-    const packed = await provider.download(file.name);
+  let appliedAny = false;
+  for (const seg of segments) {
+    const packed = await provider.download(segmentFilename(seg.siteId, seg.version));
     if (!packed) continue;
 
     let plaintext: Uint8Array;
@@ -186,8 +237,9 @@ export async function pullDeltas(
     }
 
     await applyRemoteChanges(db, changes);
+    applied[seg.siteId] = Math.max(applied[seg.siteId] ?? 0, seg.version);
     appliedAny = true;
   }
 
-  if (appliedAny) await savePullState();
+  if (appliedAny) await savePullState(applied);
 }

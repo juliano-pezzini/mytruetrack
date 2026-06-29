@@ -33,10 +33,7 @@ function handleConnection(port: chrome.runtime.Port): void {
   });
 }
 
-async function handleMessage(
-  port: chrome.runtime.Port,
-  msg: BridgeMessage,
-): Promise<void> {
+async function handleMessage(port: chrome.runtime.Port, msg: BridgeMessage): Promise<void> {
   try {
     switch (msg.type) {
       case 'PING':
@@ -45,11 +42,7 @@ async function handleMessage(
 
       case 'START_IMPORT': {
         const token = await refreshToken();
-        const transactions = await fetchTransactions(
-          token,
-          msg.periodStart,
-          msg.periodEnd,
-        );
+        const transactions = await fetchTransactions(token, msg.periodStart, msg.periodEnd);
         port.postMessage({ type: 'IMPORT_PAYLOAD', transactions });
         break;
       }

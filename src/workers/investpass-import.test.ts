@@ -97,10 +97,9 @@ describe('processInvestPassImport', () => {
 
     expect(result.perAccount['acc-nu']!.imported).toBe(1);
     // Verify the stored date
-    const rows = await db.execO(
-      `SELECT transaction_date FROM transactions WHERE external_id = ?`,
-      ['e5555555-5555-5555-5555-555555555555'],
-    );
+    const rows = await db.execO(`SELECT transaction_date FROM transactions WHERE external_id = ?`, [
+      'e5555555-5555-5555-5555-555555555555',
+    ]);
     expect(rows[0]!.transaction_date).toBe('2026-05-31');
   });
 
@@ -117,10 +116,9 @@ describe('processInvestPassImport', () => {
     const result = await processInvestPassImport(db, txns, accountMap);
 
     expect(result.perAccount['acc-nu']!.imported).toBe(1);
-    const rows = await db.execO(
-      `SELECT type FROM transactions WHERE external_id = ?`,
-      ['f6666666-6666-6666-6666-666666666666'],
-    );
+    const rows = await db.execO(`SELECT type FROM transactions WHERE external_id = ?`, [
+      'f6666666-6666-6666-6666-666666666666',
+    ]);
     expect(rows[0]!.type).toBe('credit');
   });
 
@@ -137,7 +135,7 @@ describe('processInvestPassImport', () => {
       `SELECT amount, external_id FROM transactions WHERE external_id IN (?, ?) ORDER BY amount`,
       ['g7777777-7777-7777-7777-777777777777', 'h8888888-8888-8888-8888-888888888888'],
     );
-    expect(rows[0]!.amount).toBe(1);   // 0.01 → 1 cent
+    expect(rows[0]!.amount).toBe(1); // 0.01 → 1 cent
     expect(rows[1]!.amount).toBe(27999); // 279.99 → 27999 cents
   });
 
@@ -155,11 +153,15 @@ describe('processInvestPassImport', () => {
     expect(result.perAccount['acc-nu']!.imported).toBe(3);
     const rows = await db.execO(
       `SELECT amount, external_id FROM transactions WHERE external_id IN (?, ?, ?) ORDER BY amount`,
-      ['k1111111-1111-4111-a111-111111111111', 'k2222222-2222-4222-a222-222222222222', 'k3333333-3333-4333-a333-333333333333'],
+      [
+        'k1111111-1111-4111-a111-111111111111',
+        'k2222222-2222-4222-a222-222222222222',
+        'k3333333-3333-4333-a333-333333333333',
+      ],
     );
-    expect(rows[0]!.amount).toBe(10);    // 0.1  → 10 cents
-    expect(rows[1]!.amount).toBe(1999);  // 19.99 → 1999 cents (NOT 1998)
-    expect(rows[2]!.amount).toBe(3333);  // 33.33 → 3333 cents (NOT 3334)
+    expect(rows[0]!.amount).toBe(10); // 0.1  → 10 cents
+    expect(rows[1]!.amount).toBe(1999); // 19.99 → 1999 cents (NOT 1998)
+    expect(rows[2]!.amount).toBe(3333); // 33.33 → 3333 cents (NOT 3334)
   });
 
   it('routes transactions to multiple mapped accounts', async () => {

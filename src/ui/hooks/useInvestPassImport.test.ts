@@ -61,7 +61,9 @@ function createMockPort(): { port: InvestPassPort; respond: (msg: BridgeMessage)
   return {
     port: {
       send: vi.fn(),
-      onMessage: vi.fn((cb: (msg: BridgeMessage) => void) => { handler = cb; }),
+      onMessage: vi.fn((cb: (msg: BridgeMessage) => void) => {
+        handler = cb;
+      }),
       disconnect: vi.fn(),
     },
     respond(msg: BridgeMessage) {
@@ -82,9 +84,16 @@ describe('useInvestPassImport', () => {
     const mock = createMockPort();
     mockConnect.mockReturnValue(mock.port);
     mockGetAccountMap.mockResolvedValue([
-      { investPassAccountName: 'Main Account', mytruetrackAccountId: 'acc-1', lastImportedDate: null },
+      {
+        investPassAccountName: 'Main Account',
+        mytruetrackAccountId: 'acc-1',
+        lastImportedDate: null,
+      },
     ]);
-    const expectedResult = { perAccount: { 'acc-1': { imported: 1, skipped: 0, errors: [] } }, unmappedAccounts: [] };
+    const expectedResult = {
+      perAccount: { 'acc-1': { imported: 1, skipped: 0, errors: [] } },
+      unmappedAccounts: [],
+    };
     mockProcess.mockResolvedValue(expectedResult);
 
     // Schedule the extension response for when port.send is called
@@ -129,11 +138,18 @@ describe('useInvestPassImport', () => {
     expect(result.current.unmappedAccounts).toEqual(['Main Account']);
 
     // Now provide the mapping
-    const expectedResult = { perAccount: { 'acc-1': { imported: 1, skipped: 0, errors: [] } }, unmappedAccounts: [] };
+    const expectedResult = {
+      perAccount: { 'acc-1': { imported: 1, skipped: 0, errors: [] } },
+      unmappedAccounts: [],
+    };
     mockProcess.mockResolvedValue(expectedResult);
     // After saving, getAccountMap returns the new mapping
     mockGetAccountMap.mockResolvedValue([
-      { investPassAccountName: 'Main Account', mytruetrackAccountId: 'acc-1', lastImportedDate: null },
+      {
+        investPassAccountName: 'Main Account',
+        mytruetrackAccountId: 'acc-1',
+        lastImportedDate: null,
+      },
     ]);
 
     await act(async () => {
@@ -159,9 +175,18 @@ describe('useInvestPassImport', () => {
     const mock = createMockPort();
     mockConnect.mockReturnValue(mock.port);
     mockGetAccountMap.mockResolvedValue([
-      { investPassAccountName: 'Main Account', mytruetrackAccountId: 'acc-1', lastImportedDate: null },
+      {
+        investPassAccountName: 'Main Account',
+        mytruetrackAccountId: 'acc-1',
+        lastImportedDate: null,
+      },
     ]);
-    mockProcess.mockImplementation(() => new Promise(() => { /* never resolves */ }));
+    mockProcess.mockImplementation(
+      () =>
+        new Promise(() => {
+          /* never resolves */
+        }),
+    );
 
     mock.port.send = vi.fn(() => {
       mock.respond({ type: 'IMPORT_PAYLOAD', transactions: [txn] });

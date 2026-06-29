@@ -45,10 +45,7 @@ export async function saveMapping(entry: AccountMapEntry): Promise<void> {
 }
 
 /** Update the lastImportedDate for a specific account mapping. */
-export async function updateLastImportedDate(
-  investPassName: string,
-  date: string,
-): Promise<void> {
+export async function updateLastImportedDate(investPassName: string, date: string): Promise<void> {
   const db = await getDb();
   const existing = (await db.get(STORE_NAME, investPassName)) as AccountMapEntry | undefined;
   if (!existing) return;

@@ -59,8 +59,7 @@ describe('fetchTransactions', () => {
   it('returns typed transaction array on success', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () =>
-        Promise.resolve({ data: { findAllTransactions: [sampleTx] } }),
+      json: () => Promise.resolve({ data: { findAllTransactions: [sampleTx] } }),
     });
 
     const txs = await fetchTransactions('tok', '2025-06-01', '2025-06-30');
@@ -76,9 +75,7 @@ describe('fetchTransactions', () => {
   it('throws on 401', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
 
-    await expect(
-      fetchTransactions('bad', '2025-06-01', '2025-06-30'),
-    ).rejects.toThrow('HTTP 401');
+    await expect(fetchTransactions('bad', '2025-06-01', '2025-06-30')).rejects.toThrow('HTTP 401');
   });
 
   it('throws on malformed response', async () => {
@@ -87,8 +84,8 @@ describe('fetchTransactions', () => {
       json: () => Promise.resolve({ data: {} }),
     });
 
-    await expect(
-      fetchTransactions('tok', '2025-06-01', '2025-06-30'),
-    ).rejects.toThrow('malformed response');
+    await expect(fetchTransactions('tok', '2025-06-01', '2025-06-30')).rejects.toThrow(
+      'malformed response',
+    );
   });
 });

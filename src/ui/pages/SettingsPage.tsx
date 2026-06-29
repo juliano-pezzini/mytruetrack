@@ -134,8 +134,20 @@ export function SettingsPage() {
           to="/import/investpass"
           className="inline-flex items-center gap-2 rounded-lg border border-mtt-border bg-mtt-surface px-4 py-3 text-sm font-medium text-mtt-fg hover:border-mtt-accent transition-colors"
         >
-          <svg aria-hidden="true" focusable="false" className="w-4 h-4 text-mtt-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          <svg
+            aria-hidden="true"
+            focusable="false"
+            className="w-4 h-4 text-mtt-accent"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+            />
           </svg>
           InvestPass Import
         </Link>

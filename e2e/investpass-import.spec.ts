@@ -60,8 +60,17 @@ test('vault-locked state blocks access to import page (AC9)', async ({ page }) =
   // Should NOT see the import page — should see setup or unlock
   await expect(page.getByTestId('import-button')).not.toBeVisible();
   // VaultGate renders either SetupWizard (has "Get Started") or UnlockPage
-  const hasSetup = await page.getByText('Get Started').isVisible().catch(() => false);
-  const hasUnlock = await page.getByText(/unlock/i).isVisible().catch(() => false);
-  const hasLoading = await page.getByText('Loading…').isVisible().catch(() => false);
+  const hasSetup = await page
+    .getByText('Get Started')
+    .isVisible()
+    .catch(() => false);
+  const hasUnlock = await page
+    .getByText(/unlock/i)
+    .isVisible()
+    .catch(() => false);
+  const hasLoading = await page
+    .getByText('Loading…')
+    .isVisible()
+    .catch(() => false);
   expect(hasSetup || hasUnlock || hasLoading).toBe(true);
 });

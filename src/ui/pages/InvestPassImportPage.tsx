@@ -172,18 +172,21 @@ export function InvestPassImportPage() {
 
       {/* Summary */}
       {status === 'done' && summary && (
-        <div data-testid="import-summary" className="rounded-xl border border-mtt-border bg-mtt-surface p-5 space-y-3">
+        <div
+          data-testid="import-summary"
+          className="rounded-xl border border-mtt-border bg-mtt-surface p-5 space-y-3"
+        >
           <h2 className="text-sm font-semibold text-mtt-positive">Import Complete</h2>
           {Object.entries(summary.perAccount).map(([accountId, result]) => {
             const acct = accounts.find((a) => a.id === accountId);
             return (
-            <div key={accountId} className="flex items-center justify-between text-sm">
-              <span className="font-medium text-mtt-fg">{acct?.name ?? accountId}</span>
-              <span className="text-mtt-muted">
-                {result.imported} imported, {result.skipped} skipped
-                {result.errors.length > 0 && `, ${result.errors.length} errors`}
-              </span>
-            </div>
+              <div key={accountId} className="flex items-center justify-between text-sm">
+                <span className="font-medium text-mtt-fg">{acct?.name ?? accountId}</span>
+                <span className="text-mtt-muted">
+                  {result.imported} imported, {result.skipped} skipped
+                  {result.errors.length > 0 && `, ${result.errors.length} errors`}
+                </span>
+              </div>
             );
           })}
           {summary.unmappedAccounts.length > 0 && (

@@ -28,8 +28,8 @@ export async function refreshToken(): Promise<string> {
   }
 
   const json: unknown = await res.json();
-  const token = (json as { data?: { refreshToken?: { accessToken?: string } } })
-    ?.data?.refreshToken?.accessToken;
+  const token = (json as { data?: { refreshToken?: { accessToken?: string } } })?.data?.refreshToken
+    ?.accessToken;
 
   if (typeof token !== 'string' || token.length === 0) {
     throw new Error('RefreshToken: missing accessToken in response');
@@ -67,8 +67,8 @@ export async function fetchTransactions(
   }
 
   const json: unknown = await res.json();
-  const transactions = (json as { data?: { findAllTransactions?: unknown } })
-    ?.data?.findAllTransactions;
+  const transactions = (json as { data?: { findAllTransactions?: unknown } })?.data
+    ?.findAllTransactions;
 
   if (!Array.isArray(transactions)) {
     throw new Error('FindAllTransactions: malformed response');

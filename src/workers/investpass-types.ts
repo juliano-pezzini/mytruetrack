@@ -7,28 +7,27 @@
 import { z } from 'zod';
 import type { ImportResult } from './types.ts';
 
-export const InvestPassTransactionSchema = z
-  .object({
-    id: z.string().uuid(),
-    name: z.string(),
-    date: z.string().datetime(),
-    amount: z.number().nonnegative().finite(),
-    type: z.enum(['DEBIT', 'CREDIT']),
-    ignored: z.boolean(),
-    category: z
-      .object({
-        name: z.string(),
-        icon: z.string(),
-        color: z.string(),
-      })
-      .nullable(),
-    account: z.object({
+export const InvestPassTransactionSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  date: z.string().datetime(),
+  amount: z.number().nonnegative().finite(),
+  type: z.enum(['DEBIT', 'CREDIT']),
+  ignored: z.boolean(),
+  category: z
+    .object({
       name: z.string(),
-      institution: z.object({
-        name: z.string(),
-      }),
+      icon: z.string(),
+      color: z.string(),
+    })
+    .nullable(),
+  account: z.object({
+    name: z.string(),
+    institution: z.object({
+      name: z.string(),
     }),
-  });
+  }),
+});
 
 export const ImportPayloadSchema = z.object({
   type: z.literal('IMPORT_PAYLOAD'),

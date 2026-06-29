@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  InvestPassTransactionSchema,
-  ImportPayloadSchema,
-} from './investpass-types.ts';
+import { InvestPassTransactionSchema, ImportPayloadSchema } from './investpass-types.ts';
 import type { InvestPassImportResult } from './investpass-types.ts';
 
 const validTransaction = {

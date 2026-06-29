@@ -3,8 +3,9 @@ import { useInvestPassImport } from '../hooks/useInvestPassImport.ts';
 import { useAccounts } from '../hooks/useAccounts.ts';
 import type { ImportStatus } from '../hooks/useInvestPassImport.ts';
 
-// The extension ID is only known at install time; for local dev we use a placeholder.
-// In production the user would configure this or it's auto-discovered.
+// TODO(P2): The extension ID is assigned at install time by Chrome. For local dev we use
+// a placeholder. In production, introduce a Settings field or auto-discovery handshake
+// so the user can connect to their installed extension.
 const EXTENSION_ID = 'mytruetrack-investpass-extension';
 
 const STATUS_LABELS: Record<ImportStatus, string> = {
@@ -17,12 +18,20 @@ const STATUS_LABELS: Record<ImportStatus, string> = {
   error: 'Error',
 };
 
+function pad(n: number): string {
+  return n.toString().padStart(2, '0');
+}
+
+function toLocalDateString(d: Date): string {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 function defaultPeriod(): { start: string; end: string } {
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth(); // 0-based
-  const start = new Date(year, month, 1).toISOString().slice(0, 10);
-  const end = new Date(year, month + 1, 0).toISOString().slice(0, 10);
+  const start = toLocalDateString(new Date(year, month, 1));
+  const end = toLocalDateString(new Date(year, month + 1, 0));
   return { start, end };
 }
 
@@ -165,15 +174,18 @@ export function InvestPassImportPage() {
       {status === 'done' && summary && (
         <div data-testid="import-summary" className="rounded-xl border border-mtt-border bg-mtt-surface p-5 space-y-3">
           <h2 className="text-sm font-semibold text-mtt-positive">Import Complete</h2>
-          {Object.entries(summary.perAccount).map(([accountName, result]) => (
-            <div key={accountName} className="flex items-center justify-between text-sm">
-              <span className="font-medium text-mtt-fg">{accountName}</span>
+          {Object.entries(summary.perAccount).map(([accountId, result]) => {
+            const acct = accounts.find((a) => a.id === accountId);
+            return (
+            <div key={accountId} className="flex items-center justify-between text-sm">
+              <span className="font-medium text-mtt-fg">{acct?.name ?? accountId}</span>
               <span className="text-mtt-muted">
                 {result.imported} imported, {result.skipped} skipped
                 {result.errors.length > 0 && `, ${result.errors.length} errors`}
               </span>
             </div>
-          ))}
+            );
+          })}
           {summary.unmappedAccounts.length > 0 && (
             <p className="text-xs text-mtt-muted">
               Unmapped: {summary.unmappedAccounts.join(', ')}

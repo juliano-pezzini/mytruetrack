@@ -212,4 +212,34 @@ describe('useInvestPassImport', () => {
     expect(result.current.status).toBe('error');
     expect(result.current.error).toBe('InvestPass extension not available');
   });
+
+  it('times out if extension never responds', async () => {
+    vi.useFakeTimers();
+
+    const mock = createMockPort();
+    mockConnect.mockReturnValue(mock.port);
+    // port.send does nothing — extension never responds
+
+    const { result } = renderHook(() => useInvestPassImport(EXTENSION_ID), { wrapper });
+
+    let importPromise: Promise<void> | undefined;
+    await act(async () => {
+      importPromise = result.current.startImport('2025-06-01', '2025-06-30');
+    });
+
+    // Advance past the 30s timeout
+    await act(async () => {
+      vi.advanceTimersByTime(30_000);
+    });
+
+    await act(async () => {
+      await importPromise;
+    });
+
+    expect(result.current.status).toBe('error');
+    expect(result.current.error).toBe('Extension did not respond within 30 seconds');
+    expect(mock.port.disconnect).toHaveBeenCalled();
+
+    vi.useRealTimers();
+  });
 });

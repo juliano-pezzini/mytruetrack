@@ -3,10 +3,9 @@
   "name": "mytruetrack InvestPass Import",
   "version": "0.1.0",
   "description": "Companion extension for importing InvestPass transactions into mytruetrack",
-  "permissions": ["cookies"],
+  "permissions": [],
   "host_permissions": [
-    "https://pass-api.invest-pass.com/*",
-    "https://app.invest-pass.com/*"
+    "https://pass-api.invest-pass.com/*"
   ],
   "externally_connectable": {
     "matches": ["http://localhost:*/*", "https://localhost:*/*"]
@@ -15,7 +14,5 @@
     "service_worker": "src/background.ts",
     "type": "module"
   },
-  "action": {
-    "default_popup": "popup.html"
-  }
+  "action": {}
 }

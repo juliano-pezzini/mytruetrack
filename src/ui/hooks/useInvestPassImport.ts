@@ -25,6 +25,9 @@ export type UseInvestPassImportReturn = {
   mapAccount: (investPassName: string, mytruetrackAccountId: string) => Promise<void>;
 };
 
+/** Maximum time (ms) to wait for the extension to respond before timing out. */
+const BRIDGE_TIMEOUT_MS = 30_000;
+
 export function useInvestPassImport(extensionId: string): UseInvestPassImportReturn {
   const db = useDatabase();
   const [status, setStatus] = useState<ImportStatus>('idle');
@@ -66,7 +69,13 @@ export function useInvestPassImport(extensionId: string): UseInvestPassImportRet
       setStatus('fetching');
 
       const response = await new Promise<BridgeMessage>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          port.disconnect();
+          reject(new Error('Extension did not respond within 30 seconds'));
+        }, BRIDGE_TIMEOUT_MS);
+
         port.onMessage((msg) => {
+          clearTimeout(timer);
           port.disconnect();
           resolve(msg);
         });
@@ -74,6 +83,7 @@ export function useInvestPassImport(extensionId: string): UseInvestPassImportRet
         try {
           port.send({ type: 'START_IMPORT', periodStart, periodEnd });
         } catch (err) {
+          clearTimeout(timer);
           port.disconnect();
           reject(err);
         }

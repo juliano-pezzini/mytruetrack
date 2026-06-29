@@ -33,6 +33,7 @@ describe('InvestPassTransactionSchema', () => {
   });
 
   it('rejects missing id', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id: _id, ...rest } = validTransaction;
     const result = InvestPassTransactionSchema.safeParse(rest);
     expect(result.success).toBe(false);

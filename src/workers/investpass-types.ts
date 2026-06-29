@@ -12,7 +12,7 @@ export const InvestPassTransactionSchema = z
     id: z.string().uuid(),
     name: z.string(),
     date: z.string().datetime(),
-    amount: z.number().nonnegative(),
+    amount: z.number().nonnegative().finite(),
     type: z.enum(['DEBIT', 'CREDIT']),
     ignored: z.boolean(),
     category: z

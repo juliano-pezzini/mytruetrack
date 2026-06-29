@@ -1,5 +1,7 @@
 import { refreshToken, fetchTransactions } from './investpass-api.ts';
 
+// TODO(P2): Add the production PWA origin once deployed (e.g. 'https://mytruetrack.app').
+// For P1 MVP, the PWA runs on localhost only.
 const ALLOWED_ORIGINS = ['http://localhost', 'https://localhost'];
 const EXTENSION_VERSION = '0.1.0';
 

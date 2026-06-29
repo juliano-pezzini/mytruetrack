@@ -2,13 +2,17 @@ import { useState, useEffect } from 'react';
 import { useVault } from '../hooks/useVault.ts';
 import { ConfirmDialog } from './ConfirmDialog.tsx';
 import { PassphraseInput } from './PassphraseInput.tsx';
-import { hasKeyData, loadKeyData, saveKeyData } from '../../crypto/key-store.ts';
+import {
+  hasKeyData,
+  loadKeyData,
+  saveKeyData,
+  clearBiometricVault,
+} from '../../crypto/key-store.ts';
 import { generateSalt, deriveKek, rewrapDek } from '../../crypto/key-derivation.ts';
 import {
   isBiometricAvailable,
-  hasBiometricCredential,
-  registerBiometric,
-  removeBiometricCredential,
+  hasBiometricUnlock,
+  enrollBiometricUnlock,
 } from '../../crypto/webauthn.ts';
 
 type SecurityState = {
@@ -18,7 +22,7 @@ type SecurityState = {
 };
 
 export function SecuritySection() {
-  const { status, reset } = useVault();
+  const { status, reset, dek } = useVault();
   const [state, setState] = useState<SecurityState | null>(null);
   const [loading, setLoading] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -36,7 +40,7 @@ export function SecuritySection() {
     const [vaultProtected, bioAvailable, bioEnrolled] = await Promise.all([
       hasKeyData(),
       isBiometricAvailable(),
-      hasBiometricCredential(),
+      hasBiometricUnlock(),
     ]);
     setState({ vaultProtected, bioAvailable, bioEnrolled });
   }
@@ -46,11 +50,19 @@ export function SecuritySection() {
   }, [status]);
 
   async function handleEnableBiometric() {
+    if (!dek) {
+      setMessage({ type: 'error', text: 'Unlock with your passphrase first to enable biometric.' });
+      return;
+    }
     setLoading(true);
     setMessage(null);
     try {
       const userId = crypto.getRandomValues(new Uint8Array(16));
-      await registerBiometric(userId, 'mytruetrack');
+      const enrolled = await enrollBiometricUnlock(userId, 'mytruetrack', dek);
+      if (!enrolled) {
+        setMessage({ type: 'error', text: 'This device doesn’t support biometric unlock.' });
+        return;
+      }
       setMessage({ type: 'success', text: 'Biometric unlock enabled.' });
       await loadState();
     } catch {
@@ -64,7 +76,7 @@ export function SecuritySection() {
     setLoading(true);
     setMessage(null);
     try {
-      await removeBiometricCredential();
+      await clearBiometricVault();
       setMessage({ type: 'success', text: 'Biometric unlock removed.' });
       await loadState();
     } catch {

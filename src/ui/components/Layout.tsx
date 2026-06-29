@@ -9,6 +9,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/transactions': 'Transactions',
   '/categories': 'Categories & Tags',
   '/settings': 'Settings',
+  '/import/investpass': 'InvestPass Import',
 };
 
 export function Layout() {

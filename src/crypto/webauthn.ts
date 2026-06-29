@@ -21,11 +21,13 @@ import {
   clearCredentialId,
   saveBiometricVault,
   loadBiometricVault,
+  clearBiometricVault,
 } from './key-store.ts';
 import { deriveKekFromPrf, wrapDek, unwrapDek } from './key-derivation.ts';
 
 export type BiometricRegistration = {
   readonly credentialId: Uint8Array;
+  readonly prfOutput: Uint8Array | null;
 };
 
 /** Check if a platform authenticator (fingerprint, face, etc.) is available. */
@@ -41,12 +43,15 @@ export async function isBiometricAvailable(): Promise<boolean> {
 }
 
 /**
- * Register a WebAuthn platform authenticator credential.
+ * Register a WebAuthn platform authenticator credential. When a prfSalt is
+ * given, the PRF extension is requested at creation; if the authenticator
+ * returns PRF output immediately, it is included (avoids a second prompt).
  * Stores the credential ID in IndexedDB for future assertions.
  */
 export async function registerBiometric(
   userId: Uint8Array,
   userName: string,
+  prfSalt?: Uint8Array,
 ): Promise<BiometricRegistration> {
   if (typeof navigator === 'undefined' || !navigator.credentials) {
     throw new Error('WebAuthn is not available in this environment');
@@ -70,9 +75,11 @@ export async function registerBiometric(
       authenticatorSelection: {
         authenticatorAttachment: 'platform',
         userVerification: 'required',
-        residentKey: 'preferred',
+        residentKey: 'required', // discoverable credential — required for PRF on Windows Hello
       },
-      extensions: { prf: {} } as AuthenticationExtensionsClientInputs,
+      extensions: (prfSalt
+        ? { prf: { eval: { first: prfSalt.buffer as ArrayBuffer } } }
+        : { prf: {} }) as AuthenticationExtensionsClientInputs,
       timeout: 60000,
     },
   });
@@ -81,10 +88,14 @@ export async function registerBiometric(
     throw new Error('WebAuthn registration cancelled or failed');
   }
 
-  const credentialId = new Uint8Array((credential as PublicKeyCredential).rawId);
+  const pkc = credential as PublicKeyCredential;
+  const credentialId = new Uint8Array(pkc.rawId);
   await saveCredentialId(credentialId);
 
-  return { credentialId };
+  const ext = pkc.getClientExtensionResults() as { prf?: { results?: { first?: ArrayBuffer } } };
+  const prfFirst = ext.prf?.results?.first;
+
+  return { credentialId, prfOutput: prfFirst ? new Uint8Array(prfFirst) : null };
 }
 
 /**
@@ -172,20 +183,26 @@ async function evaluatePrf(
 /**
  * Enrol biometric unlock: re-wrap the in-memory DEK under a KEK derived from
  * the authenticator's PRF output. Returns true on success, false if the
- * platform authenticator does not support the PRF extension.
+ * platform authenticator does not support the PRF extension (in which case any
+ * orphan credential is cleaned up). Throws if the user cancels.
  */
 export async function enrollBiometricUnlock(
   userId: Uint8Array,
   userName: string,
   dek: CryptoKey,
 ): Promise<boolean> {
-  const { credentialId } = await registerBiometric(userId, userName);
   const prfSalt = crypto.getRandomValues(new Uint8Array(32));
-  const prfOutput = await evaluatePrf(credentialId, prfSalt);
-  if (!prfOutput) {
+  const { credentialId, prfOutput } = await registerBiometric(userId, userName, prfSalt);
+
+  // Prefer PRF output from creation (single prompt); fall back to an assertion.
+  const prf = prfOutput ?? (await evaluatePrf(credentialId, prfSalt));
+  if (!prf) {
+    // PRF unsupported on this authenticator — drop the unusable credential.
+    await clearBiometricVault();
     return false;
   }
-  const kek = await deriveKekFromPrf(prfOutput);
+
+  const kek = await deriveKekFromPrf(prf);
   const wrappedDek = await wrapDek(dek, kek);
   await saveBiometricVault({ credentialId, prfSalt, wrappedDek });
   return true;

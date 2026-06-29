@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   deriveKek,
+  deriveKekFromPrf,
   generateDek,
   wrapDek,
   unwrapDek,
@@ -8,7 +9,6 @@ import {
   DEFAULT_ITERATIONS,
   SALT_LENGTH,
 } from './key-derivation.ts';
-
 describe('key-derivation', () => {
   const FAST_ITERATIONS = 1000; // fast for tests
 
@@ -35,6 +35,28 @@ describe('key-derivation', () => {
     expect(kek.type).toBe('secret');
     expect(kek.algorithm.name).toBe('AES-KW');
     expect(kek.extractable).toBe(false);
+  });
+
+  it('deriveKekFromPrf returns a non-extractable AES-KW key', async () => {
+    const prf = crypto.getRandomValues(new Uint8Array(32));
+    const kek = await deriveKekFromPrf(prf);
+    expect(kek.algorithm.name).toBe('AES-KW');
+    expect(kek.extractable).toBe(false);
+  });
+
+  it('deriveKekFromPrf rejects output shorter than 32 bytes', async () => {
+    await expect(deriveKekFromPrf(new Uint8Array(16))).rejects.toThrow();
+  });
+
+  it('DEK wrapped with a PRF-derived KEK round-trips', async () => {
+    const prf = crypto.getRandomValues(new Uint8Array(32));
+    const kek = await deriveKekFromPrf(prf);
+    const dek = await generateDek();
+    const wrapped = await wrapDek(dek, kek);
+    const kek2 = await deriveKekFromPrf(prf);
+    const unwrapped = await unwrapDek(wrapped, kek2);
+    expect(unwrapped.algorithm.name).toBe('AES-GCM');
+    expect(unwrapped.extractable).toBe(false);
   });
 
   it('rejects empty passphrase', async () => {

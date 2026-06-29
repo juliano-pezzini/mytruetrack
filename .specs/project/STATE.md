@@ -1,6 +1,6 @@
 # State
 
-**Last Updated:** 2026-06-23
+**Last Updated:** 2026-06-28
 **Current Work:** Local persistence + CRDT delta sync COMPLETE (AD-008) — cr-sqlite via an
 IndexedDB-backed VFS, per-site `crsql_changes` delta sync. 330 unit tests, 50 e2e tests, all
 passing. Auto-sync (AD-007) and Phase 8 — Local-First Foundation complete prior.
@@ -8,6 +8,30 @@ passing. Auto-sync (AD-007) and Phase 8 — Local-First Foundation complete prio
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-009: WebAuthn PRF biometric unlock — DEK re-wrapped under PRF-derived KEK (2026-06-28)
+
+**Decision:** Biometric is now a real unlock path, not just an identity check. On enrollment
+(`enrollBiometricUnlock`) the platform authenticator is registered with the WebAuthn `prf`
+extension; a fresh `prfSalt` is evaluated to obtain 32 secret bytes, HKDF-stretched into a
+non-extractable AES-KW KEK (`deriveKekFromPrf`), and the in-memory DEK is re-wrapped under it.
+The wrapped DEK + credentialId + prfSalt are stored as a `biometric-vault` record in the
+keystore IndexedDB (`saveBiometricVault`). On unlock, `unlockWithBiometric` runs a PRF
+assertion, re-derives the KEK, and unwraps the DEK — so a tab discard/reload can be unlocked
+by fingerprint/face with no passphrase. Passphrase remains the fallback; enroll returns false
+and the UI degrades gracefully when PRF is unsupported.
+
+**Reason:** "First unlock this session" really meant first unlock since page load — biometric
+never worked because it derived no key. Tab discards forced repeated passphrase entry. PRF is
+now broadly supported (Chrome/Edge 116+, Safari 18+, Windows Hello, Touch ID, Android).
+
+**Trade-off:** No plaintext key or passphrase is cached (rejected sessionStorage caching as an
+XSS-exposed downgrade). Biometric unlock unavailable on authenticators without PRF; passphrase
+covers them.
+
+**Impact:** `deriveKekFromPrf` (key-derivation), `BiometricVault` keystore record,
+`enrollBiometricUnlock`/`unlockWithBiometric` (webauthn); SetupWizard + UnlockPage rewired.
+377 unit tests, e2e unlock/setup green.
 
 ### AD-008: Local persistence + cr-sqlite CRDT delta sync (Phase 8.11) (2026-06-17)
 
@@ -153,7 +177,6 @@ dynamically to preserve offline-first boot.
 ## Deferred Ideas
 
 - Argon2-WASM for passphrase hashing (PBKDF2 is sufficient; upgrade when bundle budget allows)
-- WebAuthn PRF-based biometric-only unlock (waiting for broader platform support)
 
 ---
 

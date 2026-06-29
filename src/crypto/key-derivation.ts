@@ -55,6 +55,41 @@ export async function deriveKek(
 }
 
 /**
+ * Derive a Key Encryption Key (KEK) from WebAuthn PRF output bytes.
+ *
+ * The PRF extension yields 32 high-entropy bytes that are bound to the
+ * platform authenticator and never persisted. We stretch them with HKDF
+ * (cheap, since the input is already strong) into a non-extractable AES-KW
+ * key used only to wrap/unwrap the DEK. Returns null if PRF bytes are absent.
+ */
+export async function deriveKekFromPrf(prfOutput: Uint8Array): Promise<CryptoKey> {
+  if (prfOutput.length < 32) {
+    throw new Error('PRF output too short to derive a key');
+  }
+
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    prfOutput.buffer as ArrayBuffer,
+    'HKDF',
+    false,
+    ['deriveKey'],
+  );
+
+  return crypto.subtle.deriveKey(
+    {
+      name: 'HKDF',
+      hash: 'SHA-256',
+      salt: new Uint8Array(0),
+      info: encoder.encode('mytruetrack-biometric-kek'),
+    },
+    keyMaterial,
+    { name: 'AES-KW', length: 256 },
+    false,
+    ['wrapKey', 'unwrapKey'],
+  );
+}
+
+/**
  * Generate a fresh Data Encryption Key (DEK).
  * Extractable so it can be wrapped by the KEK.
  */

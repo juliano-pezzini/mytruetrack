@@ -4,7 +4,11 @@ import { PassphraseInput } from '../components/PassphraseInput.tsx';
 import { ConfirmDialog } from '../components/ConfirmDialog.tsx';
 import { loadKeyData } from '../../crypto/key-store.ts';
 import { deriveKek, unwrapDek } from '../../crypto/key-derivation.ts';
-import { isBiometricAvailable, assertBiometric, getCredentialId } from '../../crypto/webauthn.ts';
+import {
+  isBiometricAvailable,
+  unlockWithBiometric,
+  hasBiometricUnlock,
+} from '../../crypto/webauthn.ts';
 
 export function UnlockPage() {
   const { unlock, reset } = useVault();
@@ -16,8 +20,8 @@ export function UnlockPage() {
 
   useEffect(() => {
     async function checkBio() {
-      const credId = await getCredentialId();
-      if (credId) {
+      const enrolled = await hasBiometricUnlock();
+      if (enrolled) {
         const avail = await isBiometricAvailable();
         setBioAvailable(avail);
       }
@@ -54,18 +58,12 @@ export function UnlockPage() {
     setLoading(true);
 
     try {
-      const credId = await getCredentialId();
-      if (!credId) {
-        setError('No biometric credential found.');
+      const dek = await unlockWithBiometric();
+      if (!dek) {
+        setError('Biometric unlock is unavailable. Please use your passphrase.');
         return;
       }
-      await assertBiometric(credId);
-      // Biometric only gates access — DEK must still be derived from passphrase.
-      // In the current design, biometric is session-scoped: the user must enter
-      // the passphrase at least once per session, then biometric can re-verify.
-      setError(
-        'Biometric verified, but passphrase is still needed for the first unlock this session.',
-      );
+      unlock(dek);
     } catch {
       setError('Biometric verification failed.');
     } finally {

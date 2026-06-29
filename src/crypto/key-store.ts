@@ -13,11 +13,23 @@ const DB_VERSION = 1;
 const STORE_NAME = 'keys';
 const KEY_DATA_KEY = 'vault';
 const CREDENTIAL_KEY = 'webauthn-credential';
+const BIOMETRIC_VAULT_KEY = 'biometric-vault';
 
 export type KeyData = {
   readonly wrappedDek: Uint8Array;
   readonly salt: Uint8Array;
   readonly iterations: number;
+};
+
+/**
+ * Biometric unlock material. The DEK is wrapped under a KEK derived from the
+ * WebAuthn PRF output, so it can be unwrapped after a fingerprint/face prompt
+ * without ever caching the passphrase or a plaintext key.
+ */
+export type BiometricVault = {
+  readonly credentialId: Uint8Array;
+  readonly prfSalt: Uint8Array;
+  readonly wrappedDek: Uint8Array;
 };
 
 async function getDb() {
@@ -67,6 +79,7 @@ export async function clearKeyData(): Promise<void> {
   const db = await getDb();
   await db.delete(STORE_NAME, KEY_DATA_KEY);
   await db.delete(STORE_NAME, CREDENTIAL_KEY);
+  await db.delete(STORE_NAME, BIOMETRIC_VAULT_KEY);
 }
 
 /** Persist a WebAuthn credential ID. */
@@ -87,4 +100,36 @@ export async function loadCredentialId(): Promise<Uint8Array | null> {
 export async function clearCredentialId(): Promise<void> {
   const db = await getDb();
   await db.delete(STORE_NAME, CREDENTIAL_KEY);
+}
+
+/** Persist the biometric (PRF-wrapped) vault material. */
+export async function saveBiometricVault(vault: BiometricVault): Promise<void> {
+  const db = await getDb();
+  await db.put(
+    STORE_NAME,
+    {
+      credentialId: vault.credentialId,
+      prfSalt: vault.prfSalt,
+      wrappedDek: vault.wrappedDek,
+    },
+    BIOMETRIC_VAULT_KEY,
+  );
+}
+
+/** Load biometric vault material, or null if biometric unlock is not set up. */
+export async function loadBiometricVault(): Promise<BiometricVault | null> {
+  const db = await getDb();
+  const stored = await db.get(STORE_NAME, BIOMETRIC_VAULT_KEY);
+  if (!stored) return null;
+  return {
+    credentialId: stored.credentialId as Uint8Array,
+    prfSalt: stored.prfSalt as Uint8Array,
+    wrappedDek: stored.wrappedDek as Uint8Array,
+  };
+}
+
+/** Remove only the biometric vault material. */
+export async function clearBiometricVault(): Promise<void> {
+  const db = await getDb();
+  await db.delete(STORE_NAME, BIOMETRIC_VAULT_KEY);
 }

@@ -4,16 +4,25 @@
  * This module is browser-only. All functions gracefully degrade when the
  * WebAuthn API is absent (e.g., in Node.js tests or unsupported browsers).
  *
- * The biometric does NOT produce a cryptographic key (PRF not yet widely supported).
- * Instead, it gates access to the session-scoped DEK that was already unlocked
- * via passphrase. The flow is:
- *   1. User enters passphrase → DEK unwrapped and held in memory
- *   2. User registers biometric (WebAuthn credential created)
- *   3. On subsequent opens, biometric assertion confirms identity → DEK stays accessible
- *   4. If session expires, user must re-enter passphrase
+ * Biometric unlock uses the WebAuthn PRF extension: a fingerprint/face
+ * assertion yields 32 secret bytes (never persisted) from which we derive a
+ * KEK and unwrap the DEK. No passphrase or plaintext key is ever cached, so a
+ * tab discard/reload can be unlocked by biometric without re-entering the
+ * passphrase. The passphrase remains the fallback. Flow:
+ *   1. User enters passphrase → DEK unwrapped in memory
+ *   2. User enrols biometric → DEK re-wrapped under a PRF-derived KEK
+ *   3. On later opens, biometric assertion derives the KEK → DEK unwrapped
+ *   4. If PRF is unavailable, fall back to passphrase
  */
 
-import { saveCredentialId, loadCredentialId, clearCredentialId } from './key-store.ts';
+import {
+  saveCredentialId,
+  loadCredentialId,
+  clearCredentialId,
+  saveBiometricVault,
+  loadBiometricVault,
+} from './key-store.ts';
+import { deriveKekFromPrf, wrapDek, unwrapDek } from './key-derivation.ts';
 
 export type BiometricRegistration = {
   readonly credentialId: Uint8Array;
@@ -63,6 +72,7 @@ export async function registerBiometric(
         userVerification: 'required',
         residentKey: 'preferred',
       },
+      extensions: { prf: {} } as AuthenticationExtensionsClientInputs,
       timeout: 60000,
     },
   });
@@ -117,6 +127,83 @@ export async function hasBiometricCredential(): Promise<boolean> {
 
 /** Get the stored credential ID, or null if not registered. */
 export { loadCredentialId as getCredentialId };
+
+/** True if biometric PRF unlock has been enrolled on this device. */
+export async function hasBiometricUnlock(): Promise<boolean> {
+  return (await loadBiometricVault()) !== null;
+}
+
+/**
+ * Run a WebAuthn assertion that evaluates the PRF extension and returns its
+ * 32-byte output, or null if the authenticator did not provide PRF results.
+ */
+async function evaluatePrf(
+  credentialId: Uint8Array,
+  prfSalt: Uint8Array,
+): Promise<Uint8Array | null> {
+  if (typeof navigator === 'undefined' || !navigator.credentials) {
+    return null;
+  }
+
+  const challenge = crypto.getRandomValues(new Uint8Array(32));
+
+  const assertion = await navigator.credentials.get({
+    publicKey: {
+      challenge,
+      allowCredentials: [{ id: credentialId.buffer as ArrayBuffer, type: 'public-key' }],
+      userVerification: 'required',
+      extensions: {
+        prf: { eval: { first: prfSalt.buffer as ArrayBuffer } },
+      } as AuthenticationExtensionsClientInputs,
+      timeout: 60000,
+    },
+  });
+
+  if (!assertion) return null;
+
+  const results = (assertion as PublicKeyCredential).getClientExtensionResults() as {
+    prf?: { results?: { first?: ArrayBuffer } };
+  };
+  const first = results.prf?.results?.first;
+  if (!first) return null;
+  return new Uint8Array(first);
+}
+
+/**
+ * Enrol biometric unlock: re-wrap the in-memory DEK under a KEK derived from
+ * the authenticator's PRF output. Returns true on success, false if the
+ * platform authenticator does not support the PRF extension.
+ */
+export async function enrollBiometricUnlock(
+  userId: Uint8Array,
+  userName: string,
+  dek: CryptoKey,
+): Promise<boolean> {
+  const { credentialId } = await registerBiometric(userId, userName);
+  const prfSalt = crypto.getRandomValues(new Uint8Array(32));
+  const prfOutput = await evaluatePrf(credentialId, prfSalt);
+  if (!prfOutput) {
+    return false;
+  }
+  const kek = await deriveKekFromPrf(prfOutput);
+  const wrappedDek = await wrapDek(dek, kek);
+  await saveBiometricVault({ credentialId, prfSalt, wrappedDek });
+  return true;
+}
+
+/**
+ * Unlock via biometric: prompt for fingerprint/face, derive the KEK from PRF,
+ * and unwrap the DEK. Returns the non-extractable DEK, or null if biometric
+ * unlock is not set up or PRF is unavailable. Throws if the user cancels.
+ */
+export async function unlockWithBiometric(): Promise<CryptoKey | null> {
+  const vault = await loadBiometricVault();
+  if (!vault) return null;
+  const prfOutput = await evaluatePrf(vault.credentialId, vault.prfSalt);
+  if (!prfOutput) return null;
+  const kek = await deriveKekFromPrf(prfOutput);
+  return unwrapDek(vault.wrappedDek, kek);
+}
 
 /** Remove the biometric credential from this device. */
 export { clearCredentialId as removeBiometricCredential };

@@ -90,6 +90,20 @@ export async function deriveKekFromPrf(prfOutput: Uint8Array): Promise<CryptoKey
 }
 
 /**
+ * Generate a fresh random **non-extractable** AES-KW wrapping key.
+ *
+ * Used by the biometric wrapped-key fallback (authenticators without PRF): the
+ * key can wrap/unwrap the DEK but can never be exported from the CryptoKey, so
+ * it is safe to persist as a `CryptoKey` in IndexedDB.
+ */
+export async function generateWrappingKey(): Promise<CryptoKey> {
+  return crypto.subtle.generateKey({ name: 'AES-KW', length: 256 }, false, [
+    'wrapKey',
+    'unwrapKey',
+  ]);
+}
+
+/**
  * Generate a fresh Data Encryption Key (DEK).
  * Extractable so it can be wrapped by the KEK.
  */
@@ -104,6 +118,33 @@ export async function generateDek(): Promise<CryptoKey> {
 export async function wrapDek(dek: CryptoKey, kek: CryptoKey): Promise<Uint8Array> {
   const wrapped = await crypto.subtle.wrapKey('raw', dek, kek, 'AES-KW');
   return new Uint8Array(wrapped);
+}
+
+/**
+ * Unwrap a wrapped DEK as an **extractable** AES-GCM key.
+ *
+ * Scoped for flows that must immediately re-wrap the DEK under a different KEK
+ * (e.g. enrolling biometric unlock) — the extractable copy is transient and
+ * must never be stored or handed to the app. The app's working DEK stays
+ * non-extractable (see `unwrapDek`).
+ */
+export async function unwrapDekExtractable(
+  wrappedDek: Uint8Array,
+  kek: CryptoKey,
+): Promise<CryptoKey> {
+  try {
+    return await crypto.subtle.unwrapKey(
+      'raw',
+      wrappedDek.buffer as ArrayBuffer,
+      kek,
+      'AES-KW',
+      { name: 'AES-GCM', length: 256 },
+      true, // extractable — needed to re-wrap under another KEK
+      ['encrypt', 'decrypt'],
+    );
+  } catch {
+    throw new Error('Failed to unwrap key — incorrect passphrase or corrupted key data');
+  }
 }
 
 /**

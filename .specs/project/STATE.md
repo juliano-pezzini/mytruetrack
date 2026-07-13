@@ -1,6 +1,6 @@
 # State
 
-**Last Updated:** 2026-06-28
+**Last Updated:** 2026-07-12
 **Current Work:** Local persistence + CRDT delta sync COMPLETE (AD-008) — cr-sqlite via an
 IndexedDB-backed VFS, per-site `crsql_changes` delta sync. 330 unit tests, 50 e2e tests, all
 passing. Auto-sync (AD-007) and Phase 8 — Local-First Foundation complete prior.
@@ -9,29 +9,44 @@ passing. Auto-sync (AD-007) and Phase 8 — Local-First Foundation complete prio
 
 ## Recent Decisions (Last 60 days)
 
-### AD-009: WebAuthn PRF biometric unlock — DEK re-wrapped under PRF-derived KEK (2026-06-28)
+### AD-009: WebAuthn biometric unlock — PRF preferred, non-extractable wrapped-key fallback (2026-07-12)
 
-**Decision:** Biometric is now a real unlock path, not just an identity check. On enrollment
-(`enrollBiometricUnlock`) the platform authenticator is registered with the WebAuthn `prf`
-extension; a fresh `prfSalt` is evaluated to obtain 32 secret bytes, HKDF-stretched into a
-non-extractable AES-KW KEK (`deriveKekFromPrf`), and the in-memory DEK is re-wrapped under it.
-The wrapped DEK + credentialId + prfSalt are stored as a `biometric-vault` record in the
-keystore IndexedDB (`saveBiometricVault`). On unlock, `unlockWithBiometric` runs a PRF
-assertion, re-derives the KEK, and unwraps the DEK — so a tab discard/reload can be unlocked
-by fingerprint/face with no passphrase. Passphrase remains the fallback; enroll returns false
-and the UI degrades gracefully when PRF is unsupported.
+**Decision:** Biometric is now a real unlock path, not just an identity check. Two modes,
+selected automatically at enrollment (`enrollBiometricUnlock`), both stored as a
+discriminated-union `biometric-vault` record in the keystore IndexedDB:
+
+- **`prf` (preferred):** the authenticator is registered with the WebAuthn `prf` extension;
+  a `prfSalt` yields 32 secret bytes, HKDF-stretched into a non-extractable AES-KW KEK
+  (`deriveKekFromPrf`) that wraps the DEK. Nothing extra is persisted — the KEK only exists
+  during a biometric prompt. Requires authenticator PRF/hmac-secret support.
+- **`wrapped-key` (fallback):** for authenticators without PRF (e.g. Windows Hello on Win11
+  23H2, which reports `prf.enabled === false`). The DEK is wrapped under a random
+  **non-extractable** AES-KW `CryptoKey` (`generateWrappingKey`) persisted as a `CryptoKey`
+  in IndexedDB; a biometric assertion gates the unlock. The key can never be exported by page
+  script, though it is not cryptographically bound to the assertion.
+
+On unlock, `unlockWithBiometric` branches on `mode` and returns a non-extractable DEK, so a tab
+discard/reload is unlocked by fingerprint/face with no passphrase. Because `wrapKey` requires an
+extractable key, Settings enrollment prompts for the passphrase to derive a *transient*
+extractable DEK (`unwrapDekExtractable`) that is wrapped and discarded — the app's working DEK
+stays non-extractable. The setup wizard uses the freshly generated (still-extractable) DEK
+directly.
 
 **Reason:** "First unlock this session" really meant first unlock since page load — biometric
-never worked because it derived no key. Tab discards forced repeated passphrase entry. PRF is
-now broadly supported (Chrome/Edge 116+, Safari 18+, Windows Hello, Touch ID, Android).
+never worked because it derived no key, and tab discards forced repeated passphrase entry. PRF
+is the ideal path but Windows Hello frequently lacks hmac-secret even on Win11 23H2, so a
+fallback was needed for biometric to work at all on those machines.
 
-**Trade-off:** No plaintext key or passphrase is cached (rejected sessionStorage caching as an
-XSS-exposed downgrade). Biometric unlock unavailable on authenticators without PRF; passphrase
-covers them.
+**Trade-off:** No plaintext key or passphrase is ever cached (rejected sessionStorage caching
+as an XSS-exposed downgrade). The `wrapped-key` fallback is weaker than PRF — an XSS payload
+could invoke the unwrap without the biometric prompt since the assertion is not bound to the
+key — but far stronger than storing a plaintext key; strict CSP is the backstop.
 
-**Impact:** `deriveKekFromPrf` (key-derivation), `BiometricVault` keystore record,
-`enrollBiometricUnlock`/`unlockWithBiometric` (webauthn); SetupWizard + UnlockPage rewired.
-377 unit tests, e2e unlock/setup green.
+**Impact:** `deriveKekFromPrf` / `generateWrappingKey` / `unwrapDekExtractable`
+(key-derivation), union `BiometricVault` keystore record, `enrollBiometricUnlock` /
+`unlockWithBiometric` (webauthn); SetupWizard, UnlockPage (biometric-first UI), and
+SecuritySection (passphrase-gated enrollment) rewired. Verified working with Windows Hello via
+the fallback path.
 
 ### AD-008: Local persistence + cr-sqlite CRDT delta sync (Phase 8.11) (2026-06-17)
 

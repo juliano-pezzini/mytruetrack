@@ -77,11 +77,9 @@ export function SetupWizard() {
     setError(null);
     try {
       const userId = crypto.getRandomValues(new Uint8Array(16));
-      const enrolled = await enrollBiometricUnlock(userId, 'mytruetrack', dek);
-      if (!enrolled) {
-        setError(
-          'This device doesn’t support biometric unlock. You’ll use your passphrase instead.',
-        );
+      const result = await enrollBiometricUnlock(userId, 'mytruetrack', dek);
+      if (!result.ok) {
+        setError(`${result.reason} You’ll use your passphrase instead.`);
         return;
       }
       setStep('done');

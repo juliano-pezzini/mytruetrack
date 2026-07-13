@@ -3,8 +3,10 @@ import {
   deriveKek,
   deriveKekFromPrf,
   generateDek,
+  generateWrappingKey,
   wrapDek,
   unwrapDek,
+  unwrapDekExtractable,
   generateSalt,
   DEFAULT_ITERATIONS,
   SALT_LENGTH,
@@ -57,6 +59,47 @@ describe('key-derivation', () => {
     const unwrapped = await unwrapDek(wrapped, kek2);
     expect(unwrapped.algorithm.name).toBe('AES-GCM');
     expect(unwrapped.extractable).toBe(false);
+  });
+
+  it('generateWrappingKey returns a non-extractable AES-KW key', async () => {
+    const kek = await generateWrappingKey();
+    expect(kek.algorithm.name).toBe('AES-KW');
+    expect(kek.extractable).toBe(false);
+  });
+
+  it('DEK wrapped with a generated wrapping key round-trips', async () => {
+    const kek = await generateWrappingKey();
+    const dek = await generateDek();
+    const wrapped = await wrapDek(dek, kek);
+    const unwrapped = await unwrapDek(wrapped, kek);
+    expect(unwrapped.algorithm.name).toBe('AES-GCM');
+    expect(unwrapped.extractable).toBe(false);
+  });
+
+  it('unwrapDekExtractable yields an extractable DEK that can be re-wrapped', async () => {
+    const salt = generateSalt();
+    const kek = await deriveKek('pass', salt, FAST_ITERATIONS);
+    const dek = await generateDek();
+    const wrapped = await wrapDek(dek, kek);
+
+    const extractable = await unwrapDekExtractable(wrapped, kek);
+    expect(extractable.extractable).toBe(true);
+
+    // The extractable copy can be re-wrapped under a different (biometric) KEK.
+    const bioKek = await generateWrappingKey();
+    const rewrapped = await wrapDek(extractable, bioKek);
+    const back = await unwrapDek(rewrapped, bioKek);
+    expect(back.algorithm.name).toBe('AES-GCM');
+    expect(back.extractable).toBe(false);
+  });
+
+  it('unwrapDekExtractable throws on wrong KEK', async () => {
+    const salt = generateSalt();
+    const kek = await deriveKek('pass', salt, FAST_ITERATIONS);
+    const dek = await generateDek();
+    const wrapped = await wrapDek(dek, kek);
+    const wrongKek = await deriveKek('other', salt, FAST_ITERATIONS);
+    await expect(unwrapDekExtractable(wrapped, wrongKek)).rejects.toThrow();
   });
 
   it('rejects empty passphrase', async () => {

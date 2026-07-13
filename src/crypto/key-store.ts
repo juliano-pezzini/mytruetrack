@@ -22,15 +22,34 @@ export type KeyData = {
 };
 
 /**
- * Biometric unlock material. The DEK is wrapped under a KEK derived from the
- * WebAuthn PRF output, so it can be unwrapped after a fingerprint/face prompt
- * without ever caching the passphrase or a plaintext key.
+ * Biometric unlock material. Two modes:
+ *
+ * - `prf`: the DEK is wrapped under a KEK derived from the WebAuthn PRF output.
+ *   Nothing extra is persisted — the KEK only exists during a biometric prompt.
+ *   Preferred; requires authenticator PRF/hmac-secret support.
+ *
+ * - `wrapped-key`: fallback for authenticators without PRF (e.g. many Windows
+ *   Hello configs). The DEK is wrapped under a random **non-extractable**
+ *   AES-KW key stored as a `CryptoKey` in IndexedDB. XSS cannot export the key
+ *   (non-extractable) and a biometric assertion gates the unlock, but the key
+ *   is not cryptographically bound to the assertion — a weaker guarantee than
+ *   PRF, still far stronger than caching a plaintext key.
  */
-export type BiometricVault = {
+export type PrfBiometricVault = {
+  readonly mode: 'prf';
   readonly credentialId: Uint8Array;
   readonly prfSalt: Uint8Array;
   readonly wrappedDek: Uint8Array;
 };
+
+export type WrappedKeyBiometricVault = {
+  readonly mode: 'wrapped-key';
+  readonly credentialId: Uint8Array;
+  readonly kek: CryptoKey;
+  readonly wrappedDek: Uint8Array;
+};
+
+export type BiometricVault = PrfBiometricVault | WrappedKeyBiometricVault;
 
 async function getDb() {
   return openDB(DB_NAME, DB_VERSION, {
@@ -102,30 +121,17 @@ export async function clearCredentialId(): Promise<void> {
   await db.delete(STORE_NAME, CREDENTIAL_KEY);
 }
 
-/** Persist the biometric (PRF-wrapped) vault material. */
+/** Persist the biometric vault material (PRF or wrapped-key fallback). */
 export async function saveBiometricVault(vault: BiometricVault): Promise<void> {
   const db = await getDb();
-  await db.put(
-    STORE_NAME,
-    {
-      credentialId: vault.credentialId,
-      prfSalt: vault.prfSalt,
-      wrappedDek: vault.wrappedDek,
-    },
-    BIOMETRIC_VAULT_KEY,
-  );
+  await db.put(STORE_NAME, vault, BIOMETRIC_VAULT_KEY);
 }
 
 /** Load biometric vault material, or null if biometric unlock is not set up. */
 export async function loadBiometricVault(): Promise<BiometricVault | null> {
   const db = await getDb();
-  const stored = await db.get(STORE_NAME, BIOMETRIC_VAULT_KEY);
-  if (!stored) return null;
-  return {
-    credentialId: stored.credentialId as Uint8Array,
-    prfSalt: stored.prfSalt as Uint8Array,
-    wrappedDek: stored.wrappedDek as Uint8Array,
-  };
+  const stored = (await db.get(STORE_NAME, BIOMETRIC_VAULT_KEY)) as BiometricVault | undefined;
+  return stored ?? null;
 }
 
 /** Remove only the biometric vault material. */

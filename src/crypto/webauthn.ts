@@ -21,14 +21,17 @@ import {
   clearCredentialId,
   saveBiometricVault,
   loadBiometricVault,
-  clearBiometricVault,
 } from './key-store.ts';
-import { deriveKekFromPrf, wrapDek, unwrapDek } from './key-derivation.ts';
+import { deriveKekFromPrf, generateWrappingKey, wrapDek, unwrapDek } from './key-derivation.ts';
 
 export type BiometricRegistration = {
   readonly credentialId: Uint8Array;
+  readonly prfEnabled: boolean;
   readonly prfOutput: Uint8Array | null;
 };
+
+/** Result of enrolling biometric unlock — success or a human-readable reason. */
+export type EnrollResult = { ok: true } | { ok: false; reason: string };
 
 /** Check if a platform authenticator (fingerprint, face, etc.) is available. */
 export async function isBiometricAvailable(): Promise<boolean> {
@@ -92,10 +95,16 @@ export async function registerBiometric(
   const credentialId = new Uint8Array(pkc.rawId);
   await saveCredentialId(credentialId);
 
-  const ext = pkc.getClientExtensionResults() as { prf?: { results?: { first?: ArrayBuffer } } };
+  const ext = pkc.getClientExtensionResults() as {
+    prf?: { enabled?: boolean; results?: { first?: ArrayBuffer } };
+  };
   const prfFirst = ext.prf?.results?.first;
 
-  return { credentialId, prfOutput: prfFirst ? new Uint8Array(prfFirst) : null };
+  return {
+    credentialId,
+    prfEnabled: ext.prf?.enabled === true,
+    prfOutput: prfFirst ? new Uint8Array(prfFirst) : null,
+  };
 }
 
 /**
@@ -181,45 +190,62 @@ async function evaluatePrf(
 }
 
 /**
- * Enrol biometric unlock: re-wrap the in-memory DEK under a KEK derived from
- * the authenticator's PRF output. Returns true on success, false if the
- * platform authenticator does not support the PRF extension (in which case any
- * orphan credential is cleaned up). Throws if the user cancels.
+ * Enrol biometric unlock. Prefers the PRF extension (nothing extra persisted);
+ * if the authenticator lacks PRF, falls back to wrapping the DEK under a random
+ * non-extractable AES-KW key stored in IndexedDB, gated by a biometric
+ * assertion. Returns ok on success. Throws only if the user cancels the prompt.
  */
 export async function enrollBiometricUnlock(
   userId: Uint8Array,
   userName: string,
   dek: CryptoKey,
-): Promise<boolean> {
+): Promise<EnrollResult> {
   const prfSalt = crypto.getRandomValues(new Uint8Array(32));
-  const { credentialId, prfOutput } = await registerBiometric(userId, userName, prfSalt);
+  const { credentialId, prfEnabled, prfOutput } = await registerBiometric(
+    userId,
+    userName,
+    prfSalt,
+  );
 
-  // Prefer PRF output from creation (single prompt); fall back to an assertion.
-  const prf = prfOutput ?? (await evaluatePrf(credentialId, prfSalt));
-  if (!prf) {
-    // PRF unsupported on this authenticator — drop the unusable credential.
-    await clearBiometricVault();
-    return false;
+  // Preferred path: PRF output from creation, or an assertion when the
+  // authenticator advertised PRF support but didn't return it at creation.
+  const prf = prfOutput ?? (prfEnabled ? await evaluatePrf(credentialId, prfSalt) : null);
+  if (prf) {
+    const kek = await deriveKekFromPrf(prf);
+    const wrappedDek = await wrapDek(dek, kek);
+    await saveBiometricVault({ mode: 'prf', credentialId, prfSalt, wrappedDek });
+    return { ok: true };
   }
 
-  const kek = await deriveKekFromPrf(prf);
+  // Fallback: wrap the DEK under a non-extractable AES-KW key persisted in
+  // IndexedDB. The biometric assertion gates unlock; the key never leaves the
+  // CryptoKey and cannot be exported by page script.
+  const kek = await generateWrappingKey();
   const wrappedDek = await wrapDek(dek, kek);
-  await saveBiometricVault({ credentialId, prfSalt, wrappedDek });
-  return true;
+  await saveBiometricVault({ mode: 'wrapped-key', credentialId, kek, wrappedDek });
+  return { ok: true };
 }
 
 /**
- * Unlock via biometric: prompt for fingerprint/face, derive the KEK from PRF,
- * and unwrap the DEK. Returns the non-extractable DEK, or null if biometric
- * unlock is not set up or PRF is unavailable. Throws if the user cancels.
+ * Unlock via biometric: prompt for fingerprint/face and unwrap the DEK.
+ * Returns the non-extractable DEK, or null if biometric unlock is not set up
+ * or its key material is unavailable. Throws if the user cancels.
  */
 export async function unlockWithBiometric(): Promise<CryptoKey | null> {
   const vault = await loadBiometricVault();
   if (!vault) return null;
-  const prfOutput = await evaluatePrf(vault.credentialId, vault.prfSalt);
-  if (!prfOutput) return null;
-  const kek = await deriveKekFromPrf(prfOutput);
-  return unwrapDek(vault.wrappedDek, kek);
+
+  if (vault.mode === 'prf') {
+    const prfOutput = await evaluatePrf(vault.credentialId, vault.prfSalt);
+    if (!prfOutput) return null;
+    const kek = await deriveKekFromPrf(prfOutput);
+    return unwrapDek(vault.wrappedDek, kek);
+  }
+
+  // wrapped-key fallback: require a biometric assertion to gate the unlock,
+  // then unwrap with the stored non-extractable key.
+  await assertBiometric(vault.credentialId);
+  return unwrapDek(vault.wrappedDek, vault.kek);
 }
 
 /** Remove the biometric credential from this device. */

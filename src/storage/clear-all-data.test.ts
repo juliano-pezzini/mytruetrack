@@ -6,7 +6,7 @@ import type { Database } from './database.ts';
 
 async function rowCount(db: Database, table: string): Promise<number> {
   const rows = await db.execA(`SELECT COUNT(*) FROM ${table}`);
-  return Number(rows[0][0]);
+  return Number(rows[0]?.[0] ?? 0);
 }
 
 async function seedEveryTable(db: Database): Promise<void> {

@@ -1,6 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { setupLocalOnly } from './helpers.ts';
 
+/** Return a date string (YYYY-MM-DD) for day `d` of the current month. */
+function thisMonth(d: number): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
 async function createAccount(
   page: import('@playwright/test').Page,
   name: string,
@@ -31,7 +37,7 @@ test('create a credit transaction', async ({ page }) => {
 
   await page.getByLabel('Amount').fill('500.00');
   await page.getByLabel('Description').fill('Salary');
-  await page.getByLabel('Date').fill('2026-06-01');
+  await page.getByLabel('Date').fill(thisMonth(1));
   await page.getByLabel('Type').selectOption('credit');
   await page.getByRole('button', { name: 'Create' }).click();
 
@@ -44,7 +50,7 @@ test('create a debit transaction', async ({ page }) => {
 
   await page.getByLabel('Amount').fill('85.50');
   await page.getByLabel('Description').fill('Groceries');
-  await page.getByLabel('Date').fill('2026-06-15');
+  await page.getByLabel('Date').fill(thisMonth(15));
   await page.getByLabel('Type').selectOption('debit');
   await page.getByRole('button', { name: 'Create' }).click();
 
@@ -57,7 +63,7 @@ test('running balance is shown in the table', async ({ page }) => {
   await page.getByRole('button', { name: '+ New Transaction' }).click();
   await page.getByLabel('Amount').fill('200.00');
   await page.getByLabel('Description').fill('Credit entry');
-  await page.getByLabel('Date').fill('2026-06-01');
+  await page.getByLabel('Date').fill(thisMonth(1));
   await page.getByLabel('Type').selectOption('credit');
   await page.getByRole('button', { name: 'Create' }).click();
   await page.getByRole('cell', { name: 'Credit entry' }).waitFor();
@@ -72,7 +78,7 @@ test('edit a transaction', async ({ page }) => {
   await page.getByRole('button', { name: '+ New Transaction' }).click();
   await page.getByLabel('Amount').fill('100.00');
   await page.getByLabel('Description').fill('Original Desc');
-  await page.getByLabel('Date').fill('2026-06-01');
+  await page.getByLabel('Date').fill(thisMonth(1));
   await page.getByLabel('Type').selectOption('debit');
   await page.getByRole('button', { name: 'Create' }).click();
   await page.getByRole('cell', { name: 'Original Desc' }).waitFor();
@@ -89,7 +95,7 @@ test('delete a transaction with confirmation', async ({ page }) => {
   await page.getByRole('button', { name: '+ New Transaction' }).click();
   await page.getByLabel('Amount').fill('50.00');
   await page.getByLabel('Description').fill('To Delete');
-  await page.getByLabel('Date').fill('2026-06-01');
+  await page.getByLabel('Date').fill(thisMonth(1));
   await page.getByLabel('Type').selectOption('debit');
   await page.getByRole('button', { name: 'Create' }).click();
   await page.getByRole('cell', { name: 'To Delete' }).waitFor();

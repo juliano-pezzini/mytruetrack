@@ -4,7 +4,11 @@ import { PassphraseInput } from '../components/PassphraseInput.tsx';
 import { ConfirmDialog } from '../components/ConfirmDialog.tsx';
 import { loadKeyData } from '../../crypto/key-store.ts';
 import { deriveKek, unwrapDek } from '../../crypto/key-derivation.ts';
-import { isBiometricAvailable, assertBiometric, getCredentialId } from '../../crypto/webauthn.ts';
+import {
+  isBiometricAvailable,
+  unlockWithBiometric,
+  hasBiometricUnlock,
+} from '../../crypto/webauthn.ts';
 
 export function UnlockPage() {
   const { unlock, reset } = useVault();
@@ -13,13 +17,24 @@ export function UnlockPage() {
   const [loading, setLoading] = useState(false);
   const [showReset, setShowReset] = useState(false);
   const [bioAvailable, setBioAvailable] = useState(false);
+  const [showPassphrase, setShowPassphrase] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     async function checkBio() {
-      const credId = await getCredentialId();
-      if (credId) {
-        const avail = await isBiometricAvailable();
-        setBioAvailable(avail);
+      try {
+        const enrolled = await hasBiometricUnlock();
+        if (enrolled) {
+          const avail = await isBiometricAvailable();
+          setBioAvailable(avail);
+          if (!avail) setShowPassphrase(true);
+        } else {
+          setShowPassphrase(true);
+        }
+      } catch {
+        setShowPassphrase(true);
+      } finally {
+        setChecking(false);
       }
     }
     void checkBio();
@@ -54,20 +69,16 @@ export function UnlockPage() {
     setLoading(true);
 
     try {
-      const credId = await getCredentialId();
-      if (!credId) {
-        setError('No biometric credential found.');
+      const dek = await unlockWithBiometric();
+      if (!dek) {
+        setError('Biometric unlock is unavailable. Please use your passphrase.');
+        setShowPassphrase(true);
         return;
       }
-      await assertBiometric(credId);
-      // Biometric only gates access — DEK must still be derived from passphrase.
-      // In the current design, biometric is session-scoped: the user must enter
-      // the passphrase at least once per session, then biometric can re-verify.
-      setError(
-        'Biometric verified, but passphrase is still needed for the first unlock this session.',
-      );
+      unlock(dek);
     } catch {
-      setError('Biometric verification failed.');
+      setError('Biometric verification failed. You can use your passphrase instead.');
+      setShowPassphrase(true);
     } finally {
       setLoading(false);
     }
@@ -90,40 +101,67 @@ export function UnlockPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-1">mytruetrack</h1>
-            <p className="text-sm text-gray-500">Enter your passphrase to unlock</p>
+            <p className="text-sm text-gray-500">
+              {bioAvailable && !showPassphrase
+                ? 'Unlock with your fingerprint or face'
+                : 'Enter your passphrase to unlock'}
+            </p>
           </div>
 
-          <div className="space-y-4" onKeyDown={handleKeyDown}>
-            <PassphraseInput
-              value={passphrase}
-              onChange={setPassphrase}
-              label="Passphrase"
-              autoFocus
-            />
+          {error && <p className="text-sm text-red-600 mb-4 text-center">{error}</p>}
 
-            {error && <p className="text-sm text-red-600">{error}</p>}
+          {checking ? (
+            <p className="text-sm text-gray-500 text-center">Loading…</p>
+          ) : (
+            <>
+              {bioAvailable && (
+                <button
+                  type="button"
+                  onClick={handleBiometric}
+                  disabled={loading}
+                  className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loading ? 'Unlocking…' : 'Unlock with biometric'}
+                </button>
+              )}
 
-            <button
-              type="button"
-              onClick={handleUnlock}
-              disabled={loading || !passphrase}
-              className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {loading ? 'Unlocking…' : 'Unlock'}
-            </button>
+              {bioAvailable && !showPassphrase && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPassphrase(true);
+                    setError(null);
+                  }}
+                  className="w-full mt-3 py-2 px-4 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                >
+                  Use passphrase instead
+                </button>
+              )}
 
-            {bioAvailable && (
-              <button
-                type="button"
-                onClick={handleBiometric}
-                disabled={loading}
-                className="w-full py-2 px-4 text-sm text-gray-600 hover:text-gray-800 transition-colors"
-              >
-                Use biometric instead
-              </button>
-            )}
-          </div>
+              {showPassphrase && (
+                <div
+                  className={`space-y-4 ${bioAvailable ? 'mt-4' : ''}`}
+                  onKeyDown={handleKeyDown}
+                >
+                  <PassphraseInput
+                    value={passphrase}
+                    onChange={setPassphrase}
+                    label="Passphrase"
+                    autoFocus
+                  />
 
+                  <button
+                    type="button"
+                    onClick={handleUnlock}
+                    disabled={loading || !passphrase}
+                    className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {loading ? 'Unlocking…' : 'Unlock'}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
           <div className="mt-6 text-center">
             <button
               type="button"

@@ -3,11 +3,16 @@ import { useVault } from '../hooks/useVault.ts';
 import { ConfirmDialog } from './ConfirmDialog.tsx';
 import { PassphraseInput } from './PassphraseInput.tsx';
 import { hasKeyData, loadKeyData, saveKeyData } from '../../crypto/key-store.ts';
-import { generateSalt, deriveKek, rewrapDek } from '../../crypto/key-derivation.ts';
+import {
+  generateSalt,
+  deriveKek,
+  rewrapDek,
+  unwrapDekExtractable,
+} from '../../crypto/key-derivation.ts';
 import {
   isBiometricAvailable,
-  hasBiometricCredential,
-  registerBiometric,
+  hasBiometricUnlock,
+  enrollBiometricUnlock,
   removeBiometricCredential,
 } from '../../crypto/webauthn.ts';
 
@@ -32,11 +37,16 @@ export function SecuritySection() {
   const [changeError, setChangeError] = useState<string | null>(null);
   const [changing, setChanging] = useState(false);
 
+  // Enable-biometric form (needs the passphrase to derive an extractable DEK)
+  const [showBioForm, setShowBioForm] = useState(false);
+  const [bioPassphrase, setBioPassphrase] = useState('');
+  const [bioError, setBioError] = useState<string | null>(null);
+
   async function loadState() {
     const [vaultProtected, bioAvailable, bioEnrolled] = await Promise.all([
       hasKeyData(),
       isBiometricAvailable(),
-      hasBiometricCredential(),
+      hasBiometricUnlock(),
     ]);
     setState({ vaultProtected, bioAvailable, bioEnrolled });
   }
@@ -46,15 +56,33 @@ export function SecuritySection() {
   }, [status]);
 
   async function handleEnableBiometric() {
+    if (bioPassphrase.length === 0) {
+      setBioError('Enter your passphrase to enable biometric unlock.');
+      return;
+    }
     setLoading(true);
+    setBioError(null);
     setMessage(null);
     try {
+      const keyData = await loadKeyData();
+      if (!keyData) throw new Error('No vault found.');
+
+      // Derive a transient extractable DEK from the passphrase so it can be
+      // re-wrapped for biometric. The app's working DEK stays non-extractable.
+      const kek = await deriveKek(bioPassphrase, keyData.salt, keyData.iterations);
+      const extractableDek = await unwrapDekExtractable(keyData.wrappedDek, kek);
+
       const userId = crypto.getRandomValues(new Uint8Array(16));
-      await registerBiometric(userId, 'mytruetrack');
+      await enrollBiometricUnlock(userId, 'mytruetrack', extractableDek);
+      setShowBioForm(false);
+      setBioPassphrase('');
       setMessage({ type: 'success', text: 'Biometric unlock enabled.' });
       await loadState();
-    } catch {
-      setMessage({ type: 'error', text: 'Biometric enrollment failed or was cancelled.' });
+    } catch (err) {
+      const isPassphrase = err instanceof Error && err.message.startsWith('Failed to unwrap key');
+      setBioError(
+        isPassphrase ? 'Incorrect passphrase.' : 'Biometric enrollment failed or was cancelled.',
+      );
     } finally {
       setLoading(false);
     }
@@ -68,7 +96,7 @@ export function SecuritySection() {
       setMessage({ type: 'success', text: 'Biometric unlock removed.' });
       await loadState();
     } catch {
-      setMessage({ type: 'error', text: 'Failed to remove biometric credential.' });
+      setMessage({ type: 'error', text: 'Failed to remove biometric unlock.' });
     } finally {
       setLoading(false);
     }
@@ -236,14 +264,54 @@ export function SecuritySection() {
                 <p className="text-xs text-gray-500 mb-2">
                   Your device supports fingerprint or face unlock.
                 </p>
-                <button
-                  type="button"
-                  onClick={handleEnableBiometric}
-                  disabled={loading}
-                  className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
-                >
-                  {loading ? 'Setting up…' : 'Enable biometric unlock'}
-                </button>
+                {!showBioForm ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowBioForm(true);
+                      setBioError(null);
+                    }}
+                    className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
+                  >
+                    Enable biometric unlock
+                  </button>
+                ) : (
+                  <div className="mt-2 space-y-3 border border-gray-200 rounded-lg p-4">
+                    <p className="text-xs text-gray-600">
+                      Enter your passphrase to link biometric unlock on this device.
+                    </p>
+                    <PassphraseInput
+                      id="bio-passphrase"
+                      value={bioPassphrase}
+                      onChange={setBioPassphrase}
+                      label="Passphrase"
+                      autoFocus
+                    />
+                    {bioError && <p className="text-xs text-red-600">{bioError}</p>}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={handleEnableBiometric}
+                        disabled={loading || !bioPassphrase}
+                        className="flex-1 py-2 px-3 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {loading ? 'Setting up…' : 'Enable biometric unlock'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowBioForm(false);
+                          setBioPassphrase('');
+                          setBioError(null);
+                        }}
+                        disabled={loading}
+                        className="py-2 px-3 text-xs text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <>

@@ -5,7 +5,7 @@ import { StrengthMeter } from '../components/StrengthMeter.tsx';
 import { generateSalt, deriveKek, generateDek, wrapDek } from '../../crypto/key-derivation.ts';
 import { saveKeyData } from '../../crypto/key-store.ts';
 import { generateRecoverySheet } from '../../crypto/recovery-sheet.ts';
-import { isBiometricAvailable, registerBiometric } from '../../crypto/webauthn.ts';
+import { isBiometricAvailable, enrollBiometricUnlock } from '../../crypto/webauthn.ts';
 
 type Step = 'welcome' | 'choice' | 'passphrase' | 'recovery' | 'biometric' | 'done';
 
@@ -69,11 +69,15 @@ export function SetupWizard() {
   }
 
   async function handleBiometricEnroll() {
+    if (!dek) {
+      setError('Vault not ready. Please restart setup.');
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const userId = crypto.getRandomValues(new Uint8Array(16));
-      await registerBiometric(userId, 'mytruetrack');
+      await enrollBiometricUnlock(userId, 'mytruetrack', dek);
       setStep('done');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Biometric enrollment failed.');

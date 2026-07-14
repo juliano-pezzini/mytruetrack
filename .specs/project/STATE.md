@@ -1,6 +1,6 @@
 # State
 
-**Last Updated:** 2026-06-23
+**Last Updated:** 2026-07-12
 **Current Work:** Local persistence + CRDT delta sync COMPLETE (AD-008) — cr-sqlite via an
 IndexedDB-backed VFS, per-site `crsql_changes` delta sync. 330 unit tests, 50 e2e tests, all
 passing. Auto-sync (AD-007) and Phase 8 — Local-First Foundation complete prior.
@@ -8,6 +8,45 @@ passing. Auto-sync (AD-007) and Phase 8 — Local-First Foundation complete prio
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-009: WebAuthn biometric unlock — PRF preferred, non-extractable wrapped-key fallback (2026-07-12)
+
+**Decision:** Biometric is now a real unlock path, not just an identity check. Two modes,
+selected automatically at enrollment (`enrollBiometricUnlock`), both stored as a
+discriminated-union `biometric-vault` record in the keystore IndexedDB:
+
+- **`prf` (preferred):** the authenticator is registered with the WebAuthn `prf` extension;
+  a `prfSalt` yields 32 secret bytes, HKDF-stretched into a non-extractable AES-KW KEK
+  (`deriveKekFromPrf`) that wraps the DEK. Nothing extra is persisted — the KEK only exists
+  during a biometric prompt. Requires authenticator PRF/hmac-secret support.
+- **`wrapped-key` (fallback):** for authenticators without PRF (e.g. Windows Hello on Win11
+  23H2, which reports `prf.enabled === false`). The DEK is wrapped under a random
+  **non-extractable** AES-KW `CryptoKey` (`generateWrappingKey`) persisted as a `CryptoKey`
+  in IndexedDB; a biometric assertion gates the unlock. The key can never be exported by page
+  script, though it is not cryptographically bound to the assertion.
+
+On unlock, `unlockWithBiometric` branches on `mode` and returns a non-extractable DEK, so a tab
+discard/reload is unlocked by fingerprint/face with no passphrase. Because `wrapKey` requires an
+extractable key, Settings enrollment prompts for the passphrase to derive a *transient*
+extractable DEK (`unwrapDekExtractable`) that is wrapped and discarded — the app's working DEK
+stays non-extractable. The setup wizard uses the freshly generated (still-extractable) DEK
+directly.
+
+**Reason:** "First unlock this session" really meant first unlock since page load — biometric
+never worked because it derived no key, and tab discards forced repeated passphrase entry. PRF
+is the ideal path but Windows Hello frequently lacks hmac-secret even on Win11 23H2, so a
+fallback was needed for biometric to work at all on those machines.
+
+**Trade-off:** No plaintext key or passphrase is ever cached (rejected sessionStorage caching
+as an XSS-exposed downgrade). The `wrapped-key` fallback is weaker than PRF — an XSS payload
+could invoke the unwrap without the biometric prompt since the assertion is not bound to the
+key — but far stronger than storing a plaintext key; strict CSP is the backstop.
+
+**Impact:** `deriveKekFromPrf` / `generateWrappingKey` / `unwrapDekExtractable`
+(key-derivation), union `BiometricVault` keystore record, `enrollBiometricUnlock` /
+`unlockWithBiometric` (webauthn); SetupWizard, UnlockPage (biometric-first UI), and
+SecuritySection (passphrase-gated enrollment) rewired. Verified working with Windows Hello via
+the fallback path.
 
 ### AD-008: Local persistence + cr-sqlite CRDT delta sync (Phase 8.11) (2026-06-17)
 
@@ -153,7 +192,6 @@ dynamically to preserve offline-first boot.
 ## Deferred Ideas
 
 - Argon2-WASM for passphrase hashing (PBKDF2 is sufficient; upgrade when bundle budget allows)
-- WebAuthn PRF-based biometric-only unlock (waiting for broader platform support)
 
 ---
 

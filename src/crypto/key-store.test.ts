@@ -8,7 +8,11 @@ import {
   saveCredentialId,
   loadCredentialId,
   clearCredentialId,
+  saveBiometricVault,
+  loadBiometricVault,
+  clearBiometricVault,
 } from './key-store.ts';
+import { generateWrappingKey, generateDek, wrapDek, unwrapDek } from './key-derivation.ts';
 
 describe('key-store', () => {
   beforeEach(async () => {
@@ -108,5 +112,82 @@ describe('key-store', () => {
 
     expect(await loadCredentialId()).toBeNull();
     expect(await hasKeyData()).toBe(true); // key data still present
+  });
+
+  it('returns null when no biometric vault exists', async () => {
+    expect(await loadBiometricVault()).toBeNull();
+  });
+
+  it('saves and loads biometric vault', async () => {
+    const vault = {
+      mode: 'prf' as const,
+      credentialId: new Uint8Array([1, 2, 3]),
+      prfSalt: new Uint8Array([4, 5, 6, 7]),
+      wrappedDek: new Uint8Array([8, 9, 10, 11, 12]),
+    };
+    await saveBiometricVault(vault);
+
+    const loaded = await loadBiometricVault();
+    expect(loaded).not.toBeNull();
+    expect(loaded!.credentialId).toEqual(vault.credentialId);
+    expect(loaded!.mode).toBe('prf');
+    expect(loaded!.wrappedDek).toEqual(vault.wrappedDek);
+  });
+
+  it('clearBiometricVault removes only the biometric vault', async () => {
+    await saveKeyData({
+      wrappedDek: new Uint8Array([1]),
+      salt: new Uint8Array([2]),
+      iterations: 1000,
+    });
+    await saveBiometricVault({
+      mode: 'prf',
+      credentialId: new Uint8Array([1]),
+      prfSalt: new Uint8Array([2]),
+      wrappedDek: new Uint8Array([3]),
+    });
+
+    await clearBiometricVault();
+
+    expect(await loadBiometricVault()).toBeNull();
+    expect(await hasKeyData()).toBe(true);
+  });
+
+  it('clearKeyData also removes the biometric vault', async () => {
+    await saveBiometricVault({
+      mode: 'prf',
+      credentialId: new Uint8Array([1]),
+      prfSalt: new Uint8Array([2]),
+      wrappedDek: new Uint8Array([3]),
+    });
+
+    await clearKeyData();
+
+    expect(await loadBiometricVault()).toBeNull();
+  });
+
+  it('saves and loads wrapped-key biometric vault with a real CryptoKey', async () => {
+    const kek = await generateWrappingKey();
+    const dek = await generateDek();
+    const wrappedDek = await wrapDek(dek, kek);
+
+    const vault = {
+      mode: 'wrapped-key' as const,
+      credentialId: new Uint8Array([10, 20, 30]),
+      kek,
+      wrappedDek,
+    };
+    await saveBiometricVault(vault);
+
+    const loaded = await loadBiometricVault();
+    expect(loaded).not.toBeNull();
+    expect(loaded!.mode).toBe('wrapped-key');
+    expect(loaded!.credentialId).toEqual(vault.credentialId);
+    expect(loaded!.wrappedDek).toEqual(vault.wrappedDek);
+
+    // Round-trip: the persisted CryptoKey must still unwrap the DEK
+    const loadedVault = loaded as { mode: 'wrapped-key'; kek: CryptoKey; wrappedDek: Uint8Array };
+    const unwrapped = await unwrapDek(loadedVault.wrappedDek, loadedVault.kek);
+    expect(unwrapped).toBeInstanceOf(CryptoKey);
   });
 });

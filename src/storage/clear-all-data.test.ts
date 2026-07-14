@@ -17,9 +17,7 @@ async function seedEveryTable(db: Database): Promise<void> {
     `INSERT INTO transactions (id, account_id, amount, description, transaction_date, type)
      VALUES ('tx1', 'a1', 500, 'Lunch', '2026-01-01', 'debit')`,
   );
-  await db.exec(
-    `INSERT INTO transaction_tags (transaction_id, tag_id) VALUES ('tx1', 't1')`,
-  );
+  await db.exec(`INSERT INTO transaction_tags (transaction_id, tag_id) VALUES ('tx1', 't1')`);
   await db.exec(
     `INSERT INTO account_balances (account_id, year, month, closing_balance)
      VALUES ('a1', 2026, 1, 1000)`,
@@ -78,5 +76,28 @@ describe('clearAllData', () => {
     // A fresh insert must still succeed against the surviving schema.
     await db.exec(`INSERT INTO accounts (id, name, type) VALUES ('a2', 'Savings', 'bank')`);
     expect(await rowCount(db, 'accounts')).toBe(1);
+  });
+
+  it('rolls back the whole wipe if any delete fails (atomic)', async () => {
+    const calls: string[] = [];
+    let deletes = 0;
+    const failing: Database = {
+      async exec(sql: string) {
+        calls.push(sql);
+        if (sql.startsWith('DELETE')) {
+          deletes += 1;
+          if (deletes === 3) throw new Error('boom');
+        }
+      },
+      execA: async () => [],
+      execO: async () => [],
+      close: async () => {},
+    };
+
+    await expect(clearAllData(failing)).rejects.toThrow('boom');
+
+    expect(calls[0]).toBe('BEGIN');
+    expect(calls).toContain('ROLLBACK');
+    expect(calls).not.toContain('COMMIT');
   });
 });

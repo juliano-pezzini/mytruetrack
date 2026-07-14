@@ -58,3 +58,23 @@ Mutation reverted; suite green afterward. No surviving mutants.
 ## Lessons
 
 Clean PASS — no grounded failures to distill.
+
+---
+
+## Post-review update (PR #63)
+
+Addressed three valid `copilot-pull-request-reviewer` comments:
+
+1. **Atomicity** — `clearAllData` now wraps its deletes in a `BEGIN`/`COMMIT` transaction with
+   `ROLLBACK` on failure and quotes table identifiers. New unit test asserts a mid-wipe failure
+   rolls back (no `COMMIT`).
+2. **Meaningful vault test** — replaced the tautological inline `wipeEverything` test with a
+   jsdom `renderHook(VaultProvider)` test (`vault-provider.render.test.ts`) that invokes
+   `result.current.wipeEverything()` and asserts the teardown calls + `status → needs-setup`.
+3. **Dialog reuse** — extended `ConfirmDialog` with optional `children` + `confirmDisabled`
+   and refactored `DangerZone` to reuse it instead of a bespoke modal.
+
+Also fixed the failing CI **Quality** job (two files were not Prettier-formatted).
+
+Re-verified: prettier/lint/typecheck clean, 387 unit tests, 4 wipe e2e + 23 shared-dialog
+e2e (accounts/categories/transactions) pass, audit-ci clean.

@@ -6,22 +6,10 @@ vi.mock('../crypto/key-store.ts', () => ({
   clearKeyData: vi.fn(),
 }));
 
-vi.mock('../sync/sync-config.ts', () => ({
-  clearSyncConfig: vi.fn(),
-}));
-
-vi.mock('../sync/sync-state.ts', () => ({
-  clearSyncState: vi.fn(),
-}));
-
 import { hasKeyData, clearKeyData } from '../crypto/key-store.ts';
-import { clearSyncConfig } from '../sync/sync-config.ts';
-import { clearSyncState } from '../sync/sync-state.ts';
 
 const mockedHasKeyData = vi.mocked(hasKeyData);
 const mockedClearKeyData = vi.mocked(clearKeyData);
-const mockedClearSyncConfig = vi.mocked(clearSyncConfig);
-const mockedClearSyncState = vi.mocked(clearSyncState);
 
 // We test the vault logic directly rather than rendering React components,
 // since the test environment is Node (no DOM). The VaultProvider logic is:
@@ -53,8 +41,6 @@ describe('VaultProvider logic', () => {
     vi.stubGlobal('localStorage', localStorageMock);
     mockedHasKeyData.mockReset();
     mockedClearKeyData.mockReset();
-    mockedClearSyncConfig.mockReset();
-    mockedClearSyncState.mockReset();
   });
 
   afterEach(() => {
@@ -130,29 +116,6 @@ describe('VaultProvider logic', () => {
     localStorage.removeItem('vault-skipped');
 
     expect(mockedClearKeyData).toHaveBeenCalledOnce();
-    expect(localStorage.getItem('vault-skipped')).toBeNull();
-
-    const status = 'needs-setup';
-    const dek = null;
-    expect(status).toBe('needs-setup');
-    expect(dek).toBeNull();
-  });
-
-  it('wipeEverything clears keys, sync config, sync state, and localStorage → needs-setup', async () => {
-    localStorage.setItem('vault-skipped', 'true');
-    mockedClearKeyData.mockResolvedValue();
-    mockedClearSyncConfig.mockResolvedValue();
-    mockedClearSyncState.mockResolvedValue();
-
-    // Simulate wipeEverything()
-    await clearKeyData();
-    await clearSyncConfig();
-    await clearSyncState();
-    localStorage.removeItem('vault-skipped');
-
-    expect(mockedClearKeyData).toHaveBeenCalledOnce();
-    expect(mockedClearSyncConfig).toHaveBeenCalledOnce();
-    expect(mockedClearSyncState).toHaveBeenCalledOnce();
     expect(localStorage.getItem('vault-skipped')).toBeNull();
 
     const status = 'needs-setup';

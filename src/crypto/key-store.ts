@@ -30,10 +30,13 @@ export type KeyData = {
  *
  * - `wrapped-key`: fallback for authenticators without PRF (e.g. many Windows
  *   Hello configs). The DEK is wrapped under a random **non-extractable**
- *   AES-KW key stored as a `CryptoKey` in IndexedDB. XSS cannot export the key
- *   (non-extractable) and a biometric assertion gates the unlock, but the key
- *   is not cryptographically bound to the assertion — a weaker guarantee than
- *   PRF, still far stronger than caching a plaintext key.
+ *   AES-KW key stored as a `CryptoKey` in IndexedDB. The key is not bound to a
+ *   biometric assertion: while the app's unlock flow prompts for biometric
+ *   first, any same-origin script (including an XSS payload) can read this
+ *   record and call `crypto.subtle.unwrapKey` directly without proving user
+ *   presence. The only hard protection is non-extractability — the raw key
+ *   bytes can never be exported. Weaker than PRF (which binds the KEK to the
+ *   assertion), but still far stronger than caching a plaintext key.
  */
 export type PrfBiometricVault = {
   readonly mode: 'prf';

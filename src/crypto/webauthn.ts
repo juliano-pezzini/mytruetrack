@@ -52,7 +52,8 @@ export async function isBiometricAvailable(): Promise<boolean> {
  * Register a WebAuthn platform authenticator credential. When a prfSalt is
  * given, the PRF extension is requested at creation; if the authenticator
  * returns PRF output immediately, it is included (avoids a second prompt).
- * Stores the credential ID in IndexedDB for future assertions.
+ * The credential ID is returned but NOT persisted here — the caller stores it
+ * only after the biometric vault is written, to avoid orphaned state.
  */
 export async function registerBiometric(
   userId: Uint8Array,
@@ -96,7 +97,6 @@ export async function registerBiometric(
 
   const pkc = credential as PublicKeyCredential;
   const credentialId = new Uint8Array(pkc.rawId);
-  await saveCredentialId(credentialId);
 
   const ext = pkc.getClientExtensionResults() as {
     prf?: { enabled?: boolean; results?: { first?: ArrayBuffer } };
@@ -217,15 +217,20 @@ export async function enrollBiometricUnlock(
     const kek = await deriveKekFromPrf(prf);
     const wrappedDek = await wrapDek(dek, kek);
     await saveBiometricVault({ mode: 'prf', credentialId, prfSalt, wrappedDek });
+    // Persist the credential ID only after the vault is written, so a failure
+    // above never leaves an orphaned credential ID without a matching vault.
+    await saveCredentialId(credentialId);
     return;
   }
 
   // Fallback: wrap the DEK under a non-extractable AES-KW key persisted in
-  // IndexedDB. The biometric assertion gates unlock; the key never leaves the
-  // CryptoKey and cannot be exported by page script.
+  // IndexedDB. The unlock flow prompts for biometric, but the key is not bound
+  // to the assertion — same-origin script could unwrap without it. The raw key
+  // bytes are never exportable (non-extractable). See key-store.ts for details.
   const kek = await generateWrappingKey();
   const wrappedDek = await wrapDek(dek, kek);
   await saveBiometricVault({ mode: 'wrapped-key', credentialId, kek, wrappedDek });
+  await saveCredentialId(credentialId);
 }
 
 /**

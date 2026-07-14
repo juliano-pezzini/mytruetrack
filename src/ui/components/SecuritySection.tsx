@@ -79,7 +79,7 @@ export function SecuritySection() {
       setMessage({ type: 'success', text: 'Biometric unlock enabled.' });
       await loadState();
     } catch (err) {
-      const isPassphrase = err instanceof Error && err.message.includes('unwrap');
+      const isPassphrase = err instanceof Error && err.message.startsWith('Failed to unwrap key');
       setBioError(
         isPassphrase ? 'Incorrect passphrase.' : 'Biometric enrollment failed or was cancelled.',
       );

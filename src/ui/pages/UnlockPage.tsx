@@ -18,6 +18,7 @@ export function UnlockPage() {
   const [showReset, setShowReset] = useState(false);
   const [bioAvailable, setBioAvailable] = useState(false);
   const [showPassphrase, setShowPassphrase] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     async function checkBio() {
@@ -32,6 +33,8 @@ export function UnlockPage() {
         }
       } catch {
         setShowPassphrase(true);
+      } finally {
+        setChecking(false);
       }
     }
     void checkBio();
@@ -107,48 +110,57 @@ export function UnlockPage() {
 
           {error && <p className="text-sm text-red-600 mb-4 text-center">{error}</p>}
 
-          {bioAvailable && (
-            <button
-              type="button"
-              onClick={handleBiometric}
-              disabled={loading}
-              className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {loading ? 'Unlocking…' : 'Unlock with biometric'}
-            </button>
-          )}
+          {checking ? (
+            <p className="text-sm text-gray-500 text-center">Loading…</p>
+          ) : (
+            <>
+              {bioAvailable && (
+                <button
+                  type="button"
+                  onClick={handleBiometric}
+                  disabled={loading}
+                  className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loading ? 'Unlocking…' : 'Unlock with biometric'}
+                </button>
+              )}
 
-          {bioAvailable && !showPassphrase && (
-            <button
-              type="button"
-              onClick={() => {
-                setShowPassphrase(true);
-                setError(null);
-              }}
-              className="w-full mt-3 py-2 px-4 text-sm text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              Use passphrase instead
-            </button>
-          )}
+              {bioAvailable && !showPassphrase && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPassphrase(true);
+                    setError(null);
+                  }}
+                  className="w-full mt-3 py-2 px-4 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                >
+                  Use passphrase instead
+                </button>
+              )}
 
-          {showPassphrase && (
-            <div className={`space-y-4 ${bioAvailable ? 'mt-4' : ''}`} onKeyDown={handleKeyDown}>
-              <PassphraseInput
-                value={passphrase}
-                onChange={setPassphrase}
-                label="Passphrase"
-                autoFocus
-              />
+              {showPassphrase && (
+                <div
+                  className={`space-y-4 ${bioAvailable ? 'mt-4' : ''}`}
+                  onKeyDown={handleKeyDown}
+                >
+                  <PassphraseInput
+                    value={passphrase}
+                    onChange={setPassphrase}
+                    label="Passphrase"
+                    autoFocus
+                  />
 
-              <button
-                type="button"
-                onClick={handleUnlock}
-                disabled={loading || !passphrase}
-                className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {loading ? 'Unlocking…' : 'Unlock'}
-              </button>
-            </div>
+                  <button
+                    type="button"
+                    onClick={handleUnlock}
+                    disabled={loading || !passphrase}
+                    className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {loading ? 'Unlocking…' : 'Unlock'}
+                  </button>
+                </div>
+              )}
+            </>
           )}
           <div className="mt-6 text-center">
             <button

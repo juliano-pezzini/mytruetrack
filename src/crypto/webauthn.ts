@@ -21,6 +21,7 @@ import {
   clearCredentialId,
   saveBiometricVault,
   loadBiometricVault,
+  clearBiometricVault,
 } from './key-store.ts';
 import { deriveKekFromPrf, generateWrappingKey, wrapDek, unwrapDek } from './key-derivation.ts';
 
@@ -30,8 +31,10 @@ export type BiometricRegistration = {
   readonly prfOutput: Uint8Array | null;
 };
 
-/** Result of enrolling biometric unlock — success or a human-readable reason. */
-export type EnrollResult = { ok: true } | { ok: false; reason: string };
+/** Extract exact bytes from a Uint8Array, safe for views with non-zero byteOffset. */
+function toBuffer(view: Uint8Array): ArrayBuffer {
+  return new Uint8Array(view).buffer as ArrayBuffer;
+}
 
 /** Check if a platform authenticator (fingerprint, face, etc.) is available. */
 export async function isBiometricAvailable(): Promise<boolean> {
@@ -66,7 +69,7 @@ export async function registerBiometric(
     publicKey: {
       rp: { name: 'mytruetrack' },
       user: {
-        id: userId.buffer as ArrayBuffer,
+        id: toBuffer(userId),
         name: userName,
         displayName: userName,
       },
@@ -81,7 +84,7 @@ export async function registerBiometric(
         residentKey: 'required', // discoverable credential — required for PRF on Windows Hello
       },
       extensions: (prfSalt
-        ? { prf: { eval: { first: prfSalt.buffer as ArrayBuffer } } }
+        ? { prf: { eval: { first: toBuffer(prfSalt) } } }
         : { prf: {} }) as AuthenticationExtensionsClientInputs,
       timeout: 60000,
     },
@@ -123,7 +126,7 @@ export async function assertBiometric(credentialId: Uint8Array): Promise<boolean
       challenge,
       allowCredentials: [
         {
-          id: credentialId.buffer as ArrayBuffer,
+          id: toBuffer(credentialId),
           type: 'public-key',
         },
       ],
@@ -170,10 +173,10 @@ async function evaluatePrf(
   const assertion = await navigator.credentials.get({
     publicKey: {
       challenge,
-      allowCredentials: [{ id: credentialId.buffer as ArrayBuffer, type: 'public-key' }],
+      allowCredentials: [{ id: toBuffer(credentialId), type: 'public-key' }],
       userVerification: 'required',
       extensions: {
-        prf: { eval: { first: prfSalt.buffer as ArrayBuffer } },
+        prf: { eval: { first: toBuffer(prfSalt) } },
       } as AuthenticationExtensionsClientInputs,
       timeout: 60000,
     },
@@ -193,13 +196,13 @@ async function evaluatePrf(
  * Enrol biometric unlock. Prefers the PRF extension (nothing extra persisted);
  * if the authenticator lacks PRF, falls back to wrapping the DEK under a random
  * non-extractable AES-KW key stored in IndexedDB, gated by a biometric
- * assertion. Returns ok on success. Throws only if the user cancels the prompt.
+ * assertion. Throws if the user cancels the prompt.
  */
 export async function enrollBiometricUnlock(
   userId: Uint8Array,
   userName: string,
   dek: CryptoKey,
-): Promise<EnrollResult> {
+): Promise<void> {
   const prfSalt = crypto.getRandomValues(new Uint8Array(32));
   const { credentialId, prfEnabled, prfOutput } = await registerBiometric(
     userId,
@@ -214,7 +217,7 @@ export async function enrollBiometricUnlock(
     const kek = await deriveKekFromPrf(prf);
     const wrappedDek = await wrapDek(dek, kek);
     await saveBiometricVault({ mode: 'prf', credentialId, prfSalt, wrappedDek });
-    return { ok: true };
+    return;
   }
 
   // Fallback: wrap the DEK under a non-extractable AES-KW key persisted in
@@ -223,7 +226,6 @@ export async function enrollBiometricUnlock(
   const kek = await generateWrappingKey();
   const wrappedDek = await wrapDek(dek, kek);
   await saveBiometricVault({ mode: 'wrapped-key', credentialId, kek, wrappedDek });
-  return { ok: true };
 }
 
 /**
@@ -248,5 +250,8 @@ export async function unlockWithBiometric(): Promise<CryptoKey | null> {
   return unwrapDek(vault.wrappedDek, vault.kek);
 }
 
-/** Remove the biometric credential from this device. */
-export { clearCredentialId as removeBiometricCredential };
+/** Remove all biometric unlock material (credential ID + vault record). */
+export async function removeBiometricCredential(): Promise<void> {
+  await clearBiometricVault();
+  await clearCredentialId();
+}

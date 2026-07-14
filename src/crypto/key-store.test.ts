@@ -12,6 +12,7 @@ import {
   loadBiometricVault,
   clearBiometricVault,
 } from './key-store.ts';
+import { generateWrappingKey, generateDek, wrapDek, unwrapDek } from './key-derivation.ts';
 
 describe('key-store', () => {
   beforeEach(async () => {
@@ -163,5 +164,30 @@ describe('key-store', () => {
     await clearKeyData();
 
     expect(await loadBiometricVault()).toBeNull();
+  });
+
+  it('saves and loads wrapped-key biometric vault with a real CryptoKey', async () => {
+    const kek = await generateWrappingKey();
+    const dek = await generateDek();
+    const wrappedDek = await wrapDek(dek, kek);
+
+    const vault = {
+      mode: 'wrapped-key' as const,
+      credentialId: new Uint8Array([10, 20, 30]),
+      kek,
+      wrappedDek,
+    };
+    await saveBiometricVault(vault);
+
+    const loaded = await loadBiometricVault();
+    expect(loaded).not.toBeNull();
+    expect(loaded!.mode).toBe('wrapped-key');
+    expect(loaded!.credentialId).toEqual(vault.credentialId);
+    expect(loaded!.wrappedDek).toEqual(vault.wrappedDek);
+
+    // Round-trip: the persisted CryptoKey must still unwrap the DEK
+    const loadedVault = loaded as { mode: 'wrapped-key'; kek: CryptoKey; wrappedDek: Uint8Array };
+    const unwrapped = await unwrapDek(loadedVault.wrappedDek, loadedVault.kek);
+    expect(unwrapped).toBeInstanceOf(CryptoKey);
   });
 });

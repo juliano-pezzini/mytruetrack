@@ -77,11 +77,7 @@ export function SetupWizard() {
     setError(null);
     try {
       const userId = crypto.getRandomValues(new Uint8Array(16));
-      const result = await enrollBiometricUnlock(userId, 'mytruetrack', dek);
-      if (!result.ok) {
-        setError(`${result.reason} You’ll use your passphrase instead.`);
-        return;
-      }
+      await enrollBiometricUnlock(userId, 'mytruetrack', dek);
       setStep('done');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Biometric enrollment failed.');

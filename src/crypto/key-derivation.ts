@@ -60,7 +60,9 @@ export async function deriveKek(
  * The PRF extension yields 32 high-entropy bytes that are bound to the
  * platform authenticator and never persisted. We stretch them with HKDF
  * (cheap, since the input is already strong) into a non-extractable AES-KW
- * key used only to wrap/unwrap the DEK. Returns null if PRF bytes are absent.
+ * key used only to wrap/unwrap the DEK.
+ *
+ * @throws {Error} If `prfOutput` is shorter than 32 bytes.
  */
 export async function deriveKekFromPrf(prfOutput: Uint8Array): Promise<CryptoKey> {
   if (prfOutput.length < 32) {
@@ -69,7 +71,7 @@ export async function deriveKekFromPrf(prfOutput: Uint8Array): Promise<CryptoKey
 
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
-    prfOutput.buffer as ArrayBuffer,
+    new Uint8Array(prfOutput).buffer as ArrayBuffer,
     'HKDF',
     false,
     ['deriveKey'],

@@ -2,12 +2,7 @@ import { useState, useEffect } from 'react';
 import { useVault } from '../hooks/useVault.ts';
 import { ConfirmDialog } from './ConfirmDialog.tsx';
 import { PassphraseInput } from './PassphraseInput.tsx';
-import {
-  hasKeyData,
-  loadKeyData,
-  saveKeyData,
-  clearBiometricVault,
-} from '../../crypto/key-store.ts';
+import { hasKeyData, loadKeyData, saveKeyData } from '../../crypto/key-store.ts';
 import {
   generateSalt,
   deriveKek,
@@ -18,6 +13,7 @@ import {
   isBiometricAvailable,
   hasBiometricUnlock,
   enrollBiometricUnlock,
+  removeBiometricCredential,
 } from '../../crypto/webauthn.ts';
 
 type SecurityState = {
@@ -77,11 +73,7 @@ export function SecuritySection() {
       const extractableDek = await unwrapDekExtractable(keyData.wrappedDek, kek);
 
       const userId = crypto.getRandomValues(new Uint8Array(16));
-      const result = await enrollBiometricUnlock(userId, 'mytruetrack', extractableDek);
-      if (!result.ok) {
-        setBioError(result.reason);
-        return;
-      }
+      await enrollBiometricUnlock(userId, 'mytruetrack', extractableDek);
       setShowBioForm(false);
       setBioPassphrase('');
       setMessage({ type: 'success', text: 'Biometric unlock enabled.' });
@@ -100,11 +92,11 @@ export function SecuritySection() {
     setLoading(true);
     setMessage(null);
     try {
-      await clearBiometricVault();
+      await removeBiometricCredential();
       setMessage({ type: 'success', text: 'Biometric unlock removed.' });
       await loadState();
     } catch {
-      setMessage({ type: 'error', text: 'Failed to remove biometric credential.' });
+      setMessage({ type: 'error', text: 'Failed to remove biometric unlock.' });
     } finally {
       setLoading(false);
     }

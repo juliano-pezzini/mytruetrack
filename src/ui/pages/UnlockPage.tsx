@@ -25,6 +25,7 @@ export function UnlockPage() {
       if (enrolled) {
         const avail = await isBiometricAvailable();
         setBioAvailable(avail);
+        if (!avail) setShowPassphrase(true);
       } else {
         setShowPassphrase(true);
       }

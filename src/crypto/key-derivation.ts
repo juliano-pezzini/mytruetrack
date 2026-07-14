@@ -137,7 +137,7 @@ export async function unwrapDekExtractable(
   try {
     return await crypto.subtle.unwrapKey(
       'raw',
-      wrappedDek.buffer as ArrayBuffer,
+      new Uint8Array(wrappedDek).buffer as ArrayBuffer,
       kek,
       'AES-KW',
       { name: 'AES-GCM', length: 256 },
@@ -163,7 +163,7 @@ export async function rewrapDek(
   try {
     extractableDek = await crypto.subtle.unwrapKey(
       'raw',
-      wrappedDek.buffer as ArrayBuffer,
+      new Uint8Array(wrappedDek).buffer as ArrayBuffer,
       currentKek,
       'AES-KW',
       { name: 'AES-GCM', length: 256 },

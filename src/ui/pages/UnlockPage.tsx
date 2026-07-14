@@ -21,12 +21,16 @@ export function UnlockPage() {
 
   useEffect(() => {
     async function checkBio() {
-      const enrolled = await hasBiometricUnlock();
-      if (enrolled) {
-        const avail = await isBiometricAvailable();
-        setBioAvailable(avail);
-        if (!avail) setShowPassphrase(true);
-      } else {
+      try {
+        const enrolled = await hasBiometricUnlock();
+        if (enrolled) {
+          const avail = await isBiometricAvailable();
+          setBioAvailable(avail);
+          if (!avail) setShowPassphrase(true);
+        } else {
+          setShowPassphrase(true);
+        }
+      } catch {
         setShowPassphrase(true);
       }
     }

@@ -62,7 +62,9 @@ test('a transaction survives a full page reload', async ({ page }) => {
   await page.getByRole('button', { name: '+ New Transaction' }).click();
   await page.getByLabel('Amount').fill('42.00');
   await page.getByLabel('Description').fill('Persisted Txn');
-  await page.getByLabel('Date').fill('2026-06-10');
+  await page.getByLabel('Date').fill(
+    `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-10`,
+  );
   await page.getByLabel('Type').selectOption('debit');
   await page.getByRole('button', { name: 'Create' }).click();
   await expect(page.getByRole('cell', { name: 'Persisted Txn' })).toBeVisible();

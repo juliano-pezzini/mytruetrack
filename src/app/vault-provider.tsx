@@ -1,5 +1,7 @@
 import { createContext, useCallback, useEffect, useState, type ReactNode } from 'react';
 import { hasKeyData, clearKeyData } from '../crypto/key-store.ts';
+import { clearSyncConfig } from '../sync/sync-config.ts';
+import { clearSyncState } from '../sync/sync-state.ts';
 
 const VAULT_SKIPPED_KEY = 'vault-skipped';
 
@@ -12,6 +14,12 @@ export type VaultContextValue = {
   readonly unlock: (dek: CryptoKey) => void;
   readonly skipToLocalOnly: () => void;
   readonly reset: () => Promise<void>;
+  /**
+   * Tear down all local identity: crypto keys, sync config, and sync state, then return to
+   * the setup wizard. Data-table rows are wiped separately (by the caller, which holds the
+   * DB handle) before this runs. Used by the Settings "Full reset" action.
+   */
+  readonly wipeEverything: () => Promise<void>;
 };
 
 export const VaultContext = createContext<VaultContextValue | null>(null);
@@ -66,7 +74,23 @@ export function VaultProvider({ children }: { children: ReactNode }) {
     setStatus('needs-setup');
   }, []);
 
-  const value: VaultContextValue = { dek, status, unlock, skipToLocalOnly, reset };
+  const wipeEverything = useCallback(async () => {
+    await clearKeyData();
+    await clearSyncConfig();
+    await clearSyncState();
+    localStorage.removeItem(VAULT_SKIPPED_KEY);
+    setDek(null);
+    setStatus('needs-setup');
+  }, []);
+
+  const value: VaultContextValue = {
+    dek,
+    status,
+    unlock,
+    skipToLocalOnly,
+    reset,
+    wipeEverything,
+  };
 
   return <VaultContext value={value}>{children}</VaultContext>;
 }

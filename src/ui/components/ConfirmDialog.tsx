@@ -5,6 +5,7 @@ type ConfirmDialogProps = {
   title: string;
   message: string;
   confirmLabel?: string;
+  confirmDisabled?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
   children?: ReactNode;
@@ -15,8 +16,10 @@ export function ConfirmDialog({
   title,
   message,
   confirmLabel = 'Delete',
+  confirmDisabled = false,
   onConfirm,
   onCancel,
+  children,
 }: ConfirmDialogProps) {
   if (!open) return null;
 
@@ -29,7 +32,8 @@ export function ConfirmDialog({
         className="relative bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4"
       >
         <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-        <p className="text-sm text-gray-600 mb-6">{message}</p>
+        <p className={`text-sm text-gray-600 ${children ? 'mb-4' : 'mb-6'}`}>{message}</p>
+        {children && <div className="mb-4">{children}</div>}
         <div className="flex justify-end gap-3">
           <button
             type="button"
@@ -40,7 +44,8 @@ export function ConfirmDialog({
           </button>
           <button
             type="button"
-            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+            disabled={confirmDisabled}
+            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={onConfirm}
           >
             {confirmLabel}

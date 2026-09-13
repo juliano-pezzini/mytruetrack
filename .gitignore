@@ -24,3 +24,4 @@ yarn-debug.log*
 pnpm-debug.log*
 
 .specs/quick/
+test-results/*

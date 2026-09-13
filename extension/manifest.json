@@ -8,7 +8,11 @@
     "https://pass-api.invest-pass.com/*"
   ],
   "externally_connectable": {
-    "matches": ["http://localhost:*/*", "https://localhost:*/*"]
+    "matches": [
+      "http://localhost:*/*",
+      "https://localhost:*/*",
+      "https://*.github.io/*"
+    ]
   },
   "background": {
     "service_worker": "src/background.ts",

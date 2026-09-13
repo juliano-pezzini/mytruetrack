@@ -19,7 +19,7 @@ import {
 } from '../../sync/providers/google-auth-flow.ts';
 import { loadGisClient, revokeAccessToken } from '../../sync/providers/google-gis.ts';
 import type { GoogleTokens } from '../../sync/sync-config.ts';
-import { pushChanges, pullChanges } from '../../sync/sync-engine.ts';
+import { pushChanges, pullChanges, clearCloudSyncData } from '../../sync/sync-engine.ts';
 import { resolveActiveProvider } from '../../sync/active-provider.ts';
 import type { CloudProvider } from '../../sync/cloud-provider.ts';
 import { getSyncState, type SyncState } from '../../sync/sync-state.ts';
@@ -43,6 +43,7 @@ export function SyncSection() {
   const [testResult, setTestResult] = useState<string | null>(null);
   const [showUnencryptedWarning, setShowUnencryptedWarning] = useState(false);
   const [pendingAction, setPendingAction] = useState<'push' | 'pull' | 'save' | null>(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -280,6 +281,52 @@ export function SyncSection() {
     setPendingAction(null);
   }
 
+  async function handleClearCloudSyncData() {
+    setLoading(true);
+    setStatus(null);
+    setShowClearConfirm(false);
+    try {
+      const cloudProvider = await getActiveProvider();
+      if (!cloudProvider) {
+        setStatus((prev) => prev ?? 'Connect a cloud provider before clearing sync data.');
+        return;
+      }
+      const deleted = await clearCloudSyncData(cloudProvider);
+      const state = await getSyncState();
+      setSyncState(state);
+      setStatus(
+        deleted === 0
+          ? 'No remote sync files to clear. Local sync state reset.'
+          : `Cleared ${deleted} remote sync file${deleted === 1 ? '' : 's'} and reset local sync state.`,
+      );
+    } catch (err) {
+      if (err instanceof DriveAuthError) {
+        const retryProvider = await refreshAndRetryProvider();
+        if (retryProvider) {
+          try {
+            const deleted = await clearCloudSyncData(retryProvider);
+            const state = await getSyncState();
+            setSyncState(state);
+            setStatus(
+              deleted === 0
+                ? 'No remote sync files to clear. Local sync state reset.'
+                : `Cleared ${deleted} remote sync file${deleted === 1 ? '' : 's'} and reset local sync state.`,
+            );
+            return;
+          } catch (retryErr) {
+            setStatus(
+              `Clear failed: ${retryErr instanceof Error ? retryErr.message : String(retryErr)}`,
+            );
+            return;
+          }
+        }
+      }
+      setStatus(`Clear failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Provider selector */}
@@ -461,7 +508,7 @@ export function SyncSection() {
       {/* Sync controls */}
       {provider && (
         <div className="space-y-3">
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button
               type="button"
               onClick={handlePush}
@@ -478,7 +525,45 @@ export function SyncSection() {
             >
               Pull Now
             </button>
+            <button
+              type="button"
+              onClick={() => setShowClearConfirm(true)}
+              disabled={loading}
+              className="px-4 py-2 text-sm font-medium text-red-700 bg-white border border-red-200 rounded-lg hover:bg-red-50 disabled:opacity-50"
+            >
+              Clear cloud sync data
+            </button>
           </div>
+
+          {showClearConfirm && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
+              <p className="text-sm font-medium text-red-800">Clear remote sync files?</p>
+              <p className="text-sm text-red-700">
+                Deletes all <code className="px-1 bg-red-100 rounded">changes-*.bin</code> files in
+                your cloud sync folder and resets local push/pull watermarks. Use this when pull
+                fails because of leftover files from a previous vault or database. Your local data
+                is kept — push again afterward to re-upload from this device.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => void handleClearCloudSyncData()}
+                  disabled={loading}
+                  className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                >
+                  {loading ? 'Clearing…' : 'Yes, clear remote sync data'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowClearConfirm(false)}
+                  disabled={loading}
+                  className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
 
           {syncState && (
             <div className="text-xs text-gray-500 space-y-0.5">
@@ -491,7 +576,9 @@ export function SyncSection() {
 
       {/* Status */}
       {status && (
-        <p className={`text-sm ${status.includes('failed') ? 'text-red-600' : 'text-green-600'}`}>
+        <p
+          className={`text-sm ${/failed|Cannot decrypt/i.test(status) ? 'text-red-600' : 'text-green-600'}`}
+        >
           {status}
         </p>
       )}

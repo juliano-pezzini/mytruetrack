@@ -1,15 +1,16 @@
 /// <reference lib="webworker" />
 
-const CACHE_NAME = 'mytruetrack-v1';
+const CACHE_NAME = 'mytruetrack-v2';
 
+// Relative to the service worker URL so a project-site base (`/mytruetrack/`) works.
 const PRECACHE_URLS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/sql-wasm.wasm',
-  '/sql-wasm-browser.wasm',
+  './',
+  './index.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  './sql-wasm.wasm',
+  './sql-wasm-browser.wasm',
 ];
 
 const sw = /** @type {ServiceWorkerGlobalScope} */ (/** @type {unknown} */ (self));

@@ -576,7 +576,9 @@ export function SyncSection() {
 
       {/* Status */}
       {status && (
-        <p className={`text-sm ${/failed|Cannot decrypt/i.test(status) ? 'text-red-600' : 'text-green-600'}`}>
+        <p
+          className={`text-sm ${/failed|Cannot decrypt/i.test(status) ? 'text-red-600' : 'text-green-600'}`}
+        >
           {status}
         </p>
       )}

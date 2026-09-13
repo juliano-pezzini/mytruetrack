@@ -4,7 +4,7 @@ import type { Database, SqlValue } from '../storage/database.ts';
 import { generateDek } from '../crypto/key-derivation.ts';
 import { createMockCloudProvider } from './mock-cloud-provider.ts';
 import { clearSyncState, getSyncState } from './sync-state.ts';
-import { serializeChanges, deserializeChanges, pushDeltas, pullDeltas } from './crsql-changes.ts';
+import { serializeChanges, deserializeChanges, pushDeltas, pullDeltas, clearRemoteChangeSegments } from './crsql-changes.ts';
 
 type ChangeValue = string | number | bigint | null | Uint8Array;
 
@@ -213,6 +213,55 @@ describe('pushDeltas / pullDeltas', () => {
 
       const self = createFakeDb('aa', [], 1);
       await expect(pullDeltas(self.db, provider, null)).rejects.toThrow(/encrypted/i);
+    });
+  });
+
+  it('names the peer segment when decrypt fails under a different DEK', async () => {
+    const provider = createMockCloudProvider();
+    const otherDek = await generateDek();
+    const peer = createFakeDb('bb', [rowB], 1);
+    await pushDeltas(peer.db, provider, otherDek);
+
+    const self = createFakeDb('aa', [], 1);
+    await expect(pullDeltas(self.db, provider, dek)).rejects.toThrow(
+      /Cannot decrypt changes-bb-1\.bin.*Clear cloud sync data/i,
+    );
+  });
+
+  it('names the peer segment when encrypted vault pulls plaintext remote data', async () => {
+    const provider = createMockCloudProvider();
+    const peer = createFakeDb('bb', [rowB], 1);
+    await pushDeltas(peer.db, provider, null); // plaintext
+
+    const self = createFakeDb('aa', [], 1);
+    await expect(pullDeltas(self.db, provider, dek)).rejects.toThrow(
+      /Cannot decrypt changes-bb-1\.bin.*unencrypted/i,
+    );
+  });
+
+  it('clearRemoteChangeSegments deletes change files and resets sync state', async () => {
+    const provider = createMockCloudProvider();
+    const peer = createFakeDb('bb', [rowB], 1);
+    await pushDeltas(peer.db, provider, dek);
+    // Reset local watermark so the second device's push is not skipped as "already shipped".
+    await clearSyncState();
+    const self = createFakeDb('aa', [rowA], 1);
+    await pushDeltas(self.db, provider, dek);
+
+    expect((await provider.list()).map((f) => f.name).sort()).toEqual([
+      'changes-aa-1.bin',
+      'changes-bb-1.bin',
+    ]);
+    expect((await getSyncState()).lastPushedVersion).toBe(1);
+
+    const deleted = await clearRemoteChangeSegments(provider);
+    expect(deleted).toBe(2);
+    expect(await provider.list()).toEqual([]);
+    expect(await getSyncState()).toEqual({
+      lastPushedVersion: 0,
+      appliedPeerVersions: {},
+      lastPushedAt: null,
+      lastPulledAt: null,
     });
   });
 });

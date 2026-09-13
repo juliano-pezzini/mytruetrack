@@ -1,6 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { encrypt, decrypt, encodeBlob, decodeBlob, IV_LENGTH } from './encryption.ts';
 import { generateDek } from './key-derivation.ts';
+import { toArrayBuffer } from './bytes.ts';
+
+describe('toArrayBuffer', () => {
+  it('copies only the view bytes when the underlying buffer is larger', () => {
+    const backing = new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7]);
+    const view = backing.subarray(2, 5); // [2, 3, 4]
+    const copied = new Uint8Array(toArrayBuffer(view));
+    expect(Array.from(copied)).toEqual([2, 3, 4]);
+    expect(copied.buffer.byteLength).toBe(3);
+  });
+});
 
 describe('encryption', () => {
   it('encrypts and decrypts a small blob', async () => {
@@ -15,6 +26,16 @@ describe('encryption', () => {
     expect(decrypted).toEqual(plaintext);
   });
 
+  it('encrypts and decrypts when plaintext is a subarray view', async () => {
+    const dek = await generateDek();
+    const backing = new Uint8Array(32);
+    backing.set(new TextEncoder().encode('view-safe'), 8);
+    const plaintext = backing.subarray(8, 17);
+
+    const blob = await encrypt(dek, plaintext);
+    const decrypted = await decrypt(dek, blob);
+    expect(new TextDecoder().decode(decrypted)).toBe('view-safe');
+  });
   it('encrypts and decrypts a 1 MB blob', { timeout: 30000 }, async () => {
     const dek = await generateDek();
     const plaintext = new Uint8Array(1024 * 1024);

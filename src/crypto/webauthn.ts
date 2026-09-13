@@ -24,17 +24,13 @@ import {
   clearBiometricVault,
 } from './key-store.ts';
 import { deriveKekFromPrf, generateWrappingKey, wrapDek, unwrapDek } from './key-derivation.ts';
+import { toArrayBuffer } from './bytes.ts';
 
 export type BiometricRegistration = {
   readonly credentialId: Uint8Array;
   readonly prfEnabled: boolean;
   readonly prfOutput: Uint8Array | null;
 };
-
-/** Extract exact bytes from a Uint8Array, safe for views with non-zero byteOffset. */
-function toBuffer(view: Uint8Array): ArrayBuffer {
-  return new Uint8Array(view).buffer as ArrayBuffer;
-}
 
 /** Check if a platform authenticator (fingerprint, face, etc.) is available. */
 export async function isBiometricAvailable(): Promise<boolean> {
@@ -70,7 +66,7 @@ export async function registerBiometric(
     publicKey: {
       rp: { name: 'mytruetrack' },
       user: {
-        id: toBuffer(userId),
+        id: toArrayBuffer(userId),
         name: userName,
         displayName: userName,
       },
@@ -85,7 +81,7 @@ export async function registerBiometric(
         residentKey: 'required', // discoverable credential — required for PRF on Windows Hello
       },
       extensions: (prfSalt
-        ? { prf: { eval: { first: toBuffer(prfSalt) } } }
+        ? { prf: { eval: { first: toArrayBuffer(prfSalt) } } }
         : { prf: {} }) as AuthenticationExtensionsClientInputs,
       timeout: 60000,
     },
@@ -126,7 +122,7 @@ export async function assertBiometric(credentialId: Uint8Array): Promise<boolean
       challenge,
       allowCredentials: [
         {
-          id: toBuffer(credentialId),
+          id: toArrayBuffer(credentialId),
           type: 'public-key',
         },
       ],
@@ -173,10 +169,10 @@ async function evaluatePrf(
   const assertion = await navigator.credentials.get({
     publicKey: {
       challenge,
-      allowCredentials: [{ id: toBuffer(credentialId), type: 'public-key' }],
+      allowCredentials: [{ id: toArrayBuffer(credentialId), type: 'public-key' }],
       userVerification: 'required',
       extensions: {
-        prf: { eval: { first: toBuffer(prfSalt) } },
+        prf: { eval: { first: toArrayBuffer(prfSalt) } },
       } as AuthenticationExtensionsClientInputs,
       timeout: 60000,
     },

@@ -9,7 +9,7 @@
 
 import type { Database, Row } from '../storage/database.ts';
 import type { CloudProvider } from './cloud-provider.ts';
-import { pushDeltas, pullDeltas } from './crsql-changes.ts';
+import { pushDeltas, pullDeltas, clearRemoteChangeSegments } from './crsql-changes.ts';
 import { SYNC_TABLES } from './sync-tables.ts';
 
 export { SYNC_TABLES };
@@ -82,4 +82,12 @@ export async function pullChanges(
   dek: CryptoKey | null,
 ): Promise<void> {
   await pullDeltas(db, provider, dek);
+}
+
+/**
+ * Delete remote change segments and reset local sync watermarks.
+ * See {@link clearRemoteChangeSegments}.
+ */
+export async function clearCloudSyncData(provider: CloudProvider): Promise<number> {
+  return clearRemoteChangeSegments(provider);
 }

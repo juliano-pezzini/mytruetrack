@@ -10,6 +10,7 @@
 import type { Database, Row } from '../storage/database.ts';
 import type { CloudProvider } from './cloud-provider.ts';
 import { pushDeltas, pullDeltas, clearRemoteChangeSegments } from './crsql-changes.ts';
+import { clearKeyData } from '../crypto/key-store.ts';
 import { SYNC_TABLES } from './sync-tables.ts';
 
 export { SYNC_TABLES };
@@ -90,4 +91,10 @@ export async function pullChanges(
  */
 export async function clearCloudSyncData(provider: CloudProvider): Promise<number> {
   return clearRemoteChangeSegments(provider);
+}
+
+/** Delete remote sync history and local vault key material for a clean Create flow. */
+export async function startFreshVault(provider: CloudProvider): Promise<void> {
+  await clearCloudSyncData(provider);
+  await clearKeyData();
 }

@@ -303,8 +303,8 @@ describe('pushDeltas / pullDeltas', () => {
     expect((await getSyncState()).lastPushedVersion).toBe(1);
 
     const deleted = await clearRemoteChangeSegments(provider);
-    expect(deleted).toBe(2);
-    expect((await provider.list()).map((f) => f.name)).toEqual([VAULT_METADATA_FILENAME]);
+    expect(deleted).toBe(3);
+    expect(await provider.list()).toEqual([]);
     expect(await getSyncState()).toEqual({
       lastPushedVersion: 0,
       appliedPeerVersions: {},

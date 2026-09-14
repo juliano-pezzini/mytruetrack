@@ -23,7 +23,7 @@ import type { CloudProvider } from './cloud-provider.ts';
 import { encrypt, decrypt, encodeBlob, decodeBlob } from '../crypto/encryption.ts';
 import { savePushState, savePullState, getSyncState, clearSyncState } from './sync-state.ts';
 import { loadKeyData } from '../crypto/key-store.ts';
-import { upsertVaultMetadata } from './vault-metadata.ts';
+import { upsertVaultMetadata, deleteVaultMetadata } from './vault-metadata.ts';
 import { getDeviceLabel, detectBrowserId } from './device-identity.ts';
 
 const CHANGES_PREFIX = 'changes-';
@@ -290,6 +290,9 @@ export async function clearRemoteChangeSegments(provider: CloudProvider): Promis
   for (const file of files) {
     if (!parseSegment(file.name)) continue;
     await provider.delete(file.name);
+    deleted += 1;
+  }
+  if (await deleteVaultMetadata(provider)) {
     deleted += 1;
   }
   await clearSyncState();

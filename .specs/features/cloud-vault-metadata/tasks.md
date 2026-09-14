@@ -220,6 +220,8 @@ T10 → T11 → T12
 
 ### T7: Clear cloud deletes metadata + startFreshVault
 
+**Status**: ✅ Done
+
 **What**: Extend `clearRemoteChangeSegments` to delete `vault-metadata.json`; add `startFreshVault` (clear cloud + `clearKeyData`).
 **Where**: `src/sync/sync-engine.ts`
 **Depends on**: T6
@@ -228,10 +230,10 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [ ] Clear removes segments and metadata file; resets sync watermarks
-- [ ] `startFreshVault` clears key store after successful cloud clear
-- [ ] Partial failure does not claim success (tests with failing provider mock)
-- [ ] Gate: full passes
+- [x] Clear removes segments and metadata file; resets sync watermarks
+- [x] `startFreshVault` clears key store after successful cloud clear
+- [x] Partial failure does not claim success (tests with failing provider mock)
+- [x] Gate: full passes
 
 **Tests**: unit (`src/sync/crsql-changes.test.ts` and/or `src/sync/sync-engine.test.ts`)
 **Gate**: full

@@ -101,6 +101,13 @@ export function SetupWizard() {
   }, [resolveCloudProvider]);
 
   useEffect(() => {
+    if (sessionStorage.getItem('setup-after-fresh') === 'create') {
+      sessionStorage.removeItem('setup-after-fresh');
+      setStep('passphrase');
+    }
+  }, []);
+
+  useEffect(() => {
     if (step === 'choice') {
       void runProbe();
     }

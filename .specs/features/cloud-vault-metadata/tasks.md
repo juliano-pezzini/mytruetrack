@@ -296,6 +296,8 @@ T10 → T11 → T12
 
 ### T10: SyncSection Start fresh vault
 
+**Status**: ✅ Done
+
 **What**: Add confirmed **Start fresh vault** action; ensure Clear cloud copy reflects metadata deletion.
 **Where**: `src/ui/components/SyncSection.tsx`
 **Depends on**: T9
@@ -304,10 +306,10 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [ ] Start fresh confirms, clears cloud + keys, routes to Setup Create
-- [ ] Does not route to Create if clear fails
-- [ ] Clear cloud messaging mentions vault metadata / sync history
-- [ ] Gate: build passes
+- [x] Start fresh confirms, clears cloud + keys, routes to Setup Create
+- [x] Does not route to Create if clear fails
+- [x] Clear cloud messaging mentions vault metadata / sync history
+- [x] Gate: build passes
 
 **Tests**: none
 **Gate**: build

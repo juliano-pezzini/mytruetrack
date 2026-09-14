@@ -19,7 +19,12 @@ import {
 } from '../../sync/providers/google-auth-flow.ts';
 import { loadGisClient, revokeAccessToken } from '../../sync/providers/google-gis.ts';
 import type { GoogleTokens } from '../../sync/sync-config.ts';
-import { pushChanges, pullChanges, clearCloudSyncData } from '../../sync/sync-engine.ts';
+import {
+  pushChanges,
+  pullChanges,
+  clearCloudSyncData,
+  startFreshVault,
+} from '../../sync/sync-engine.ts';
 import { resolveActiveProvider } from '../../sync/active-provider.ts';
 import type { CloudProvider } from '../../sync/cloud-provider.ts';
 import { getSyncState, type SyncState } from '../../sync/sync-state.ts';
@@ -33,7 +38,7 @@ const DEFAULT_WEBDAV: WebDavConfig = {
 
 export function SyncSection() {
   const db = useDatabase();
-  const { dek } = useVault();
+  const { dek, reset } = useVault();
   const [provider, setProvider] = useState<SyncProviderType>(null);
   const [webdav, setWebdav] = useState<WebDavConfig>(DEFAULT_WEBDAV);
   const [googleTokens, setGoogleTokens] = useState<GoogleTokens | null>(null);
@@ -44,6 +49,7 @@ export function SyncSection() {
   const [showUnencryptedWarning, setShowUnencryptedWarning] = useState(false);
   const [pendingAction, setPendingAction] = useState<'push' | 'pull' | 'save' | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showStartFreshConfirm, setShowStartFreshConfirm] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -279,6 +285,42 @@ export function SyncSection() {
   function cancelUnencrypted() {
     setShowUnencryptedWarning(false);
     setPendingAction(null);
+  }
+
+  async function handleStartFreshVault() {
+    setLoading(true);
+    setStatus(null);
+    setShowStartFreshConfirm(false);
+    try {
+      const cloudProvider = await getActiveProvider();
+      if (!cloudProvider) {
+        setStatus((prev) => prev ?? 'Connect a cloud provider before starting fresh.');
+        return;
+      }
+      await startFreshVault(cloudProvider);
+      sessionStorage.setItem('setup-after-fresh', 'create');
+      await reset();
+    } catch (err) {
+      if (err instanceof DriveAuthError) {
+        const retryProvider = await refreshAndRetryProvider();
+        if (retryProvider) {
+          try {
+            await startFreshVault(retryProvider);
+            sessionStorage.setItem('setup-after-fresh', 'create');
+            await reset();
+            return;
+          } catch (retryErr) {
+            setStatus(
+              `Start fresh failed: ${retryErr instanceof Error ? retryErr.message : String(retryErr)}`,
+            );
+            return;
+          }
+        }
+      }
+      setStatus(`Start fresh failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleClearCloudSyncData() {
@@ -533,16 +575,54 @@ export function SyncSection() {
             >
               Clear cloud sync data
             </button>
+            <button
+              type="button"
+              onClick={() => setShowStartFreshConfirm(true)}
+              disabled={loading}
+              className="px-4 py-2 text-sm font-medium text-red-800 bg-white border border-red-300 rounded-lg hover:bg-red-50 disabled:opacity-50"
+            >
+              Start fresh vault
+            </button>
           </div>
+
+          {showStartFreshConfirm && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
+              <p className="text-sm font-medium text-red-800">Start a fresh vault?</p>
+              <p className="text-sm text-red-700">
+                Clears remote sync files and vault metadata, removes your local passphrase, and
+                opens setup to create a new vault. Other devices still have the old vault until you
+                restore or start fresh there too. This cannot be undone without your recovery sheet.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => void handleStartFreshVault()}
+                  disabled={loading}
+                  className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                >
+                  {loading ? 'Starting…' : 'Yes, start fresh vault'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowStartFreshConfirm(false)}
+                  disabled={loading}
+                  className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
 
           {showClearConfirm && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
               <p className="text-sm font-medium text-red-800">Clear remote sync files?</p>
               <p className="text-sm text-red-700">
-                Deletes all <code className="px-1 bg-red-100 rounded">changes-*.bin</code> files in
-                your cloud sync folder and resets local push/pull watermarks. Use this when pull
-                fails because of leftover files from a previous vault or database. Your local data
-                is kept — push again afterward to re-upload from this device.
+                Deletes all <code className="px-1 bg-red-100 rounded">changes-*.bin</code> files,
+                cloud <code className="px-1 bg-red-100 rounded">vault-metadata.json</code>, and
+                resets local sync history (push/pull watermarks). Use this when pull fails because
+                of leftover files from a previous vault or database. Your local data and passphrase
+                are kept — push again afterward to re-upload from this device.
               </p>
               <div className="flex gap-2">
                 <button

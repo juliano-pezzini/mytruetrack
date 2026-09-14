@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import 'fake-indexeddb/auto';
 import { initDatabase } from '../storage/init.ts';
-import type { Database } from '../storage/database.ts';
+import type { Database, Row, SqlValue } from '../storage/database.ts';
 import {
   exportDatabaseSnapshot,
   importDatabaseSnapshot,
@@ -32,7 +32,7 @@ describe('startFreshVault', () => {
     const siteId = 'aa';
     const db = {
       async exec(): Promise<void> {},
-      async execA(sql: string): Promise<unknown[][]> {
+      async execA(sql: string): Promise<SqlValue[][]> {
         if (sql.includes('crsql_site_id')) return [[siteId]];
         if (sql.includes('crsql_db_version')) return [[1]];
         if (sql.includes('FROM crsql_changes')) {
@@ -42,7 +42,7 @@ describe('startFreshVault', () => {
         }
         return [];
       },
-      async execO(): Promise<Record<string, unknown>[]> {
+      async execO(): Promise<Row[]> {
         return [];
       },
       async close(): Promise<void> {},

@@ -343,6 +343,8 @@ T10 → T11 → T12
 
 ### T12: Attribute peer site ids with registry labels
 
+**Status**: ✅ Done
+
 **What**: When pull/sync errors (or listings) mention a peer `siteId`, include registry label when metadata is available.
 **Where**: `src/sync/crsql-changes.ts`
 **Depends on**: T11
@@ -351,10 +353,10 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [ ] Decrypt/peer error includes device label when registry has `siteId`
-- [ ] Falls back to site id only when label unknown
-- [ ] Unit test covers labeled vs unlabeled peer error
-- [ ] Gate: full passes
+- [x] Decrypt/peer error includes device label when registry has `siteId`
+- [x] Falls back to site id only when label unknown
+- [x] Unit test covers labeled vs unlabeled peer error
+- [x] Gate: full passes
 
 **Tests**: unit
 **Gate**: full

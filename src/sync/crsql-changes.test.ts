@@ -3,7 +3,11 @@ import 'fake-indexeddb/auto';
 import type { Database, SqlValue } from '../storage/database.ts';
 import { generateDek, generateSalt } from '../crypto/key-derivation.ts';
 import { saveKeyData, clearKeyData } from '../crypto/key-store.ts';
-import { VAULT_METADATA_FILENAME } from './vault-metadata.ts';
+import {
+  VAULT_METADATA_FILENAME,
+  serializeVaultMetadata,
+  parseVaultMetadata,
+} from './vault-metadata.ts';
 import type { CloudProvider } from './cloud-provider.ts';
 import { createMockCloudProvider } from './mock-cloud-provider.ts';
 import { clearSyncState, getSyncState } from './sync-state.ts';
@@ -13,6 +17,7 @@ import {
   pushDeltas,
   pullDeltas,
   clearRemoteChangeSegments,
+  formatPeerSiteForError,
 } from './crsql-changes.ts';
 
 type ChangeValue = string | number | bigint | null | Uint8Array;
@@ -270,11 +275,48 @@ describe('pushDeltas / pullDeltas', () => {
     const otherDek = await generateDek();
     const peer = createFakeDb('bb', [rowB], 1);
     await pushDeltas(peer.db, provider, otherDek);
+    await provider.delete(VAULT_METADATA_FILENAME);
 
     const self = createFakeDb('aa', [], 1);
     await expect(pullDeltas(self.db, provider, dek)).rejects.toThrow(
-      /Cannot decrypt changes-bb-1\.bin.*Clear cloud sync data/i,
+      /Cannot decrypt changes-bb-1\.bin.*peer site bb.*Clear cloud sync data/i,
     );
+  });
+
+  it('uses registry device label in decrypt error when vault metadata is present', async () => {
+    const provider = createMockCloudProvider();
+    const otherDek = await generateDek();
+    const peer = createFakeDb('bb', [rowB], 1);
+    await pushDeltas(peer.db, provider, otherDek);
+    const raw = await provider.download(VAULT_METADATA_FILENAME);
+    const meta = parseVaultMetadata(raw!);
+    await provider.upload(
+      VAULT_METADATA_FILENAME,
+      serializeVaultMetadata({
+        ...meta,
+        devices: {
+          ...meta.devices,
+          bb: {
+            ...meta.devices.bb!,
+            label: 'Phone',
+          },
+        },
+      }),
+    );
+
+    const self = createFakeDb('aa', [], 1);
+    await expect(pullDeltas(self.db, provider, dek)).rejects.toThrow(
+      /peer Phone \(bb\)/,
+    );
+  });
+
+  it('formatPeerSiteForError falls back to site id when label unknown', () => {
+    expect(formatPeerSiteForError('bb', {})).toBe('site bb');
+    expect(
+      formatPeerSiteForError('aa', {
+        aa: { label: 'Laptop', browser: 'chrome', lastSeenAt: '2026-01-01T00:00:00.000Z' },
+      }),
+    ).toBe('Laptop (aa)');
   });
 
   it('names the peer segment when encrypted vault pulls plaintext remote data', async () => {

@@ -186,7 +186,7 @@ Encrypted sync today uploads only CRDT change segments. The vault DEK stays loca
 | CVM-18 | P1: Start fresh vault | Tasks | Verified |
 | CVM-19 | P2: Device labels and registry visibility | Tasks | Verified |
 | CVM-20 | P2: Device labels and registry visibility | Tasks | Verified |
-| CVM-21 | P2: Device labels and registry visibility | Tasks | In Tasks |
+| CVM-21 | P2: Device labels and registry visibility | Tasks | Verified |
 | CVM-22 | P2: Device labels and registry visibility | Tasks | In Tasks |
 
 **ID format:** `CVM-NN` (Cloud Vault Metadata)

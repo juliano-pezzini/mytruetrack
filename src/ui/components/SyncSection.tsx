@@ -28,6 +28,8 @@ import {
 import { resolveActiveProvider } from '../../sync/active-provider.ts';
 import type { CloudProvider } from '../../sync/cloud-provider.ts';
 import { getSyncState, type SyncState } from '../../sync/sync-state.ts';
+import { getDeviceLabel, setDeviceLabel } from '../../sync/device-identity.ts';
+import { probeRemoteVault, type VaultDeviceEntry } from '../../sync/vault-metadata.ts';
 
 const DEFAULT_WEBDAV: WebDavConfig = {
   endpoint: '',
@@ -50,6 +52,11 @@ export function SyncSection() {
   const [pendingAction, setPendingAction] = useState<'push' | 'pull' | 'save' | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showStartFreshConfirm, setShowStartFreshConfirm] = useState(false);
+  const [deviceLabel, setDeviceLabelState] = useState('');
+  const [deviceLabelSaving, setDeviceLabelSaving] = useState(false);
+  const [knownDevices, setKnownDevices] = useState<
+    readonly { readonly siteId: string; readonly entry: VaultDeviceEntry }[]
+  >([]);
 
   useEffect(() => {
     async function load() {
@@ -59,6 +66,7 @@ export function SyncSection() {
       setGoogleTokens(config.google);
       const state = await getSyncState();
       setSyncState(state);
+      setDeviceLabelState(await getDeviceLabel());
     }
     void load();
   }, []);
@@ -154,6 +162,7 @@ export function SyncSection() {
       const state = await getSyncState();
       setSyncState(state);
       setStatus('Push complete.');
+      await refreshKnownDevices();
     } catch (err) {
       if (err instanceof DriveAuthError) {
         const retryProvider = await refreshAndRetryProvider();
@@ -163,6 +172,7 @@ export function SyncSection() {
             const state = await getSyncState();
             setSyncState(state);
             setStatus('Push complete.');
+            await refreshKnownDevices();
             return;
           } catch (retryErr) {
             setStatus(
@@ -202,6 +212,7 @@ export function SyncSection() {
       const state = await getSyncState();
       setSyncState(state);
       setStatus('Pull complete.');
+      await refreshKnownDevices();
     } catch (err) {
       if (err instanceof DriveAuthError) {
         const retryProvider = await refreshAndRetryProvider();
@@ -211,6 +222,7 @@ export function SyncSection() {
             const state = await getSyncState();
             setSyncState(state);
             setStatus('Pull complete.');
+            await refreshKnownDevices();
             return;
           } catch (retryErr) {
             setStatus(
@@ -252,6 +264,51 @@ export function SyncSection() {
       return resolved.provider;
     }
     return null;
+  }
+
+  const refreshKnownDevices = useCallback(async () => {
+    if (!provider) {
+      setKnownDevices([]);
+      return;
+    }
+    try {
+      const cloudProvider = await getActiveProvider();
+      if (!cloudProvider) {
+        setKnownDevices([]);
+        return;
+      }
+      const status = await probeRemoteVault(cloudProvider);
+      if (status.kind === 'ready') {
+        const entries = Object.entries(status.metadata.devices).map(([siteId, entry]) => ({
+          siteId,
+          entry,
+        }));
+        entries.sort((a, b) => b.entry.lastSeenAt.localeCompare(a.entry.lastSeenAt));
+        setKnownDevices(entries);
+      } else {
+        setKnownDevices([]);
+      }
+    } catch {
+      setKnownDevices([]);
+    }
+  }, [provider, webdav, googleTokens]);
+
+  useEffect(() => {
+    void refreshKnownDevices();
+  }, [refreshKnownDevices]);
+
+  async function handleSaveDeviceLabel() {
+    setDeviceLabelSaving(true);
+    setStatus(null);
+    try {
+      await setDeviceLabel(deviceLabel);
+      setDeviceLabelState(await getDeviceLabel());
+      setStatus('Device name saved. It will appear in the cloud registry on the next encrypted push.');
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not save device name.');
+    } finally {
+      setDeviceLabelSaving(false);
+    }
   }
 
   /** Force-refresh the Google token and return a new provider. Used as 401 retry. */
@@ -544,6 +601,57 @@ export function SyncSection() {
               Cancel
             </button>
           </div>
+        </div>
+      )}
+
+      {provider && (
+        <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+          <div>
+            <label htmlFor="device-label" className="block text-xs font-medium text-gray-600 mb-1">
+              This device name
+            </label>
+            <div className="flex gap-2">
+              <input
+                id="device-label"
+                type="text"
+                value={deviceLabel}
+                onChange={(e) => setDeviceLabelState(e.target.value)}
+                maxLength={64}
+                placeholder="e.g. Chrome · Windows"
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                type="button"
+                onClick={() => void handleSaveDeviceLabel()}
+                disabled={deviceLabelSaving || !deviceLabel.trim()}
+                className="px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                {deviceLabelSaving ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Shown in the cloud device registry after an encrypted push.
+            </p>
+          </div>
+
+          {knownDevices.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-gray-600 mb-2">Known devices (from cloud)</p>
+              <ul className="text-sm text-gray-700 space-y-1">
+                {knownDevices.map(({ siteId, entry }) => (
+                  <li key={siteId} className="flex justify-between gap-2">
+                    <span>
+                      {entry.label}{' '}
+                      <span className="text-gray-400">({entry.browser})</span>
+                    </span>
+                    <span className="text-xs text-gray-500 shrink-0">
+                      {new Date(entry.lastSeenAt).toLocaleString()}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
 

@@ -320,6 +320,8 @@ T10 → T11 → T12
 
 ### T11: Device rename + registry list in Settings
 
+**Status**: ✅ Done
+
 **What**: Device label editor + list known devices from probed/cached vault metadata.
 **Where**: `src/ui/components/SyncSection.tsx`
 **Depends on**: T10
@@ -328,9 +330,9 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [ ] User can rename device; persisted locally; next push picks it up (via existing upsert)
-- [ ] Known devices show label + last seen when metadata available
-- [ ] Gate: build passes
+- [x] User can rename device; persisted locally; next push picks it up (via existing upsert)
+- [x] Known devices show label + last seen when metadata available
+- [x] Gate: build passes
 
 **Tests**: none
 **Gate**: build

@@ -212,7 +212,7 @@ export async function restoreVaultFromRemote(
     metadata = await downloadVaultMetadata(provider);
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
-    throw new Error(`Cannot restore vault: ${detail}`);
+    throw new Error(`Cannot restore vault: ${detail}`, { cause: err });
   }
 
   const wrappedDek = base64ToBytes(metadata.wrappedDek);

@@ -270,6 +270,8 @@ T10 → T11 → T12
 
 ### T9: SetupWizard Restore + connect-provider gate
 
+**Status**: ✅ Done
+
 **What**: Restore existing vault flow (passphrase → `restoreVaultFromRemote` → unlock); if no provider, prompt connect first.
 **Where**: `src/ui/pages/SetupWizard.tsx`
 **Depends on**: T8
@@ -278,10 +280,10 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [ ] Successful restore unlocks vault
-- [ ] Wrong passphrase shows error; stays on Restore; no key write
-- [ ] No provider → connect prompt before Restore
-- [ ] Gate: build passes
+- [x] Successful restore unlocks vault
+- [x] Wrong passphrase shows error; stays on Restore; no key write
+- [x] No provider → connect prompt before Restore
+- [x] Gate: build passes
 
 **Tests**: none
 **Gate**: build

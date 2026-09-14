@@ -3,10 +3,24 @@
  */
 
 import type { CloudProvider } from './cloud-provider.ts';
+import type { KeyData } from '../crypto/key-store.ts';
 
 export const VAULT_METADATA_FILENAME = 'vault-metadata.json';
 
 const CHANGES_SEGMENT_RE = /^changes-[0-9a-f]+-\d+\.bin$/;
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]!);
+  return btoa(binary);
+}
+
+function base64ToBytes(b64: string): Uint8Array {
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
 
 export type VaultDeviceEntry = {
   readonly label: string;
@@ -140,4 +154,48 @@ export async function deleteVaultMetadata(provider: CloudProvider): Promise<bool
   }
   await provider.delete(VAULT_METADATA_FILENAME);
   return true;
+}
+
+export type UpsertVaultMetadataArgs = {
+  readonly siteId: string;
+  readonly keyData: KeyData;
+  readonly label: string;
+  readonly browser: string;
+};
+
+/** Download-merge-upload vault metadata (create when absent). */
+export async function upsertVaultMetadata(
+  provider: CloudProvider,
+  args: UpsertVaultMetadataArgs,
+): Promise<void> {
+  const { siteId, keyData, label, browser } = args;
+  const lastSeenAt = new Date().toISOString();
+
+  let existing: VaultMetadata | null = null;
+  const raw = await provider.download(VAULT_METADATA_FILENAME);
+  if (raw) {
+    existing = parseVaultMetadata(raw);
+  }
+
+  const devices: Record<string, VaultDeviceEntry> = existing ? { ...existing.devices } : {};
+  devices[siteId] = { label, browser, lastSeenAt };
+
+  const meta: VaultMetadata = {
+    version: 1,
+    wrappedDek: bytesToBase64(keyData.wrappedDek),
+    salt: bytesToBase64(keyData.salt),
+    iterations: keyData.iterations,
+    devices,
+  };
+
+  await provider.upload(VAULT_METADATA_FILENAME, serializeVaultMetadata(meta));
+}
+
+/** Download remote metadata for restore or display. */
+export async function downloadVaultMetadata(provider: CloudProvider): Promise<VaultMetadata> {
+  const raw = await provider.download(VAULT_METADATA_FILENAME);
+  if (!raw) {
+    throw new Error('Vault metadata is not present on the cloud provider');
+  }
+  return parseVaultMetadata(raw);
 }

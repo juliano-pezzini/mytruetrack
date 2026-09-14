@@ -4,10 +4,12 @@ import {
   serializeVaultMetadata,
   probeRemoteVault,
   deleteVaultMetadata,
+  upsertVaultMetadata,
   VAULT_METADATA_FILENAME,
   type VaultMetadata,
 } from './vault-metadata.ts';
 import { createMockCloudProvider } from './mock-cloud-provider.ts';
+import type { KeyData } from '../crypto/key-store.ts';
 
 const sampleMeta: VaultMetadata = {
   version: 1,
@@ -82,6 +84,69 @@ describe('probeRemoteVault', () => {
     const provider = createMockCloudProvider();
     await provider.upload('changes-aa-1.bin', new Uint8Array([1]));
     expect(await probeRemoteVault(provider)).toEqual({ kind: 'legacy', segmentCount: 1 });
+  });
+});
+
+describe('upsertVaultMetadata', () => {
+  const keyA: KeyData = {
+    wrappedDek: new Uint8Array([1, 2, 3]),
+    salt: new Uint8Array([9, 9]),
+    iterations: 600_000,
+  };
+  const keyB: KeyData = {
+    wrappedDek: new Uint8Array([4, 5, 6]),
+    salt: new Uint8Array([8, 8]),
+    iterations: 500_000,
+  };
+
+  it('creates metadata when remote file is missing', async () => {
+    const provider = createMockCloudProvider();
+    await upsertVaultMetadata(provider, {
+      siteId: 'aa',
+      keyData: keyA,
+      label: 'Laptop',
+      browser: 'chrome',
+    });
+
+    const raw = await provider.download(VAULT_METADATA_FILENAME);
+    const meta = parseVaultMetadata(raw!);
+    expect(meta.wrappedDek).toBe('AQID');
+    expect(meta.salt).toBe('CQk=');
+    expect(meta.iterations).toBe(600_000);
+    expect(meta.devices.aa).toMatchObject({ label: 'Laptop', browser: 'chrome' });
+    expect(meta.devices.aa!.lastSeenAt.length).toBeGreaterThan(0);
+  });
+
+  it('merges device registry and refreshes key fields from local KeyData', async () => {
+    const provider = createMockCloudProvider();
+    const existing: VaultMetadata = {
+      version: 1,
+      wrappedDek: 'old',
+      salt: 'old',
+      iterations: 1,
+      devices: {
+        bb: {
+          label: 'Phone',
+          browser: 'chrome',
+          lastSeenAt: '2020-01-01T00:00:00.000Z',
+        },
+      },
+    };
+    await provider.upload(VAULT_METADATA_FILENAME, serializeVaultMetadata(existing));
+
+    await upsertVaultMetadata(provider, {
+      siteId: 'aa',
+      keyData: keyB,
+      label: 'Desktop',
+      browser: 'firefox',
+    });
+
+    const meta = parseVaultMetadata((await provider.download(VAULT_METADATA_FILENAME))!);
+    expect(meta.wrappedDek).toBe('BAUG');
+    expect(meta.salt).toBe('CAg=');
+    expect(meta.iterations).toBe(500_000);
+    expect(meta.devices.bb).toEqual(existing.devices.bb);
+    expect(meta.devices.aa!.label).toBe('Desktop');
   });
 });
 

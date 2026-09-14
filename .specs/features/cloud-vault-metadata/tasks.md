@@ -144,6 +144,8 @@ T10 → T11 → T12
 
 ### T4: Upsert vault metadata
 
+**Status**: ✅ Done
+
 **What**: Implement `upsertVaultMetadata` (download-merge-upload; create if missing).
 **Where**: `src/sync/vault-metadata.ts`
 **Depends on**: T3
@@ -152,11 +154,11 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [ ] Writes key fields from local `KeyData` and upserts `devices[siteId]` with label, browser, `lastSeenAt`
-- [ ] Preserves other devices’ registry entries on merge
-- [ ] Creates file when remote missing
-- [ ] Unit tests cover create, merge, key-field refresh
-- [ ] Gate: quick passes
+- [x] Writes key fields from local `KeyData` and upserts `devices[siteId]` with label, browser, `lastSeenAt`
+- [x] Preserves other devices’ registry entries on merge
+- [x] Creates file when remote missing
+- [x] Unit tests cover create, merge, key-field refresh
+- [x] Gate: quick passes
 
 **Tests**: unit
 **Gate**: quick

@@ -172,7 +172,7 @@ Encrypted sync today uploads only CRDT change segments. The vault DEK stays loca
 | CVM-04 | P1: Upsert vault metadata on encrypted push | Tasks | Verified |
 | CVM-05 | P1: Upsert vault metadata on encrypted push | Tasks | Verified |
 | CVM-06 | P1: Upsert vault metadata on encrypted push | Tasks | Verified |
-| CVM-07 | P1: Restore existing vault on a second device | Tasks | In Tasks |
+| CVM-07 | P1: Restore existing vault on a second device | Tasks | Verified |
 | CVM-08 | P1: Restore existing vault on a second device | Tasks | Verified |
 | CVM-09 | P1: Restore existing vault on a second device | Tasks | Verified |
 | CVM-10 | P1: Restore existing vault on a second device | Tasks | Verified |
@@ -180,7 +180,7 @@ Encrypted sync today uploads only CRDT change segments. The vault DEK stays loca
 | CVM-12 | P1: Guard create and handle legacy remotes | Tasks | Verified |
 | CVM-13 | P1: Guard create and handle legacy remotes | Tasks | Verified |
 | CVM-14 | P1: Guard create and handle legacy remotes | Tasks | Verified |
-| CVM-15 | P1: Guard create and handle legacy remotes | Tasks | In Tasks |
+| CVM-15 | P1: Guard create and handle legacy remotes | Tasks | Verified |
 | CVM-16 | P1: Start fresh vault | Tasks | Verified |
 | CVM-17 | P1: Start fresh vault | Tasks | Verified |
 | CVM-18 | P1: Start fresh vault | Tasks | Verified |

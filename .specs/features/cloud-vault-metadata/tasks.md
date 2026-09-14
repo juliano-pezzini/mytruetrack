@@ -246,6 +246,8 @@ T10 → T11 → T12
 
 ### T8: SetupWizard probe + Create guards
 
+**Status**: ✅ Done
+
 **What**: On setup choice, probe remote (when provider configured) and block Create for `ready` / `legacy` / `corrupt` with clear messaging and Clear/Start-fresh affordances.
 **Where**: `src/ui/pages/SetupWizard.tsx`
 **Depends on**: T7
@@ -254,10 +256,10 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [ ] `ready` → Create disabled; Restore offered as primary
-- [ ] `legacy` / `corrupt` → Create + Restore blocked; Clear / Start fresh offered
-- [ ] `empty` → existing Create path unchanged
-- [ ] Gate: build passes
+- [x] `ready` → Create disabled; Restore offered as primary
+- [x] `legacy` / `corrupt` → Create + Restore blocked; Clear / Start fresh offered
+- [x] `empty` → existing Create path unchanged
+- [x] Gate: build passes
 
 **Tests**: none
 **Gate**: build

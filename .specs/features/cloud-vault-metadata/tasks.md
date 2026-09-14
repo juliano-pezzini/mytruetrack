@@ -195,6 +195,8 @@ T10 → T11 → T12
 
 ### T6: Hook encrypted push to upsert metadata
 
+**Status**: ✅ Done
+
 **What**: After encrypted `pushDeltas` path (including segment no-op), call `upsertVaultMetadata`; never on `dek === null`.
 **Where**: `src/sync/crsql-changes.ts`
 **Depends on**: T5
@@ -203,11 +205,11 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [ ] Encrypted push writes/updates `vault-metadata.json` even when no new segment
-- [ ] Unencrypted push does not create/overwrite metadata
-- [ ] Upsert failure surfaces as thrown sync error
-- [ ] Existing crsql-changes tests still pass; new cases added
-- [ ] Gate: full `npm test` passes
+- [x] Encrypted push writes/updates `vault-metadata.json` even when no new segment
+- [x] Unencrypted push does not create/overwrite metadata
+- [x] Upsert failure surfaces as thrown sync error
+- [x] Existing crsql-changes tests still pass; new cases added
+- [x] Gate: full `npm test` passes
 
 **Tests**: unit
 **Gate**: full

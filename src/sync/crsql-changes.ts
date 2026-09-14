@@ -22,6 +22,9 @@ import type { Database, SqlValue } from '../storage/database.ts';
 import type { CloudProvider } from './cloud-provider.ts';
 import { encrypt, decrypt, encodeBlob, decodeBlob } from '../crypto/encryption.ts';
 import { savePushState, savePullState, getSyncState, clearSyncState } from './sync-state.ts';
+import { loadKeyData } from '../crypto/key-store.ts';
+import { upsertVaultMetadata } from './vault-metadata.ts';
+import { getDeviceLabel, detectBrowserId } from './device-identity.ts';
 
 const CHANGES_PREFIX = 'changes-';
 const CHANGES_SUFFIX = '.bin';
@@ -177,17 +180,28 @@ export async function pushDeltas(
   const since = (await getSyncState()).lastPushedVersion;
   const current = await getDbVersion(db);
 
-  // Nothing new since the last push — don't write an empty segment.
-  if (current <= since) return;
-
-  const rows = await exportLocalChanges(db, since, current);
-  if (rows.length > 0) {
-    const plaintext = serializeChanges(rows);
-    const payload = dek ? encodeBlob(await encrypt(dek, plaintext)) : plaintext;
-    await provider.upload(segmentFilename(siteId, current), payload);
+  if (current > since) {
+    const rows = await exportLocalChanges(db, since, current);
+    if (rows.length > 0) {
+      const plaintext = serializeChanges(rows);
+      const payload = dek ? encodeBlob(await encrypt(dek, plaintext)) : plaintext;
+      await provider.upload(segmentFilename(siteId, current), payload);
+    }
+    // Advance the watermark even if the filtered range was empty, so we never re-scan it.
+    await savePushState(current);
   }
-  // Advance the watermark even if the filtered range was empty, so we never re-scan it.
-  await savePushState(current);
+
+  if (dek !== null) {
+    const keyData = await loadKeyData();
+    if (!keyData) {
+      throw new Error(
+        'Encrypted push requires local key data to upsert vault metadata. Unlock the vault and try again.',
+      );
+    }
+    const label = await getDeviceLabel();
+    const browser = detectBrowserId();
+    await upsertVaultMetadata(provider, { siteId, keyData, label, browser });
+  }
 }
 
 /**

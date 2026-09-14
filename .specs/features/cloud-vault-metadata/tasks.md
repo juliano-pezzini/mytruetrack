@@ -96,6 +96,8 @@ T10 → T11 → T12
 
 ### T2: Device identity label helpers
 
+**Status**: ✅ Done
+
 **What**: Implement auto browser/OS label generation and local get/set with trim + max 64 chars.
 **Where**: `src/sync/device-identity.ts`
 **Depends on**: T1
@@ -104,10 +106,10 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [ ] `generateDefaultDeviceLabel` / `detectBrowserId` return non-empty coarse labels
-- [ ] `setDeviceLabel` rejects empty / >64; `getDeviceLabel` returns custom or default
-- [ ] Persisted across reload (fake-indexeddb in tests)
-- [ ] Gate: quick unit tests pass
+- [x] `generateDefaultDeviceLabel` / `detectBrowserId` return non-empty coarse labels
+- [x] `setDeviceLabel` rejects empty / >64; `getDeviceLabel` returns custom or default
+- [x] Persisted across reload (fake-indexeddb in tests)
+- [x] Gate: quick unit tests pass
 
 **Tests**: unit (`src/sync/device-identity.test.ts` — create)
 **Gate**: quick

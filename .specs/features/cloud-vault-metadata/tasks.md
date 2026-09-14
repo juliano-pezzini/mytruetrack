@@ -120,6 +120,8 @@ T10 → T11 → T12
 
 ### T3: Probe remote vault + delete metadata
 
+**Status**: ✅ Done
+
 **What**: Implement `probeRemoteVault` and `deleteVaultMetadata` against `CloudProvider`.
 **Where**: `src/sync/vault-metadata.ts`
 **Depends on**: T2
@@ -128,10 +130,10 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [ ] Returns `empty` | `ready` | `legacy` | `corrupt` per design probe rules
-- [ ] `deleteVaultMetadata` removes file when present; no-op when absent
-- [ ] Unit tests cover all four status kinds + delete
-- [ ] Gate: quick passes
+- [x] Returns `empty` | `ready` | `legacy` | `corrupt` per design probe rules
+- [x] `deleteVaultMetadata` removes file when present; no-op when absent
+- [x] Unit tests cover all four status kinds + delete
+- [x] Gate: quick passes
 
 **Tests**: unit
 **Gate**: quick

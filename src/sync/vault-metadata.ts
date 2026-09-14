@@ -2,7 +2,11 @@
  * Cloud vault metadata — portable wrapped DEK + device registry in the sync folder.
  */
 
+import type { CloudProvider } from './cloud-provider.ts';
+
 export const VAULT_METADATA_FILENAME = 'vault-metadata.json';
+
+const CHANGES_SEGMENT_RE = /^changes-[0-9a-f]+-\d+\.bin$/;
 
 export type VaultDeviceEntry = {
   readonly label: string;
@@ -94,4 +98,46 @@ export function serializeVaultMetadata(meta: VaultMetadata): Uint8Array {
     devices: meta.devices,
   };
   return new TextEncoder().encode(JSON.stringify(payload));
+}
+
+function countChangeSegments(files: readonly { readonly name: string }[]): number {
+  let count = 0;
+  for (const file of files) {
+    if (CHANGES_SEGMENT_RE.test(file.name)) count += 1;
+  }
+  return count;
+}
+
+/** Classify remote vault state from provider folder listing. */
+export async function probeRemoteVault(provider: CloudProvider): Promise<RemoteVaultStatus> {
+  const files = await provider.list();
+  const hasMetadata = files.some((f) => f.name === VAULT_METADATA_FILENAME);
+  if (hasMetadata) {
+    const raw = await provider.download(VAULT_METADATA_FILENAME);
+    if (!raw) {
+      return { kind: 'corrupt', reason: 'Vault metadata file is missing on download' };
+    }
+    try {
+      const metadata = parseVaultMetadata(raw);
+      return { kind: 'ready', metadata };
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : String(err);
+      return { kind: 'corrupt', reason };
+    }
+  }
+  const segmentCount = countChangeSegments(files);
+  if (segmentCount >= 1) {
+    return { kind: 'legacy', segmentCount };
+  }
+  return { kind: 'empty' };
+}
+
+/** Delete remote vault metadata when present. Returns true if a file was removed. */
+export async function deleteVaultMetadata(provider: CloudProvider): Promise<boolean> {
+  const files = await provider.list();
+  if (!files.some((f) => f.name === VAULT_METADATA_FILENAME)) {
+    return false;
+  }
+  await provider.delete(VAULT_METADATA_FILENAME);
+  return true;
 }

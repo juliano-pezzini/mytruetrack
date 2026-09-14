@@ -1,15 +1,25 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
+import 'fake-indexeddb/auto';
 import {
   parseVaultMetadata,
   serializeVaultMetadata,
   probeRemoteVault,
   deleteVaultMetadata,
   upsertVaultMetadata,
+  restoreVaultFromRemote,
   VAULT_METADATA_FILENAME,
   type VaultMetadata,
 } from './vault-metadata.ts';
 import { createMockCloudProvider } from './mock-cloud-provider.ts';
 import type { KeyData } from '../crypto/key-store.ts';
+import { clearKeyData, hasKeyData, loadKeyData } from '../crypto/key-store.ts';
+import {
+  deriveKek,
+  generateDek,
+  generateSalt,
+  wrapDek,
+  DEFAULT_ITERATIONS,
+} from '../crypto/key-derivation.ts';
 
 const sampleMeta: VaultMetadata = {
   version: 1,
@@ -147,6 +157,69 @@ describe('upsertVaultMetadata', () => {
     expect(meta.iterations).toBe(500_000);
     expect(meta.devices.bb).toEqual(existing.devices.bb);
     expect(meta.devices.aa!.label).toBe('Desktop');
+  });
+});
+
+describe('restoreVaultFromRemote', () => {
+  const passphrase = 'correct horse battery';
+
+  beforeEach(async () => {
+    await clearKeyData();
+  });
+
+  async function seedRemoteMetadata(provider: ReturnType<typeof createMockCloudProvider>) {
+    const dek = await generateDek();
+    const salt = generateSalt();
+    const kek = await deriveKek(passphrase, salt, DEFAULT_ITERATIONS);
+    const wrappedDek = await wrapDek(dek, kek);
+    const meta: VaultMetadata = {
+      version: 1,
+      wrappedDek: btoa(String.fromCharCode(...wrappedDek)),
+      salt: btoa(String.fromCharCode(...salt)),
+      iterations: DEFAULT_ITERATIONS,
+      devices: {},
+    };
+    await provider.upload(VAULT_METADATA_FILENAME, serializeVaultMetadata(meta));
+    return dek;
+  }
+
+  it('persists key data and returns DEK on correct passphrase', async () => {
+    const provider = createMockCloudProvider();
+    const expectedDek = await seedRemoteMetadata(provider);
+
+    const dek = await restoreVaultFromRemote(provider, passphrase);
+    expect(await hasKeyData()).toBe(true);
+    const stored = await loadKeyData();
+    expect(stored).not.toBeNull();
+
+    const { encrypt, decrypt } = await import('../crypto/encryption.ts');
+    const payload = new TextEncoder().encode('restore-check');
+    const fromExpected = await encrypt(expectedDek, payload);
+    expect(await decrypt(dek, fromExpected)).toEqual(payload);
+
+    const kek = await deriveKek(passphrase, stored!.salt, stored!.iterations);
+    const { unwrapDek } = await import('../crypto/key-derivation.ts');
+    const unwrapped = await unwrapDek(stored!.wrappedDek, kek);
+    const roundTrip = await encrypt(unwrapped, payload);
+    expect(await decrypt(dek, roundTrip)).toEqual(payload);
+  });
+
+  it('throws on wrong passphrase without writing key store', async () => {
+    const provider = createMockCloudProvider();
+    await seedRemoteMetadata(provider);
+
+    await expect(restoreVaultFromRemote(provider, 'wrong passphrase')).rejects.toThrow(
+      /passphrase|unwrap/i,
+    );
+    expect(await hasKeyData()).toBe(false);
+  });
+
+  it('throws on corrupt metadata without writing key store', async () => {
+    const provider = createMockCloudProvider();
+    await provider.upload(VAULT_METADATA_FILENAME, new TextEncoder().encode('{'));
+
+    await expect(restoreVaultFromRemote(provider, passphrase)).rejects.toThrow(/restore vault/i);
+    expect(await hasKeyData()).toBe(false);
   });
 });
 

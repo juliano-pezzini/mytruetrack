@@ -169,6 +169,8 @@ T10 → T11 → T12
 
 ### T5: Restore vault from remote helper
 
+**Status**: ✅ Done
+
 **What**: Implement `restoreVaultFromRemote(provider, passphrase)` — download, unwrap, `saveKeyData` only after success.
 **Where**: `src/sync/vault-metadata.ts`
 **Depends on**: T4
@@ -177,10 +179,10 @@ T10 → T11 → T12
 
 **Done when**:
 
-- [ ] Correct passphrase → key persisted + DEK returned
-- [ ] Wrong passphrase → throws; no key store write
-- [ ] Missing/corrupt metadata → throws; no key store write
-- [ ] Gate: quick passes
+- [x] Correct passphrase → key persisted + DEK returned
+- [x] Wrong passphrase → throws; no key store write
+- [x] Missing/corrupt metadata → throws; no key store write
+- [x] Gate: quick passes
 
 **Tests**: unit
 **Gate**: quick

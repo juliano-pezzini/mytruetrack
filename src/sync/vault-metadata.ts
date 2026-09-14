@@ -4,6 +4,8 @@
 
 import type { CloudProvider } from './cloud-provider.ts';
 import type { KeyData } from '../crypto/key-store.ts';
+import { saveKeyData } from '../crypto/key-store.ts';
+import { deriveKek, unwrapDek } from '../crypto/key-derivation.ts';
 
 export const VAULT_METADATA_FILENAME = 'vault-metadata.json';
 
@@ -198,4 +200,31 @@ export async function downloadVaultMetadata(provider: CloudProvider): Promise<Va
     throw new Error('Vault metadata is not present on the cloud provider');
   }
   return parseVaultMetadata(raw);
+}
+
+/** Restore local vault key material from cloud metadata after passphrase verification. */
+export async function restoreVaultFromRemote(
+  provider: CloudProvider,
+  passphrase: string,
+): Promise<CryptoKey> {
+  let metadata: VaultMetadata;
+  try {
+    metadata = await downloadVaultMetadata(provider);
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(`Cannot restore vault: ${detail}`);
+  }
+
+  const wrappedDek = base64ToBytes(metadata.wrappedDek);
+  const salt = base64ToBytes(metadata.salt);
+  const kek = await deriveKek(passphrase, salt, metadata.iterations);
+  const dek = await unwrapDek(wrappedDek, kek);
+
+  await saveKeyData({
+    wrappedDek,
+    salt,
+    iterations: metadata.iterations,
+  });
+
+  return dek;
 }

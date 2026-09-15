@@ -9,6 +9,8 @@
  * The KEK never leaves memory; the wrapped DEK is persisted in IndexedDB.
  */
 
+import { toArrayBuffer } from './bytes.ts';
+
 export const DEFAULT_ITERATIONS = 600_000;
 export const SALT_LENGTH = 16;
 
@@ -43,7 +45,7 @@ export async function deriveKek(
   return crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt: salt.buffer as ArrayBuffer,
+      salt: toArrayBuffer(salt),
       iterations,
       hash: 'SHA-256',
     },
@@ -71,7 +73,7 @@ export async function deriveKekFromPrf(prfOutput: Uint8Array): Promise<CryptoKey
 
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
-    new Uint8Array(prfOutput).buffer as ArrayBuffer,
+    toArrayBuffer(prfOutput),
     'HKDF',
     false,
     ['deriveKey'],
@@ -137,7 +139,7 @@ export async function unwrapDekExtractable(
   try {
     return await crypto.subtle.unwrapKey(
       'raw',
-      new Uint8Array(wrappedDek).buffer as ArrayBuffer,
+      toArrayBuffer(wrappedDek),
       kek,
       'AES-KW',
       { name: 'AES-GCM', length: 256 },
@@ -163,7 +165,7 @@ export async function rewrapDek(
   try {
     extractableDek = await crypto.subtle.unwrapKey(
       'raw',
-      new Uint8Array(wrappedDek).buffer as ArrayBuffer,
+      toArrayBuffer(wrappedDek),
       currentKek,
       'AES-KW',
       { name: 'AES-GCM', length: 256 },
@@ -186,7 +188,7 @@ export async function unwrapDek(wrappedDek: Uint8Array, kek: CryptoKey): Promise
   try {
     return await crypto.subtle.unwrapKey(
       'raw',
-      wrappedDek.buffer as ArrayBuffer,
+      toArrayBuffer(wrappedDek),
       kek,
       'AES-KW',
       { name: 'AES-GCM', length: 256 },

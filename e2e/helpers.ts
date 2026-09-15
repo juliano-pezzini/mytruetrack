@@ -52,11 +52,17 @@ export async function clearStorage(page: Page): Promise<void> {
   });
 }
 
+/** Hash-router path for Playwright (`/accounts` → `/#/accounts`). */
+export function appPath(path: string): string {
+  if (path === '/') return '/#/';
+  return `/#${path.startsWith('/') ? path : `/${path}`}`;
+}
+
 /**
  * Navigate to the app and wait for the vault gate to finish its initial check.
  */
 export async function gotoApp(page: Page): Promise<void> {
-  await page.goto('/');
+  await page.goto(appPath('/'));
   await page.waitForFunction(() => !document.body.textContent?.includes('Loading…'), {
     timeout: 10_000,
   });
@@ -73,6 +79,6 @@ export async function setupLocalOnly(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Get Started' }).click();
   // Choice → Skip (local-only)
   await page.getByRole('button', { name: /Skip.*passphrase/i }).click();
-  await page.waitForURL('/');
+  await page.waitForURL(/#\/?$/);
   await page.getByRole('heading', { name: 'Dashboard' }).waitFor();
 }

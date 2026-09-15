@@ -71,7 +71,9 @@ export function createGoogleDriveProvider(accessToken: string): CloudProvider {
             ...headers(),
             'Content-Type': 'application/octet-stream',
           },
-          body: data.buffer as ArrayBuffer,
+          // Pass the view (or a copy) — never raw `.buffer`, which may include
+          // unrelated bytes when byteOffset ≠ 0 or the buffer is oversized.
+          body: data.slice(),
         });
 
         if (!response.ok) {
@@ -91,7 +93,7 @@ export function createGoogleDriveProvider(accessToken: string): CloudProvider {
 
         const form = new FormData();
         form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-        form.append('file', new Blob([data.buffer as ArrayBuffer]));
+        form.append('file', new Blob([data.slice()]));
 
         const response = await fetch(`${UPLOAD_API}?uploadType=multipart`, {
           method: 'POST',

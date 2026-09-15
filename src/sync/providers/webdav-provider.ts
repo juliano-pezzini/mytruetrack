@@ -91,7 +91,8 @@ export function createWebDavProvider(config: WebDavConfig): CloudProvider {
           ...authHeaders(config),
           'Content-Type': 'application/octet-stream',
         },
-        body: data.buffer as ArrayBuffer,
+        // Pass the view copy — never raw `.buffer` (may include unrelated bytes).
+        body: data.slice(),
       });
 
       if (!response.ok) {

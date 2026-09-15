@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { setupLocalOnly } from './helpers.ts';
+import { appPath, setupLocalOnly } from './helpers.ts';
 
 test.beforeEach(async ({ page }) => {
   await setupLocalOnly(page);
@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
 test('InvestPass import page loads with expected UI elements', async ({ page }) => {
   await page.getByRole('link', { name: /Settings/i }).click();
   await page.getByRole('link', { name: /InvestPass Import/i }).click();
-  await page.waitForURL('/import/investpass');
+  await page.waitForURL(/#\/import\/investpass/);
 
   // Page heading
   await expect(page.getByRole('heading', { name: 'InvestPass Import' })).toBeVisible();
@@ -28,7 +28,7 @@ test('InvestPass import page loads with expected UI elements', async ({ page }) 
 });
 
 test('clicking import without extension shows error', async ({ page }) => {
-  await page.goto('/import/investpass');
+  await page.goto(appPath('/import/investpass'));
   await page.getByRole('heading', { name: 'InvestPass Import' }).waitFor();
 
   // Click import — chrome.runtime is not available in Playwright, so it should error
@@ -40,7 +40,7 @@ test('clicking import without extension shows error', async ({ page }) => {
 });
 
 test('navigating to /import/investpass directly works', async ({ page }) => {
-  await page.goto('/import/investpass');
+  await page.goto(appPath('/import/investpass'));
   await page.getByRole('heading', { name: 'InvestPass Import' }).waitFor();
   await expect(page.getByTestId('import-button')).toBeVisible();
 });
@@ -55,7 +55,7 @@ test('vault-locked state blocks access to import page (AC9)', async ({ page }) =
     localStorage.clear();
     sessionStorage.clear();
   });
-  await page.goto('/import/investpass');
+  await page.goto(appPath('/import/investpass'));
 
   // Should NOT see the import page — should see setup or unlock
   await expect(page.getByTestId('import-button')).not.toBeVisible();

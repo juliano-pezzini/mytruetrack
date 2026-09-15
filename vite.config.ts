@@ -18,6 +18,8 @@ const securityHeaders = {
 };
 
 export default defineConfig({
+  // Pages project site uses `/mytruetrack/`; local/PR builds keep `/`.
+  base: process.env.VITE_BASE_PATH ?? '/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

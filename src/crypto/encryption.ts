@@ -5,6 +5,8 @@
  * ciphertext when packed for storage/upload, and stripped when unpacking.
  */
 
+import { toArrayBuffer } from './bytes.ts';
+
 export const IV_LENGTH = 12;
 
 export type EncryptedBlob = {
@@ -19,9 +21,9 @@ export type EncryptedBlob = {
 export async function encrypt(dek: CryptoKey, plaintext: Uint8Array): Promise<EncryptedBlob> {
   const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
   const ciphertext = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv: iv.buffer as ArrayBuffer },
+    { name: 'AES-GCM', iv: toArrayBuffer(iv) },
     dek,
-    plaintext.buffer as ArrayBuffer,
+    toArrayBuffer(plaintext),
   );
   return { iv, ciphertext: new Uint8Array(ciphertext) };
 }
@@ -33,9 +35,9 @@ export async function encrypt(dek: CryptoKey, plaintext: Uint8Array): Promise<En
 export async function decrypt(dek: CryptoKey, blob: EncryptedBlob): Promise<Uint8Array> {
   try {
     const plaintext = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv: blob.iv.buffer as ArrayBuffer },
+      { name: 'AES-GCM', iv: toArrayBuffer(blob.iv) },
       dek,
-      blob.ciphertext.buffer as ArrayBuffer,
+      toArrayBuffer(blob.ciphertext),
     );
     return new Uint8Array(plaintext);
   } catch {

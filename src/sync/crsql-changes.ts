@@ -21,7 +21,7 @@
 import type { Database, SqlValue } from '../storage/database.ts';
 import type { CloudProvider } from './cloud-provider.ts';
 import { encrypt, decrypt, encodeBlob, decodeBlob } from '../crypto/encryption.ts';
-import { savePushState, savePullState, getSyncState } from './sync-state.ts';
+import { savePushState, savePullState, getSyncState, clearSyncState } from './sync-state.ts';
 
 const CHANGES_PREFIX = 'changes-';
 const CHANGES_SUFFIX = '.bin';
@@ -211,12 +211,29 @@ export async function pullDeltas(
 
   let appliedAny = false;
   for (const seg of segments) {
-    const packed = await provider.download(segmentFilename(seg.siteId, seg.version));
+    const filename = segmentFilename(seg.siteId, seg.version);
+    const packed = await provider.download(filename);
     if (!packed) continue;
 
     let plaintext: Uint8Array;
     if (dek) {
-      plaintext = await decrypt(dek, decodeBlob(packed));
+      try {
+        plaintext = await decrypt(dek, decodeBlob(packed));
+      } catch (err) {
+        const looksPlaintext = packed.length > 0 && packed[0] === 0x5b; // '['
+        if (looksPlaintext) {
+          throw new Error(
+            `Cannot decrypt ${filename}: remote segment looks unencrypted, but this vault ` +
+              `expects encrypted sync data. Clear cloud sync data in Settings, then push again.`,
+          );
+        }
+        const detail = err instanceof Error ? err.message : String(err);
+        throw new Error(
+          `Cannot decrypt ${filename} (peer site ${seg.siteId}): ${detail}. ` +
+            `Leftover sync files from a previous vault or database often cause this. ` +
+            `Clear cloud sync data in Settings, then push from this device.`,
+        );
+      }
     } else {
       plaintext = packed;
     }
@@ -229,7 +246,9 @@ export async function pullDeltas(
     try {
       changes = deserializeChanges(plaintext);
     } catch {
-      if (dek) throw new Error('Failed to decode synced change data.');
+      if (dek) {
+        throw new Error(`Failed to decode synced change data from ${filename}.`);
+      }
       throw new Error(
         'The remote data appears to be encrypted, but no passphrase is set. ' +
           'Please set up a passphrase to decrypt the synced data.',
@@ -242,4 +261,23 @@ export async function pullDeltas(
   }
 
   if (appliedAny) await savePullState(applied);
+}
+
+/**
+ * Delete every `changes-*.bin` segment from the cloud provider and reset local sync
+ * watermarks. Use when remote history is incompatible with the current vault (e.g.
+ * leftover peers encrypted under a different DEK).
+ *
+ * @returns Number of remote segment files deleted.
+ */
+export async function clearRemoteChangeSegments(provider: CloudProvider): Promise<number> {
+  const files = await provider.list();
+  let deleted = 0;
+  for (const file of files) {
+    if (!parseSegment(file.name)) continue;
+    await provider.delete(file.name);
+    deleted += 1;
+  }
+  await clearSyncState();
+  return deleted;
 }

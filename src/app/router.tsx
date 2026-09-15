@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createHashRouter } from 'react-router-dom';
 import { Layout } from '../ui/components/Layout.tsx';
 import { DashboardPage } from '../ui/pages/DashboardPage.tsx';
 import { AccountsPage } from '../ui/pages/AccountsPage.tsx';
@@ -7,7 +7,7 @@ import { CategoriesPage } from '../ui/pages/CategoriesPage.tsx';
 import { SettingsPage } from '../ui/pages/SettingsPage.tsx';
 import { InvestPassImportPage } from '../ui/pages/InvestPassImportPage.tsx';
 
-export const router = createBrowserRouter([
+export const router = createHashRouter([
   {
     element: <Layout />,
     children: [

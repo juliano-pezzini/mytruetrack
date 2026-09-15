@@ -17,9 +17,16 @@ A **local-first**, privacy-respecting personal finance tracker. Your data lives 
 
 TypeScript · React · Vite · SQLite-WASM · cr-sqlite (CRDT) · IndexedDB · Web Crypto · WebAuthn · Tailwind
 
-## Status
+## Deploy (GitHub Pages)
 
-Project bootstrap. See [.specs/project/ROADMAP.md](./.specs/project/ROADMAP.md).
+The app is a static Vite PWA. Pushes to `main` build and publish it as a **project site** at `https://<user>.github.io/mytruetrack/` (hash routes: `/#/accounts`, etc.).
+
+1. Repo **Settings → Pages → Source: GitHub Actions**.
+2. Optional: add Actions secret `VITE_GOOGLE_CLIENT_ID` so Google Drive sync is compiled in.
+3. In Google Cloud Console, add Authorized JavaScript origin `https://<user>.github.io` (scheme + host only; no path).
+4. Open `https://<user>.github.io/mytruetrack/` after the **Deploy GitHub Pages** workflow succeeds.
+
+Local and PR builds keep `base: '/'`. Only the Pages workflow sets `VITE_BASE_PATH=/mytruetrack/`.
 
 ## License
 

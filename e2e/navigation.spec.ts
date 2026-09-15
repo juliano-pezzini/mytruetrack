@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { setupLocalOnly } from './helpers.ts';
+import { appPath, setupLocalOnly } from './helpers.ts';
 
 test.beforeEach(async ({ page }) => {
   await setupLocalOnly(page);
@@ -30,7 +30,7 @@ test('page header shows correct title for each route', async ({ page }) => {
   ];
 
   for (const { path, title } of routes) {
-    await page.goto(path);
+    await page.goto(appPath(path));
     await page.waitForFunction(() => !document.body.textContent?.includes('Loading…'), {
       timeout: 10_000,
     });

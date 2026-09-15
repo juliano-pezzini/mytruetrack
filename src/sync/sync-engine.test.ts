@@ -1,12 +1,86 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import 'fake-indexeddb/auto';
 import { initDatabase } from '../storage/init.ts';
-import type { Database } from '../storage/database.ts';
-import { exportDatabaseSnapshot, importDatabaseSnapshot } from './sync-engine.ts';
+import type { Database, Row, SqlValue } from '../storage/database.ts';
+import {
+  exportDatabaseSnapshot,
+  importDatabaseSnapshot,
+  startFreshVault,
+} from './sync-engine.ts';
+import { createMockCloudProvider } from './mock-cloud-provider.ts';
+import { pushDeltas } from './crsql-changes.ts';
+import { generateDek, generateSalt } from '../crypto/key-derivation.ts';
+import { saveKeyData, hasKeyData, clearKeyData } from '../crypto/key-store.ts';
+import { VAULT_METADATA_FILENAME } from './vault-metadata.ts';
 
 // Cloud push/pull now uses cr-sqlite `crsql_changes` deltas, which are unavailable under
 // sql.js. Those are covered by crsql-changes.test.ts (protocol) and e2e (real merge).
 // This suite covers the local snapshot backup/export serialization, which runs on sql.js.
+describe('startFreshVault', () => {
+  beforeEach(async () => {
+    await clearKeyData();
+  });
+
+  it('clears cloud sync data and local key store', async () => {
+    const provider = createMockCloudProvider();
+    await saveKeyData({
+      wrappedDek: new Uint8Array([1]),
+      salt: generateSalt(),
+      iterations: 600_000,
+    });
+    const dek = await generateDek();
+    const siteId = 'aa';
+    const db = {
+      async exec(): Promise<void> {},
+      async execA(sql: string): Promise<SqlValue[][]> {
+        if (sql.includes('crsql_site_id')) return [[siteId]];
+        if (sql.includes('crsql_db_version')) return [[1]];
+        if (sql.includes('FROM crsql_changes')) {
+          return [
+            ['accounts', new Uint8Array([1]), 0, 'x', 1n, 1n, new Uint8Array([1]), 0, 1n],
+          ];
+        }
+        return [];
+      },
+      async execO(): Promise<Row[]> {
+        return [];
+      },
+      async close(): Promise<void> {},
+    };
+
+    await pushDeltas(db, provider, dek);
+    expect(await provider.download(VAULT_METADATA_FILENAME)).not.toBeNull();
+    expect(await hasKeyData()).toBe(true);
+
+    await startFreshVault(provider);
+    expect(await provider.list()).toEqual([]);
+    expect(await hasKeyData()).toBe(false);
+  });
+
+  it('does not clear key store when cloud clear fails', async () => {
+    await saveKeyData({
+      wrappedDek: new Uint8Array([1]),
+      salt: generateSalt(),
+      iterations: 600_000,
+    });
+    const base = createMockCloudProvider();
+    const provider = {
+      ...base,
+      async delete(filename: string): Promise<void> {
+        if (filename === VAULT_METADATA_FILENAME) {
+          throw new Error('metadata delete failed');
+        }
+        return base.delete(filename);
+      },
+    };
+    await base.upload('changes-aa-1.bin', new Uint8Array([1]));
+    await base.upload(VAULT_METADATA_FILENAME, new Uint8Array([123]));
+
+    await expect(startFreshVault(provider)).rejects.toThrow(/metadata delete failed/i);
+    expect(await hasKeyData()).toBe(true);
+  });
+});
+
 describe('sync-engine snapshot (local backup)', () => {
   let db: Database;
 

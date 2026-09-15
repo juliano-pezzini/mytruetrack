@@ -1,7 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import 'fake-indexeddb/auto';
 import type { Database, SqlValue } from '../storage/database.ts';
-import { generateDek } from '../crypto/key-derivation.ts';
+import { generateDek, generateSalt } from '../crypto/key-derivation.ts';
+import { saveKeyData, clearKeyData } from '../crypto/key-store.ts';
+import {
+  VAULT_METADATA_FILENAME,
+  serializeVaultMetadata,
+  parseVaultMetadata,
+} from './vault-metadata.ts';
+import type { CloudProvider } from './cloud-provider.ts';
 import { createMockCloudProvider } from './mock-cloud-provider.ts';
 import { clearSyncState, getSyncState } from './sync-state.ts';
 import {
@@ -10,6 +17,7 @@ import {
   pushDeltas,
   pullDeltas,
   clearRemoteChangeSegments,
+  formatPeerSiteForError,
 } from './crsql-changes.ts';
 
 type ChangeValue = string | number | bigint | null | Uint8Array;
@@ -87,6 +95,12 @@ describe('pushDeltas / pullDeltas', () => {
   beforeEach(async () => {
     dek = await generateDek();
     await clearSyncState();
+    await clearKeyData();
+    await saveKeyData({
+      wrappedDek: new Uint8Array([1, 2, 3]),
+      salt: generateSalt(),
+      iterations: 600_000,
+    });
   });
 
   it('pushes this device changes to changes-<siteid>-<version>.bin and round-trips', async () => {
@@ -109,8 +123,35 @@ describe('pushDeltas / pullDeltas', () => {
     await pushDeltas(db, provider, dek);
     await pushDeltas(db, provider, dek); // db_version unchanged → no second segment
 
-    const names = (await provider.list()).map((f) => f.name);
-    expect(names).toEqual(['changes-aa-1.bin']);
+    const names = (await provider.list()).map((f) => f.name).sort();
+    expect(names).toEqual(['changes-aa-1.bin', VAULT_METADATA_FILENAME].sort());
+  });
+
+  it('upserts vault metadata on encrypted push even when segment upload is a no-op', async () => {
+    const { db } = createFakeDb('aa', [rowA], 1);
+    const provider = createMockCloudProvider();
+
+    await pushDeltas(db, provider, dek);
+    expect(await provider.download(VAULT_METADATA_FILENAME)).not.toBeNull();
+
+    await pushDeltas(db, provider, dek);
+    expect(await provider.download(VAULT_METADATA_FILENAME)).not.toBeNull();
+  });
+
+  it('surfaces metadata upsert failure as a sync error', async () => {
+    const { db } = createFakeDb('aa', [rowA], 1);
+    const base = createMockCloudProvider();
+    const provider: CloudProvider = {
+      ...base,
+      async upload(filename: string, data: Uint8Array) {
+        if (filename === VAULT_METADATA_FILENAME) {
+          throw new Error('metadata upload failed');
+        }
+        return base.upload(filename, data);
+      },
+    };
+
+    await expect(pushDeltas(db, provider, dek)).rejects.toThrow(/metadata upload failed/i);
   });
 
   it('bounds the export to the snapshot db_version (upper-bound)', async () => {
@@ -199,6 +240,13 @@ describe('pushDeltas / pullDeltas', () => {
   });
 
   describe('unencrypted (null dek)', () => {
+    it('does not write vault metadata', async () => {
+      const provider = createMockCloudProvider();
+      const { db } = createFakeDb('bb', [rowB], 1);
+      await pushDeltas(db, provider, null);
+      expect(await provider.download(VAULT_METADATA_FILENAME)).toBeNull();
+    });
+
     it('uploads plaintext and applies it on pull', async () => {
       const provider = createMockCloudProvider();
       const peer = createFakeDb('bb', [rowB], 1);
@@ -227,11 +275,48 @@ describe('pushDeltas / pullDeltas', () => {
     const otherDek = await generateDek();
     const peer = createFakeDb('bb', [rowB], 1);
     await pushDeltas(peer.db, provider, otherDek);
+    await provider.delete(VAULT_METADATA_FILENAME);
 
     const self = createFakeDb('aa', [], 1);
     await expect(pullDeltas(self.db, provider, dek)).rejects.toThrow(
-      /Cannot decrypt changes-bb-1\.bin.*Clear cloud sync data/i,
+      /Cannot decrypt changes-bb-1\.bin.*peer site bb.*Clear cloud sync data/i,
     );
+  });
+
+  it('uses registry device label in decrypt error when vault metadata is present', async () => {
+    const provider = createMockCloudProvider();
+    const otherDek = await generateDek();
+    const peer = createFakeDb('bb', [rowB], 1);
+    await pushDeltas(peer.db, provider, otherDek);
+    const raw = await provider.download(VAULT_METADATA_FILENAME);
+    const meta = parseVaultMetadata(raw!);
+    await provider.upload(
+      VAULT_METADATA_FILENAME,
+      serializeVaultMetadata({
+        ...meta,
+        devices: {
+          ...meta.devices,
+          bb: {
+            ...meta.devices.bb!,
+            label: 'Phone',
+          },
+        },
+      }),
+    );
+
+    const self = createFakeDb('aa', [], 1);
+    await expect(pullDeltas(self.db, provider, dek)).rejects.toThrow(
+      /peer Phone \(bb\)/,
+    );
+  });
+
+  it('formatPeerSiteForError falls back to site id when label unknown', () => {
+    expect(formatPeerSiteForError('bb', {})).toBe('site bb');
+    expect(
+      formatPeerSiteForError('aa', {
+        aa: { label: 'Laptop', browser: 'chrome', lastSeenAt: '2026-01-01T00:00:00.000Z' },
+      }),
+    ).toBe('Laptop (aa)');
   });
 
   it('names the peer segment when encrypted vault pulls plaintext remote data', async () => {
@@ -254,14 +339,13 @@ describe('pushDeltas / pullDeltas', () => {
     const self = createFakeDb('aa', [rowA], 1);
     await pushDeltas(self.db, provider, dek);
 
-    expect((await provider.list()).map((f) => f.name).sort()).toEqual([
-      'changes-aa-1.bin',
-      'changes-bb-1.bin',
-    ]);
+    expect((await provider.list()).map((f) => f.name).sort()).toEqual(
+      ['changes-aa-1.bin', 'changes-bb-1.bin', VAULT_METADATA_FILENAME].sort(),
+    );
     expect((await getSyncState()).lastPushedVersion).toBe(1);
 
     const deleted = await clearRemoteChangeSegments(provider);
-    expect(deleted).toBe(2);
+    expect(deleted).toBe(3);
     expect(await provider.list()).toEqual([]);
     expect(await getSyncState()).toEqual({
       lastPushedVersion: 0,

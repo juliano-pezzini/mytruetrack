@@ -372,6 +372,8 @@ T11 → T12 → T13
 
 ### T11: E2E helper for This device only
 
+**Status**: ✅ Done
+
 **What**: Helper to leave Welcome via This device only so setup specs share one path.
 **Where**: `e2e/helpers.ts`
 **Depends on**: T8
@@ -385,8 +387,8 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] Helper clicks Get Started then This device only
-- [ ] Gate: build (helper unused until T12)
+- [x] Helper clicks Get Started then This device only
+- [x] Gate: build (helper unused until T12)
 
 **Tests**: none
 **Gate**: build

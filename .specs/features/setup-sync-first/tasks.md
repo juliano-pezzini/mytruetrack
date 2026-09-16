@@ -250,6 +250,8 @@ T11 → T12 → T13
 
 ### T7: Connect then probe before vault actions
 
+**Status**: ✅ Done
+
 **What**: Connect Google/WebDAV, persist provider without freezing, probe, then show Create/Restore/Skip from `vaultActionsForProbe`. Cancel/fail stays in setup with no DEK; cancel writes `DEFAULT_CONFIG`.
 **Where**: `src/ui/pages/SetupWizard.tsx`
 **Depends on**: T6
@@ -263,10 +265,10 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] Connect success probes before the vault-choice buttons
-- [ ] Connect/probe errors show a recoverable message and do not persist a DEK
-- [ ] Back/cancel from Connect returns to `sync-choice` without `storageChoice`
-- [ ] Gate: build
+- [x] Connect success probes before the vault-choice buttons
+- [x] Connect/probe errors show a recoverable message and do not persist a DEK
+- [x] Back/cancel from Connect returns to `sync-choice` without `storageChoice`
+- [x] Gate: build
 
 **Tests**: none
 **Gate**: build

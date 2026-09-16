@@ -150,8 +150,8 @@ Setup today lets a user create a passphrase (a new DEK) before any cloud provide
 | SSF-01 | P1: Sync-first setup before any vault | Tasks | Implementing |
 | SSF-02 | P1: Sync-first setup before any vault | Tasks | Implementing |
 | SSF-03 | P1: Sync-first setup before any vault | Tasks | Implementing |
-| SSF-04 | P1: Sync-first setup before any vault | Tasks | In Tasks |
-| SSF-05 | P1: Sync-first setup before any vault | Tasks | In Tasks |
+| SSF-04 | P1: Sync-first setup before any vault | Tasks | Implementing |
+| SSF-05 | P1: Sync-first setup before any vault | Tasks | Implementing |
 | SSF-06 | P1: Probe still blocks Create on existing cloud history | Tasks | In Tasks |
 | SSF-07 | P1: Probe still blocks Create on existing cloud history | Tasks | In Tasks |
 | SSF-08 | P1: Probe still blocks Create on existing cloud history | Tasks | In Tasks |

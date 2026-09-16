@@ -82,7 +82,7 @@ export function SetupWizard() {
     return null;
   }, [syncConfig]);
 
-  const runProbe = useCallback(async () => {
+  const runProbe = useCallback(async (): Promise<RemoteVaultStatus | null> => {
     setProbeLoading(true);
     setProbeError(null);
     try {
@@ -90,18 +90,21 @@ export function SetupWizard() {
       setSyncConfig(config);
       if (!config.provider) {
         setRemoteStatus(null);
-        return;
+        return null;
       }
       const cloudProvider = await resolveCloudProvider();
       if (!cloudProvider) {
         setRemoteStatus(null);
-        return;
+        setProbeError('Could not reach cloud storage.');
+        return null;
       }
       const status = await probeRemoteVault(cloudProvider);
       setRemoteStatus(status);
+      return status;
     } catch (err) {
       setProbeError(err instanceof Error ? err.message : String(err));
       setRemoteStatus(null);
+      return null;
     } finally {
       setProbeLoading(false);
     }
@@ -150,33 +153,59 @@ export function SetupWizard() {
     setStep('restore');
   }
 
-  async function handleSaveConnectAndRestore() {
+  async function handleSaveConnectAndProbe() {
     setLoading(true);
     setError(null);
     try {
       if (connectProvider === 'webdav') {
         const testProvider = createWebDavProvider(webdav);
         await testProvider.list();
-        await saveSyncConfig({ provider: 'webdav', webdav, google: null });
-        setSyncConfig({ provider: 'webdav', webdav, google: null });
+        await saveSyncConfig({ provider: 'webdav', webdav, google: null, storageChoice: null });
+        setSyncConfig({ provider: 'webdav', webdav, google: null, storageChoice: null });
       } else if (connectProvider === 'google-drive') {
         if (!googleTokens) {
           setError('Connect with Google before continuing.');
           return;
         }
-        await saveSyncConfig({ provider: 'google-drive', webdav: null, google: googleTokens });
-        setSyncConfig({ provider: 'google-drive', webdav: null, google: googleTokens });
+        await saveSyncConfig({
+          provider: 'google-drive',
+          webdav: null,
+          google: googleTokens,
+          storageChoice: null,
+        });
+        setSyncConfig({
+          provider: 'google-drive',
+          webdav: null,
+          google: googleTokens,
+          storageChoice: null,
+        });
       } else {
-        setError('Choose a cloud provider to restore from.');
+        setError('Choose a cloud provider to continue.');
         return;
       }
-      await runProbe();
-      setStep('restore');
+      const status = await runProbe();
+      if (!status) {
+        setError('Could not check the cloud folder. Try again or go back.');
+        return;
+      }
+      setThisDeviceOnly(false);
+      setStep('choice');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not connect to cloud.');
     } finally {
       setLoading(false);
     }
+  }
+
+  async function cancelConnect() {
+    setError(null);
+    setGoogleTokens(null);
+    setWebdav(DEFAULT_WEBDAV);
+    setRemoteStatus(null);
+    setProbeError(null);
+    await saveSyncConfig({ provider: null, webdav: null, google: null, storageChoice: null });
+    setSyncConfig({ provider: null, webdav: null, google: null, storageChoice: null });
+    setStep('sync-choice');
   }
 
   async function handleConnectGoogleSetup() {
@@ -185,8 +214,18 @@ export function SetupWizard() {
     try {
       const tokens = await connectGoogleDrive();
       setGoogleTokens(tokens);
-      await saveSyncConfig({ provider: 'google-drive', webdav: null, google: tokens });
-      setSyncConfig({ provider: 'google-drive', webdav: null, google: tokens });
+      await saveSyncConfig({
+        provider: 'google-drive',
+        webdav: null,
+        google: tokens,
+        storageChoice: null,
+      });
+      setSyncConfig({
+        provider: 'google-drive',
+        webdav: null,
+        google: tokens,
+        storageChoice: null,
+      });
       setConnectProvider('google-drive');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Google connect failed.');
@@ -535,7 +574,8 @@ export function SetupWizard() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
             <h2 className="text-xl font-bold text-gray-900 mb-2">Connect cloud storage</h2>
             <p className="text-sm text-gray-500 mb-6">
-              Restore downloads your vault key from the same cloud folder you use for sync.
+              Connect a Google Drive or WebDAV folder. The app checks that folder before you create
+              or restore a vault.
             </p>
 
             <div className="space-y-2 mb-4">
@@ -622,15 +662,15 @@ export function SetupWizard() {
 
             <button
               type="button"
-              onClick={() => void handleSaveConnectAndRestore()}
+              onClick={() => void handleSaveConnectAndProbe()}
               disabled={loading}
               className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 mb-3"
             >
-              {loading ? 'Connecting…' : 'Continue to restore'}
+              {loading ? 'Connecting…' : 'Continue'}
             </button>
             <button
               type="button"
-              onClick={() => setStep('sync-choice')}
+              onClick={() => void cancelConnect()}
               className="w-full text-sm text-gray-500 hover:text-gray-700"
             >
               Back

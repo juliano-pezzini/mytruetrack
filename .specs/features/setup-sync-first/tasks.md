@@ -221,6 +221,8 @@ T11 → T12 → T13
 
 ### T6: Sync-choice step before passphrase
 
+**Status**: ✅ Done
+
 **What**: After Welcome, show Use cloud sync (Connect vs This device only). Create/Restore/Skip are unreachable until that choice. This device only uses `vaultActionsForProbe({ kind: 'local-only' })`.
 **Where**: `src/ui/pages/SetupWizard.tsx`
 **Depends on**: T1
@@ -234,10 +236,10 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] New `sync-choice` step is the only path out of Welcome
-- [ ] `generateDek` / `saveKeyData` still only run from the existing Create handler
-- [ ] This device only does not prompt Google or WebDAV and does not offer Restore
-- [ ] Gate: build (`npm run typecheck && npm run lint && npm test`)
+- [x] New `sync-choice` step is the only path out of Welcome
+- [x] `generateDek` / `saveKeyData` still only run from the existing Create handler
+- [x] This device only does not prompt Google or WebDAV and does not offer Restore
+- [x] Gate: build (`npm run typecheck && npm run lint && npm test`)
 
 **Tests**: none
 **Gate**: build

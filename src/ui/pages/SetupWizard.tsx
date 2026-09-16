@@ -23,9 +23,11 @@ import {
   type RemoteVaultStatus,
 } from '../../sync/vault-metadata.ts';
 import { clearCloudSyncData, startFreshVault } from '../../sync/sync-engine.ts';
+import { vaultActionsForProbe } from '../../sync/storage-choice.ts';
 
 type Step =
   | 'welcome'
+  | 'sync-choice'
   | 'choice'
   | 'passphrase'
   | 'recovery'
@@ -62,6 +64,7 @@ export function SetupWizard() {
   const [webdav, setWebdav] = useState<WebDavConfig>(DEFAULT_WEBDAV);
   const [googleTokens, setGoogleTokens] = useState<GoogleTokens | null>(null);
   const [restorePassphrase, setRestorePassphrase] = useState('');
+  const [thisDeviceOnly, setThisDeviceOnly] = useState(false);
 
   const resolveCloudProvider = useCallback(async (): Promise<CloudProvider | null> => {
     const config = syncConfig ?? (await loadSyncConfig());
@@ -112,10 +115,15 @@ export function SetupWizard() {
   }, []);
 
   useEffect(() => {
-    if (step === 'choice') {
-      void runProbe();
+    if (step !== 'choice') return;
+    if (thisDeviceOnly) {
+      setRemoteStatus(null);
+      setProbeLoading(false);
+      setProbeError(null);
+      return;
     }
-  }, [step, runProbe]);
+    void runProbe();
+  }, [step, thisDeviceOnly, runProbe]);
 
   useEffect(() => {
     if (step !== 'connect-cloud') return;
@@ -318,12 +326,24 @@ export function SetupWizard() {
   }
 
   const hasConfiguredProvider = Boolean(syncConfig?.provider);
+  const vaultActions = thisDeviceOnly
+    ? vaultActionsForProbe({ kind: 'local-only' })
+    : remoteStatus
+      ? vaultActionsForProbe(remoteStatus)
+      : { create: false, restore: false, skip: false };
   const remoteReady = remoteStatus?.kind === 'ready';
-  const remoteBlocked =
-    remoteStatus?.kind === 'legacy' || remoteStatus?.kind === 'corrupt' || remoteReady;
-  const createDisabled = remoteBlocked || probeLoading;
-  const restoreDisabled =
-    remoteStatus?.kind === 'legacy' || remoteStatus?.kind === 'corrupt' || probeLoading;
+  const createDisabled = !vaultActions.create || probeLoading;
+  const restoreDisabled = !vaultActions.restore || probeLoading;
+  const skipDisabled = !vaultActions.skip || probeLoading;
+
+  async function chooseThisDeviceOnly() {
+    setError(null);
+    await saveSyncConfig({ provider: null, webdav: null, google: null });
+    setSyncConfig({ provider: null, webdav: null, google: null, storageChoice: null });
+    setThisDeviceOnly(true);
+    setRemoteStatus(null);
+    setStep('choice');
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -335,10 +355,47 @@ export function SetupWizard() {
             <p className="text-gray-500 mb-8">Private, local-first personal finance tracking.</p>
             <button
               type="button"
-              onClick={() => setStep('choice')}
+              onClick={() => setStep('sync-choice')}
               className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
             >
               Get Started
+            </button>
+          </div>
+        )}
+
+        {step === 'sync-choice' && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Use cloud sync?</h2>
+            <p className="text-sm text-gray-500 mb-6">
+              Connect a cloud folder first if you already have encrypted data there. Creating a
+              passphrase before connecting can leave you unable to pull that history.
+            </p>
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setThisDeviceOnly(false);
+                  setError(null);
+                  setStep('connect-cloud');
+                }}
+                className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Connect cloud storage
+              </button>
+              <button
+                type="button"
+                onClick={() => void chooseThisDeviceOnly()}
+                className="w-full py-3 px-4 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+              >
+                This device only
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => setStep('welcome')}
+              className="w-full text-sm text-gray-500 hover:text-gray-700 mt-4"
+            >
+              Back
             </button>
           </div>
         )}
@@ -352,8 +409,10 @@ export function SetupWizard() {
               unencrypted — even in the cloud.
             </p>
 
-            {probeLoading && <p className="text-sm text-gray-500 mb-4">Checking cloud vault…</p>}
-            {probeError && (
+            {probeLoading && !thisDeviceOnly && (
+              <p className="text-sm text-gray-500 mb-4">Checking cloud vault…</p>
+            )}
+            {probeError && !thisDeviceOnly && (
               <p className="text-sm text-amber-700 mb-4">
                 Could not check cloud: {probeError}. You can still create a new local vault.
               </p>
@@ -389,7 +448,7 @@ export function SetupWizard() {
             )}
 
             <div className="space-y-3">
-              {remoteReady && (
+              {vaultActions.restore && (
                 <button
                   type="button"
                   onClick={beginRestore}
@@ -409,7 +468,7 @@ export function SetupWizard() {
                 Create a passphrase
               </button>
 
-              {!remoteReady && (
+              {!thisDeviceOnly && !vaultActions.restore && (
                 <button
                   type="button"
                   onClick={beginRestore}
@@ -423,7 +482,7 @@ export function SetupWizard() {
               <button
                 type="button"
                 onClick={skipToLocalOnly}
-                disabled={remoteBlocked}
+                disabled={skipDisabled}
                 className="w-full py-3 px-4 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Skip — continue without a passphrase
@@ -458,6 +517,17 @@ export function SetupWizard() {
             <p className="text-xs text-gray-400 mt-4 text-center">
               You can always add a passphrase later in Settings.
             </p>
+            <button
+              type="button"
+              onClick={() => {
+                setThisDeviceOnly(false);
+                setStep('sync-choice');
+                setError(null);
+              }}
+              className="w-full text-sm text-gray-500 hover:text-gray-700 mt-3"
+            >
+              Back
+            </button>
           </div>
         )}
 
@@ -560,7 +630,7 @@ export function SetupWizard() {
             </button>
             <button
               type="button"
-              onClick={() => setStep('choice')}
+              onClick={() => setStep('sync-choice')}
               className="w-full text-sm text-gray-500 hover:text-gray-700"
             >
               Back

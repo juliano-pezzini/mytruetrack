@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { vaultActionsForProbe } from './storage-choice.ts';
+import { inferStorageChoice, vaultActionsForProbe } from './storage-choice.ts';
 import type { VaultMetadata } from './vault-metadata.ts';
 
 const readyMetadata: VaultMetadata = {
@@ -51,5 +51,43 @@ describe('vaultActionsForProbe', () => {
       restore: false,
       skip: false,
     });
+  });
+});
+
+const incomplete = { hasVault: false, skipped: false };
+
+describe('inferStorageChoice', () => {
+  it('returns an explicit storageChoice even when provider differs', () => {
+    expect(
+      inferStorageChoice(
+        { storageChoice: 'local-only', provider: 'google-drive' },
+        { hasVault: true, skipped: false },
+      ),
+    ).toBe('local-only');
+  });
+
+  it('infers google-drive from provider when storageChoice is missing', () => {
+    expect(inferStorageChoice({ provider: 'google-drive' }, incomplete)).toBe('google-drive');
+  });
+
+  it('infers webdav from provider when storageChoice is missing', () => {
+    expect(inferStorageChoice({ provider: 'webdav' }, incomplete)).toBe('webdav');
+  });
+
+  it('infers local-only when a vault exists and no provider is set', () => {
+    expect(inferStorageChoice({ provider: null }, { hasVault: true, skipped: false })).toBe(
+      'local-only',
+    );
+  });
+
+  it('infers local-only when encryption was skipped and no provider is set', () => {
+    expect(inferStorageChoice({ provider: null }, { hasVault: false, skipped: true })).toBe(
+      'local-only',
+    );
+  });
+
+  it('returns null during incomplete setup', () => {
+    expect(inferStorageChoice({ provider: null }, incomplete)).toBeNull();
+    expect(inferStorageChoice({ storageChoice: null, provider: null }, incomplete)).toBeNull();
   });
 });

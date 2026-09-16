@@ -31,3 +31,24 @@ export function vaultActionsForProbe(status: VaultActionProbe): VaultActions {
       return BLOCKED;
   }
 }
+
+export type InferStorageChoiceInput = {
+  readonly storageChoice?: StorageChoice | null;
+  readonly provider: 'google-drive' | 'webdav' | null;
+};
+
+export type InferStorageChoiceContext = {
+  readonly hasVault: boolean;
+  readonly skipped: boolean;
+};
+
+/** Resolve freeze for origins that predate `storageChoice` (SSF-12). */
+export function inferStorageChoice(
+  config: InferStorageChoiceInput,
+  ctx: InferStorageChoiceContext,
+): StorageChoice | null {
+  if (config.storageChoice) return config.storageChoice;
+  if (config.provider === 'google-drive' || config.provider === 'webdav') return config.provider;
+  if (ctx.hasVault || ctx.skipped) return 'local-only';
+  return null;
+}

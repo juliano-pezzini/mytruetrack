@@ -101,6 +101,8 @@ T11 → T12 → T13
 
 ### T2: Infer storage choice
 
+**Status**: ✅ Done
+
 **What**: `inferStorageChoice` for existing origins without a freeze field.
 **Where**: `src/sync/storage-choice.ts`
 **Depends on**: T1
@@ -114,11 +116,11 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] Explicit `storageChoice` wins
-- [ ] `provider` google-drive or webdav infers that choice
-- [ ] `hasVault` or `skipped` with null provider infers `local-only`
-- [ ] Incomplete setup (no vault, not skipped, no provider) infers `null`
-- [ ] Gate: quick unit tests pass
+- [x] Explicit `storageChoice` wins
+- [x] `provider` google-drive or webdav infers that choice
+- [x] `hasVault` or `skipped` with null provider infers `local-only`
+- [x] Incomplete setup (no vault, not skipped, no provider) infers `null`
+- [x] Gate: quick unit tests pass
 
 **Tests**: unit (`src/sync/storage-choice.test.ts` — extend)
 **Gate**: quick

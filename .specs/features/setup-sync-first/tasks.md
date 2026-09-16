@@ -399,6 +399,8 @@ T11 → T12 → T13
 
 ### T12: E2E skip path uses This device only
 
+**Status**: ✅ Done
+
 **What**: Update local-only setup specs so Skip is after This device only, not right after Welcome.
 **Where**: `e2e/setup-local-only.spec.ts`
 **Depends on**: T11
@@ -412,9 +414,9 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] Skip tests go Welcome → This device only → Skip
-- [ ] Create/Skip buttons are not the first screen after Get Started
-- [ ] Gate: full (`npm test && npm run test:e2e`)
+- [x] Skip tests go Welcome → This device only → Skip
+- [x] Create/Skip buttons are not the first screen after Get Started
+- [x] Gate: full (`npm test && npm run test:e2e`)
 
 **Tests**: e2e
 **Gate**: full

@@ -161,6 +161,8 @@ T11 → T12 → T13
 
 ### T4: Freeze and persist-inferred helpers
 
+**Status**: ✅ Done
+
 **What**: `freezeStorageChoice` and `persistInferredStorageChoice` writing the IDB config.
 **Where**: `src/sync/storage-choice.ts`
 **Depends on**: T3
@@ -174,10 +176,10 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] `freezeStorageChoice` sets `storageChoice` and keeps existing provider/tokens
-- [ ] `persistInferredStorageChoice` writes only when inferred is non-null and differs from stored
-- [ ] Does not freeze incomplete setup (`null`)
-- [ ] Gate: quick unit tests pass
+- [x] `freezeStorageChoice` sets `storageChoice` and keeps existing provider/tokens
+- [x] `persistInferredStorageChoice` writes only when inferred is non-null and differs from stored
+- [x] Does not freeze incomplete setup (`null`)
+- [x] Gate: quick unit tests pass
 
 **Tests**: unit (`src/sync/storage-choice.test.ts` — extend)
 **Gate**: quick

@@ -1,5 +1,12 @@
-import { describe, it, expect } from 'vitest';
-import { inferStorageChoice, vaultActionsForProbe } from './storage-choice.ts';
+import { describe, it, expect, beforeEach } from 'vitest';
+import 'fake-indexeddb/auto';
+import {
+  freezeStorageChoice,
+  inferStorageChoice,
+  persistInferredStorageChoice,
+  vaultActionsForProbe,
+} from './storage-choice.ts';
+import { clearSyncConfig, loadSyncConfig, saveSyncConfig } from './sync-config.ts';
 import type { VaultMetadata } from './vault-metadata.ts';
 
 const readyMetadata: VaultMetadata = {
@@ -89,5 +96,54 @@ describe('inferStorageChoice', () => {
   it('returns null during incomplete setup', () => {
     expect(inferStorageChoice({ provider: null }, incomplete)).toBeNull();
     expect(inferStorageChoice({ storageChoice: null, provider: null }, incomplete)).toBeNull();
+  });
+});
+
+describe('freezeStorageChoice', () => {
+  beforeEach(async () => {
+    await clearSyncConfig();
+  });
+
+  it('sets storageChoice and keeps existing provider tokens', async () => {
+    await saveSyncConfig({
+      provider: 'google-drive',
+      webdav: null,
+      google: { accessToken: 'tok', expiresAt: 1_700_000_000_000 },
+    });
+    await freezeStorageChoice('google-drive');
+    const loaded = await loadSyncConfig();
+    expect(loaded.storageChoice).toBe('google-drive');
+    expect(loaded.provider).toBe('google-drive');
+    expect(loaded.google).toEqual({ accessToken: 'tok', expiresAt: 1_700_000_000_000 });
+  });
+});
+
+describe('persistInferredStorageChoice', () => {
+  beforeEach(async () => {
+    await clearSyncConfig();
+  });
+
+  it('writes inferred local-only when a vault exists and nothing is stored', async () => {
+    const choice = await persistInferredStorageChoice({ hasVault: true, skipped: false });
+    expect(choice).toBe('local-only');
+    expect((await loadSyncConfig()).storageChoice).toBe('local-only');
+  });
+
+  it('does not rewrite when stored choice already matches', async () => {
+    await saveSyncConfig({
+      storageChoice: 'google-drive',
+      provider: 'google-drive',
+      webdav: null,
+      google: { accessToken: 'tok', expiresAt: 1 },
+    });
+    const choice = await persistInferredStorageChoice({ hasVault: true, skipped: false });
+    expect(choice).toBe('google-drive');
+    expect((await loadSyncConfig()).google).toEqual({ accessToken: 'tok', expiresAt: 1 });
+  });
+
+  it('does not freeze incomplete setup', async () => {
+    const choice = await persistInferredStorageChoice({ hasVault: false, skipped: false });
+    expect(choice).toBeNull();
+    expect((await loadSyncConfig()).storageChoice).toBeNull();
   });
 });

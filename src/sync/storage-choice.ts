@@ -3,6 +3,7 @@
  */
 
 import type { RemoteVaultStatus } from './vault-metadata.ts';
+import { loadSyncConfig, saveSyncConfig } from './sync-config.ts';
 
 export type StorageChoice = 'google-drive' | 'webdav' | 'local-only';
 
@@ -51,4 +52,25 @@ export function inferStorageChoice(
   if (config.provider === 'google-drive' || config.provider === 'webdav') return config.provider;
   if (ctx.hasVault || ctx.skipped) return 'local-only';
   return null;
+}
+
+/** Record the setup freeze without dropping provider tokens. */
+export async function freezeStorageChoice(choice: StorageChoice): Promise<void> {
+  const config = await loadSyncConfig();
+  await saveSyncConfig({ ...config, storageChoice: choice });
+}
+
+/**
+ * Write inferred freeze for existing origins. No-op when setup is incomplete
+ * or the stored choice already matches.
+ */
+export async function persistInferredStorageChoice(
+  ctx: InferStorageChoiceContext,
+): Promise<StorageChoice | null> {
+  const config = await loadSyncConfig();
+  const inferred = inferStorageChoice(config, ctx);
+  if (inferred === null) return null;
+  if (config.storageChoice === inferred) return inferred;
+  await saveSyncConfig({ ...config, storageChoice: inferred });
+  return inferred;
 }

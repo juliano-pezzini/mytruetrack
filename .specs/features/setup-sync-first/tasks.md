@@ -190,6 +190,8 @@ T11 → T12 → T13
 
 ### T5: Start fresh unfreezes storage
 
+**Status**: ✅ Done
+
 **What**: `startFreshVault` accepts `CloudProvider | null`, then clears keys, sync config, sync state, and `vault-skipped`.
 **Where**: `src/sync/sync-engine.ts`
 **Depends on**: T4
@@ -203,10 +205,10 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] `provider === null` skips remote delete and still clears local identity
-- [ ] Remote delete failure still leaves keys and sync config intact
-- [ ] Successful cloud start-fresh leaves empty provider list and `loadSyncConfig().storageChoice === null`
-- [ ] Gate: quick unit tests pass
+- [x] `provider === null` skips remote delete and still clears local identity
+- [x] Remote delete failure still leaves keys and sync config intact
+- [x] Successful cloud start-fresh leaves empty provider list and `loadSyncConfig().storageChoice === null`
+- [x] Gate: quick unit tests pass
 
 **Tests**: unit (`src/sync/sync-engine.test.ts` — extend)
 **Gate**: quick

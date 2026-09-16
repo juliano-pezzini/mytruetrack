@@ -22,6 +22,14 @@ import type { Database, SqlValue } from '../storage/database.ts';
 import type { CloudProvider } from './cloud-provider.ts';
 import { encrypt, decrypt, encodeBlob, decodeBlob } from '../crypto/encryption.ts';
 import { savePushState, savePullState, getSyncState, clearSyncState } from './sync-state.ts';
+import { loadKeyData } from '../crypto/key-store.ts';
+import {
+  upsertVaultMetadata,
+  deleteVaultMetadata,
+  downloadVaultMetadata,
+  type VaultDeviceEntry,
+} from './vault-metadata.ts';
+import { getDeviceLabel, detectBrowserId } from './device-identity.ts';
 
 const CHANGES_PREFIX = 'changes-';
 const CHANGES_SUFFIX = '.bin';
@@ -157,6 +165,27 @@ const SEGMENT_RE = /^changes-([0-9a-f]+)-(\d+)\.bin$/;
 
 type Segment = { readonly siteId: string; readonly version: number };
 
+/** Human-readable peer reference for sync error messages. */
+export function formatPeerSiteForError(
+  siteId: string,
+  devices: Readonly<Record<string, VaultDeviceEntry>>,
+): string {
+  const entry = devices[siteId];
+  if (entry?.label) return `${entry.label} (${siteId})`;
+  return `site ${siteId}`;
+}
+
+async function loadPeerDeviceRegistry(
+  provider: CloudProvider,
+): Promise<Readonly<Record<string, VaultDeviceEntry>>> {
+  try {
+    const metadata = await downloadVaultMetadata(provider);
+    return metadata.devices;
+  } catch {
+    return {};
+  }
+}
+
 function parseSegment(name: string): Segment | null {
   const match = SEGMENT_RE.exec(name);
   if (!match) return null;
@@ -177,17 +206,28 @@ export async function pushDeltas(
   const since = (await getSyncState()).lastPushedVersion;
   const current = await getDbVersion(db);
 
-  // Nothing new since the last push — don't write an empty segment.
-  if (current <= since) return;
-
-  const rows = await exportLocalChanges(db, since, current);
-  if (rows.length > 0) {
-    const plaintext = serializeChanges(rows);
-    const payload = dek ? encodeBlob(await encrypt(dek, plaintext)) : plaintext;
-    await provider.upload(segmentFilename(siteId, current), payload);
+  if (current > since) {
+    const rows = await exportLocalChanges(db, since, current);
+    if (rows.length > 0) {
+      const plaintext = serializeChanges(rows);
+      const payload = dek ? encodeBlob(await encrypt(dek, plaintext)) : plaintext;
+      await provider.upload(segmentFilename(siteId, current), payload);
+    }
+    // Advance the watermark even if the filtered range was empty, so we never re-scan it.
+    await savePushState(current);
   }
-  // Advance the watermark even if the filtered range was empty, so we never re-scan it.
-  await savePushState(current);
+
+  if (dek !== null) {
+    const keyData = await loadKeyData();
+    if (!keyData) {
+      throw new Error(
+        'Encrypted push requires local key data to upsert vault metadata. Unlock the vault and try again.',
+      );
+    }
+    const label = await getDeviceLabel();
+    const browser = detectBrowserId();
+    await upsertVaultMetadata(provider, { siteId, keyData, label, browser });
+  }
 }
 
 /**
@@ -209,6 +249,8 @@ export async function pullDeltas(
     .filter((seg) => seg.version > (applied[seg.siteId] ?? 0))
     .sort((a, b) => a.version - b.version);
 
+  const peerDevices = dek ? await loadPeerDeviceRegistry(provider) : {};
+
   let appliedAny = false;
   for (const seg of segments) {
     const filename = segmentFilename(seg.siteId, seg.version);
@@ -225,13 +267,16 @@ export async function pullDeltas(
           throw new Error(
             `Cannot decrypt ${filename}: remote segment looks unencrypted, but this vault ` +
               `expects encrypted sync data. Clear cloud sync data in Settings, then push again.`,
+            { cause: err },
           );
         }
         const detail = err instanceof Error ? err.message : String(err);
+        const peerRef = formatPeerSiteForError(seg.siteId, peerDevices);
         throw new Error(
-          `Cannot decrypt ${filename} (peer site ${seg.siteId}): ${detail}. ` +
+          `Cannot decrypt ${filename} (peer ${peerRef}): ${detail}. ` +
             `Leftover sync files from a previous vault or database often cause this. ` +
             `Clear cloud sync data in Settings, then push from this device.`,
+          { cause: err },
         );
       }
     } else {
@@ -276,6 +321,9 @@ export async function clearRemoteChangeSegments(provider: CloudProvider): Promis
   for (const file of files) {
     if (!parseSegment(file.name)) continue;
     await provider.delete(file.name);
+    deleted += 1;
+  }
+  if (await deleteVaultMetadata(provider)) {
     deleted += 1;
   }
   await clearSyncState();

@@ -427,6 +427,8 @@ T11 → T12 → T13
 
 ### T13: E2E passphrase path uses This device only
 
+**Status**: ✅ Done
+
 **What**: Update passphrase setup specs to choose This device only before Create a passphrase.
 **Where**: `e2e/setup-passphrase.spec.ts`
 **Depends on**: T12
@@ -440,8 +442,8 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] All three passphrase tests click This device only before Create a passphrase
-- [ ] Gate: full
+- [x] All three passphrase tests click This device only before Create a passphrase
+- [x] Gate: full
 
 **Tests**: e2e
 **Gate**: full

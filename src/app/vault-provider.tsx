@@ -2,6 +2,7 @@ import { createContext, useCallback, useEffect, useState, type ReactNode } from 
 import { hasKeyData, clearKeyData } from '../crypto/key-store.ts';
 import { clearSyncConfig } from '../sync/sync-config.ts';
 import { clearSyncState } from '../sync/sync-state.ts';
+import { persistInferredStorageChoice } from '../sync/storage-choice.ts';
 
 const VAULT_SKIPPED_KEY = 'vault-skipped';
 
@@ -55,6 +56,15 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (status !== 'ready') return;
+    const skipped = localStorage.getItem(VAULT_SKIPPED_KEY) === 'true';
+    void persistInferredStorageChoice({
+      hasVault: dek !== null,
+      skipped,
+    });
+  }, [status, dek]);
 
   const unlock = useCallback((key: CryptoKey) => {
     setDek(key);

@@ -15,6 +15,9 @@ vi.mock('../sync/sync-config.ts', () => ({
 vi.mock('../sync/sync-state.ts', () => ({
   clearSyncState: vi.fn().mockResolvedValue(undefined),
 }));
+vi.mock('../sync/storage-choice.ts', () => ({
+  persistInferredStorageChoice: vi.fn().mockResolvedValue(null),
+}));
 
 import { VaultProvider } from './vault-provider.tsx';
 import { useVault } from '../ui/hooks/useVault.ts';

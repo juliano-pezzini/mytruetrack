@@ -342,6 +342,8 @@ T11 → T12 → T13
 
 ### T10: Persist inferred choice when vault is ready
 
+**Status**: ✅ Done
+
 **What**: When the app is already set up (has vault or skipped), call `persistInferredStorageChoice` so pre-feature origins get a freeze without opening Settings.
 **Where**: `src/app/vault-provider.tsx`
 **Depends on**: T9
@@ -355,9 +357,9 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] Ready vault (unlock or skip) persists inferred `storageChoice` once
-- [ ] Incomplete setup (`needs-setup`) does not freeze
-- [ ] Gate: build
+- [x] Ready vault (unlock or skip) persists inferred `storageChoice` once
+- [x] Incomplete setup (`needs-setup`) does not freeze
+- [x] Gate: build
 
 **Tests**: none
 **Gate**: build

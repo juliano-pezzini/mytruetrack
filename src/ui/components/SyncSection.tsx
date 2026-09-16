@@ -303,7 +303,9 @@ export function SyncSection() {
     try {
       await setDeviceLabel(deviceLabel);
       setDeviceLabelState(await getDeviceLabel());
-      setStatus('Device name saved. It will appear in the cloud registry on the next encrypted push.');
+      setStatus(
+        'Device name saved. It will appear in the cloud registry on the next encrypted push.',
+      );
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not save device name.');
     } finally {
@@ -641,8 +643,7 @@ export function SyncSection() {
                 {knownDevices.map(({ siteId, entry }) => (
                   <li key={siteId} className="flex justify-between gap-2">
                     <span>
-                      {entry.label}{' '}
-                      <span className="text-gray-400">({entry.browser})</span>
+                      {entry.label} <span className="text-gray-400">({entry.browser})</span>
                     </span>
                     <span className="text-xs text-gray-500 shrink-0">
                       {new Date(entry.lastSeenAt).toLocaleString()}

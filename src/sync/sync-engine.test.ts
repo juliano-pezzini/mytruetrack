@@ -2,11 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import 'fake-indexeddb/auto';
 import { initDatabase } from '../storage/init.ts';
 import type { Database, Row, SqlValue } from '../storage/database.ts';
-import {
-  exportDatabaseSnapshot,
-  importDatabaseSnapshot,
-  startFreshVault,
-} from './sync-engine.ts';
+import { exportDatabaseSnapshot, importDatabaseSnapshot, startFreshVault } from './sync-engine.ts';
 import { createMockCloudProvider } from './mock-cloud-provider.ts';
 import { pushDeltas } from './crsql-changes.ts';
 import { generateDek, generateSalt } from '../crypto/key-derivation.ts';
@@ -36,9 +32,7 @@ describe('startFreshVault', () => {
         if (sql.includes('crsql_site_id')) return [[siteId]];
         if (sql.includes('crsql_db_version')) return [[1]];
         if (sql.includes('FROM crsql_changes')) {
-          return [
-            ['accounts', new Uint8Array([1]), 0, 'x', 1n, 1n, new Uint8Array([1]), 0, 1n],
-          ];
+          return [['accounts', new Uint8Array([1]), 0, 'x', 1n, 1n, new Uint8Array([1]), 0, 1n]];
         }
         return [];
       },

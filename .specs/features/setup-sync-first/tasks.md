@@ -311,6 +311,8 @@ T11 → T12 → T13
 
 ### T9: Frozen provider Settings UI
 
+**Status**: ✅ Done
+
 **What**: Remove provider radios. Render from `storageChoice`. Google Reconnect/token-only Disconnect. WebDAV endpoint/folder read-only; credentials retry. Local-only: no Connect, no Push/Pull/Clear; Start fresh remains and uses `startFreshVault` + `setup-after-fresh=sync`.
 **Where**: `src/ui/components/SyncSection.tsx`
 **Depends on**: T5
@@ -324,12 +326,12 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] No `none` / WebDAV / Drive radio group
-- [ ] First-time Connect is impossible when `storageChoice` is `local-only`
-- [ ] WebDAV Save cannot change endpoint or folder
-- [ ] Google Disconnect leaves `provider: 'google-drive'`
-- [ ] Start fresh sets `setup-after-fresh=sync` and works with `provider | null`
-- [ ] Gate: build
+- [x] No `none` / WebDAV / Drive radio group
+- [x] First-time Connect is impossible when `storageChoice` is `local-only`
+- [x] WebDAV Save cannot change endpoint or folder
+- [x] Google Disconnect leaves `provider: 'google-drive'`
+- [x] Start fresh sets `setup-after-fresh=sync` and works with `provider | null`
+- [x] Gate: build
 
 **Tests**: none
 **Gate**: build

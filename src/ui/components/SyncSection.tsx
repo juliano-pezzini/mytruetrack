@@ -7,6 +7,7 @@ import {
   type SyncConfig,
   type SyncProviderType,
 } from '../../sync/sync-config.ts';
+import { inferStorageChoice, type StorageChoice } from '../../sync/storage-choice.ts';
 import { createWebDavProvider, type WebDavConfig } from '../../sync/providers/webdav-provider.ts';
 import {
   createGoogleDriveProvider,
@@ -38,10 +39,20 @@ const DEFAULT_WEBDAV: WebDavConfig = {
   password: '',
 };
 
+function googleDriveConfig(tokens: GoogleTokens | null): SyncConfig {
+  return {
+    storageChoice: 'google-drive',
+    provider: 'google-drive',
+    webdav: null,
+    google: tokens,
+  };
+}
+
 export function SyncSection() {
   const db = useDatabase();
   const { dek, reset } = useVault();
   const [provider, setProvider] = useState<SyncProviderType>(null);
+  const [storageChoice, setStorageChoice] = useState<StorageChoice | null>(null);
   const [webdav, setWebdav] = useState<WebDavConfig>(DEFAULT_WEBDAV);
   const [googleTokens, setGoogleTokens] = useState<GoogleTokens | null>(null);
   const [syncState, setSyncState] = useState<SyncState | null>(null);
@@ -61,6 +72,11 @@ export function SyncSection() {
   useEffect(() => {
     async function load() {
       const config = await loadSyncConfig();
+      const inferred = inferStorageChoice(
+        { storageChoice: config.storageChoice, provider: config.provider },
+        { hasVault: dek !== null, skipped: dek === null },
+      );
+      setStorageChoice(inferred);
       setProvider(config.provider);
       if (config.webdav) setWebdav(config.webdav);
       setGoogleTokens(config.google);
@@ -81,12 +97,22 @@ export function SyncSection() {
   }, [provider, webdav, googleTokens, dek]);
 
   async function doSave() {
+    const current = await loadSyncConfig();
+    const frozen = current.webdav ?? webdav;
+    const savedWebdav: WebDavConfig = {
+      endpoint: frozen.endpoint,
+      syncFolder: frozen.syncFolder,
+      username: webdav.username,
+      password: webdav.password,
+    };
     const config: SyncConfig = {
-      provider,
-      webdav: provider === 'webdav' ? webdav : null,
-      google: googleTokens,
+      storageChoice: current.storageChoice ?? 'webdav',
+      provider: 'webdav',
+      webdav: savedWebdav,
+      google: null,
     };
     await saveSyncConfig(config);
+    setWebdav(savedWebdav);
     setStatus('Configuration saved.');
     setShowUnencryptedWarning(false);
     setPendingAction(null);
@@ -112,7 +138,7 @@ export function SyncSection() {
     try {
       const tokens = await connectGoogleDrive();
       setGoogleTokens(tokens);
-      await saveSyncConfig({ provider: 'google-drive', webdav: null, google: tokens });
+      await saveSyncConfig(googleDriveConfig(tokens));
       setProvider('google-drive');
       setStatus('Connected to Google Drive.');
     } catch (err) {
@@ -134,7 +160,7 @@ export function SyncSection() {
       }
     }
     setGoogleTokens(null);
-    await saveSyncConfig({ provider: 'google-drive', webdav: null, google: null });
+    await saveSyncConfig(googleDriveConfig(null));
     setStatus('Disconnected from Google Drive.');
   }
 
@@ -252,14 +278,14 @@ export function SyncSection() {
       if (resolved.kind === 'reconnect') {
         // Silent re-request failed — session expired, need interactive reconnect.
         setGoogleTokens(null);
-        await saveSyncConfig({ provider: 'google-drive', webdav: null, google: null });
+        await saveSyncConfig(googleDriveConfig(null));
         setStatus('Google session expired. Please reconnect.');
         return null;
       }
       if (resolved.kind === 'none') return null;
       if (resolved.config.google && resolved.config.google !== googleTokens) {
         setGoogleTokens(resolved.config.google);
-        await saveSyncConfig(resolved.config);
+        await saveSyncConfig({ ...resolved.config, storageChoice: 'google-drive' });
       }
       return resolved.provider;
     }
@@ -320,16 +346,16 @@ export function SyncSection() {
       const refreshed = await forceRefreshGoogleTokens();
       if (!refreshed) {
         setGoogleTokens(null);
-        await saveSyncConfig({ provider: 'google-drive', webdav: null, google: null });
+        await saveSyncConfig(googleDriveConfig(null));
         setStatus('Google session expired. Please reconnect.');
         return null;
       }
       setGoogleTokens(refreshed);
-      await saveSyncConfig({ provider: 'google-drive', webdav: null, google: refreshed });
+      await saveSyncConfig(googleDriveConfig(refreshed));
       return createGoogleDriveProvider(refreshed.accessToken);
     } catch {
       setGoogleTokens(null);
-      await saveSyncConfig({ provider: 'google-drive', webdav: null, google: null });
+      await saveSyncConfig(googleDriveConfig(null));
       setStatus('Google session expired. Please reconnect.');
       return null;
     }
@@ -351,13 +377,15 @@ export function SyncSection() {
     setStatus(null);
     setShowStartFreshConfirm(false);
     try {
-      const cloudProvider = await getActiveProvider();
-      if (!cloudProvider) {
-        setStatus((prev) => prev ?? 'Connect a cloud provider before starting fresh.');
+      const cloudProvider = storageChoice === 'local-only' ? null : await getActiveProvider();
+      if (storageChoice !== 'local-only' && !cloudProvider) {
+        setStatus(
+          (prev) => prev ?? 'Reconnect before starting fresh so cloud files can be cleared.',
+        );
         return;
       }
       await startFreshVault(cloudProvider);
-      sessionStorage.setItem('setup-after-fresh', 'create');
+      sessionStorage.setItem('setup-after-fresh', 'sync');
       await reset();
     } catch (err) {
       if (err instanceof DriveAuthError) {
@@ -365,7 +393,7 @@ export function SyncSection() {
         if (retryProvider) {
           try {
             await startFreshVault(retryProvider);
-            sessionStorage.setItem('setup-after-fresh', 'create');
+            sessionStorage.setItem('setup-after-fresh', 'sync');
             await reset();
             return;
           } catch (retryErr) {
@@ -428,36 +456,27 @@ export function SyncSection() {
     }
   }
 
+  const isCloudChoice = storageChoice === 'google-drive' || storageChoice === 'webdav';
+
   return (
     <div className="space-y-6">
-      {/* Provider selector */}
+      {/* Frozen storage choice */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Cloud Provider</label>
-        <div className="space-y-2">
-          {(
-            [
-              ['none', 'None — local only'],
-              ['webdav', 'WebDAV (Nextcloud, ownCloud, etc.)'],
-              ['google-drive', 'Google Drive'],
-            ] as const
-          ).map(([value, label]) => (
-            <label key={value} className="flex items-center gap-2 text-sm cursor-pointer">
-              <input
-                type="radio"
-                name="sync-provider"
-                value={value}
-                checked={provider === (value === 'none' ? null : value)}
-                onChange={() => setProvider(value === 'none' ? null : (value as SyncProviderType))}
-                className="text-blue-600"
-              />
-              {label}
-            </label>
-          ))}
-        </div>
+        <p className="block text-sm font-medium text-gray-700 mb-1">Cloud storage</p>
+        <p className="text-sm text-gray-900">
+          {storageChoice === 'google-drive'
+            ? 'Google Drive'
+            : storageChoice === 'webdav'
+              ? 'WebDAV'
+              : 'This device only'}
+        </p>
+        <p className="text-xs text-gray-500 mt-1">
+          Chosen during setup. Start a fresh vault to pick a different option.
+        </p>
       </div>
 
-      {/* WebDAV config */}
-      {provider === 'webdav' && (
+      {/* WebDAV credentials for the frozen endpoint */}
+      {storageChoice === 'webdav' && (
         <div className="bg-gray-50 rounded-lg p-4 space-y-3">
           <div>
             <label
@@ -470,9 +489,8 @@ export function SyncSection() {
               id="webdav-endpoint"
               type="url"
               value={webdav.endpoint}
-              onChange={(e) => setWebdav({ ...webdav, endpoint: e.target.value })}
-              placeholder="https://cloud.example.com/remote.php/dav/files/user/"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              readOnly
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-700"
             />
           </div>
           <div>
@@ -483,9 +501,8 @@ export function SyncSection() {
               id="webdav-folder"
               type="text"
               value={webdav.syncFolder}
-              onChange={(e) => setWebdav({ ...webdav, syncFolder: e.target.value })}
-              placeholder="mytruetrack/"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              readOnly
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-700"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -545,8 +562,8 @@ export function SyncSection() {
         </div>
       )}
 
-      {/* Google Drive */}
-      {provider === 'google-drive' && (
+      {/* Google Drive token reconnect */}
+      {storageChoice === 'google-drive' && (
         <div className="bg-gray-50 rounded-lg p-4 space-y-3">
           {!isGoogleConfigured() ? (
             <p className="text-sm text-gray-600">
@@ -572,7 +589,7 @@ export function SyncSection() {
               disabled={loading}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
-              {loading ? 'Connecting…' : 'Connect with Google'}
+              {loading ? 'Connecting…' : 'Reconnect'}
             </button>
           )}
         </div>
@@ -606,7 +623,7 @@ export function SyncSection() {
         </div>
       )}
 
-      {provider && (
+      {isCloudChoice && (
         <div className="bg-gray-50 rounded-lg p-4 space-y-4">
           <div>
             <label htmlFor="device-label" className="block text-xs font-medium text-gray-600 mb-1">
@@ -657,7 +674,7 @@ export function SyncSection() {
       )}
 
       {/* Sync controls */}
-      {provider && (
+      {isCloudChoice && (
         <div className="space-y-3">
           <div className="flex gap-2 flex-wrap">
             <button
@@ -684,44 +701,7 @@ export function SyncSection() {
             >
               Clear cloud sync data
             </button>
-            <button
-              type="button"
-              onClick={() => setShowStartFreshConfirm(true)}
-              disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-red-800 bg-white border border-red-300 rounded-lg hover:bg-red-50 disabled:opacity-50"
-            >
-              Start fresh vault
-            </button>
           </div>
-
-          {showStartFreshConfirm && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
-              <p className="text-sm font-medium text-red-800">Start a fresh vault?</p>
-              <p className="text-sm text-red-700">
-                Clears remote sync files and vault metadata, removes your local passphrase, and
-                opens setup to create a new vault. Other devices still have the old vault until you
-                restore or start fresh there too. This cannot be undone without your recovery sheet.
-              </p>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => void handleStartFreshVault()}
-                  disabled={loading}
-                  className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
-                >
-                  {loading ? 'Starting…' : 'Yes, start fresh vault'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowStartFreshConfirm(false)}
-                  disabled={loading}
-                  className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
 
           {showClearConfirm && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
@@ -758,6 +738,47 @@ export function SyncSection() {
             <div className="text-xs text-gray-500 space-y-0.5">
               <p>Last pushed: {syncState.lastPushedAt ?? 'Never'}</p>
               <p>Last pulled: {syncState.lastPulledAt ?? 'Never'}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {storageChoice && (
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={() => setShowStartFreshConfirm(true)}
+            disabled={loading}
+            className="px-4 py-2 text-sm font-medium text-red-800 bg-white border border-red-300 rounded-lg hover:bg-red-50 disabled:opacity-50"
+          >
+            Start fresh vault
+          </button>
+          {showStartFreshConfirm && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
+              <p className="text-sm font-medium text-red-800">Start a fresh vault?</p>
+              <p className="text-sm text-red-700">
+                {storageChoice === 'local-only'
+                  ? 'Removes your local passphrase and opens setup to choose cloud sync again. This cannot be undone without your recovery sheet.'
+                  : 'Clears remote sync files and vault metadata, removes your local passphrase, and opens setup to choose cloud sync again. Other devices still have the old vault until you restore or start fresh there too. This cannot be undone without your recovery sheet.'}
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => void handleStartFreshVault()}
+                  disabled={loading}
+                  className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                >
+                  {loading ? 'Starting…' : 'Yes, start fresh vault'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowStartFreshConfirm(false)}
+                  disabled={loading}
+                  className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           )}
         </div>

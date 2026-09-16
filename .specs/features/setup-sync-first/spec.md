@@ -158,11 +158,11 @@ Setup today lets a user create a passphrase (a new DEK) before any cloud provide
 | SSF-09 | P1: Probe still blocks Create on existing cloud history | Tasks | In Tasks |
 | SSF-10 | P1: Probe still blocks Create on existing cloud history | Tasks | In Tasks |
 | SSF-11 | P1: Probe still blocks Create on existing cloud history | Tasks | Implementing |
-| SSF-12 | P1: Frozen provider in Settings | Tasks | In Tasks |
-| SSF-13 | P1: Frozen provider in Settings | Tasks | In Tasks |
-| SSF-14 | P1: Frozen provider in Settings | Tasks | In Tasks |
-| SSF-15 | P1: Frozen provider in Settings | Tasks | In Tasks |
-| SSF-16 | P1: Frozen provider in Settings | Tasks | In Tasks |
+| SSF-12 | P1: Frozen provider in Settings | Tasks | Implementing |
+| SSF-13 | P1: Frozen provider in Settings | Tasks | Implementing |
+| SSF-14 | P1: Frozen provider in Settings | Tasks | Implementing |
+| SSF-15 | P1: Frozen provider in Settings | Tasks | Implementing |
+| SSF-16 | P1: Frozen provider in Settings | Tasks | Implementing |
 | SSF-17 | P1: Start fresh returns to sync-first setup | Tasks | Implementing |
 | SSF-18 | P1: Start fresh returns to sync-first setup | Tasks | Implementing |
 | SSF-19 | P1: Start fresh returns to sync-first setup | Tasks | Implementing |

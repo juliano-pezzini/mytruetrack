@@ -305,9 +305,7 @@ describe('pushDeltas / pullDeltas', () => {
     );
 
     const self = createFakeDb('aa', [], 1);
-    await expect(pullDeltas(self.db, provider, dek)).rejects.toThrow(
-      /peer Phone \(bb\)/,
-    );
+    await expect(pullDeltas(self.db, provider, dek)).rejects.toThrow(/peer Phone \(bb\)/);
   });
 
   it('formatPeerSiteForError falls back to site id when label unknown', () => {

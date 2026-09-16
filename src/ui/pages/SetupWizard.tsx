@@ -17,7 +17,11 @@ import { createWebDavProvider, type WebDavConfig } from '../../sync/providers/we
 import { connectGoogleDrive, isGoogleConfigured } from '../../sync/providers/google-auth-flow.ts';
 import { resolveActiveProvider } from '../../sync/active-provider.ts';
 import type { CloudProvider } from '../../sync/cloud-provider.ts';
-import { probeRemoteVault, restoreVaultFromRemote, type RemoteVaultStatus } from '../../sync/vault-metadata.ts';
+import {
+  probeRemoteVault,
+  restoreVaultFromRemote,
+  type RemoteVaultStatus,
+} from '../../sync/vault-metadata.ts';
 import { clearCloudSyncData, startFreshVault } from '../../sync/sync-engine.ts';
 
 type Step =
@@ -316,14 +320,10 @@ export function SetupWizard() {
   const hasConfiguredProvider = Boolean(syncConfig?.provider);
   const remoteReady = remoteStatus?.kind === 'ready';
   const remoteBlocked =
-    remoteStatus?.kind === 'legacy' ||
-    remoteStatus?.kind === 'corrupt' ||
-    remoteReady;
+    remoteStatus?.kind === 'legacy' || remoteStatus?.kind === 'corrupt' || remoteReady;
   const createDisabled = remoteBlocked || probeLoading;
   const restoreDisabled =
-    remoteStatus?.kind === 'legacy' ||
-    remoteStatus?.kind === 'corrupt' ||
-    probeLoading;
+    remoteStatus?.kind === 'legacy' || remoteStatus?.kind === 'corrupt' || probeLoading;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -352,9 +352,7 @@ export function SetupWizard() {
               unencrypted — even in the cloud.
             </p>
 
-            {probeLoading && (
-              <p className="text-sm text-gray-500 mb-4">Checking cloud vault…</p>
-            )}
+            {probeLoading && <p className="text-sm text-gray-500 mb-4">Checking cloud vault…</p>}
             {probeError && (
               <p className="text-sm text-amber-700 mb-4">
                 Could not check cloud: {probeError}. You can still create a new local vault.
@@ -364,8 +362,8 @@ export function SetupWizard() {
             {remoteReady && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
                 <p className="text-sm text-blue-800">
-                  An encrypted vault already exists in your cloud sync folder. Restore it with
-                  your passphrase — creating a new vault here would desync your devices.
+                  An encrypted vault already exists in your cloud sync folder. Restore it with your
+                  passphrase — creating a new vault here would desync your devices.
                 </p>
               </div>
             )}
@@ -374,9 +372,9 @@ export function SetupWizard() {
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
                 <p className="text-sm text-amber-800">
                   Found {remoteStatus.segmentCount} sync file
-                  {remoteStatus.segmentCount === 1 ? '' : 's'} but no vault metadata — likely
-                  from an older app version. Clear cloud sync data or start fresh before setting
-                  up this device.
+                  {remoteStatus.segmentCount === 1 ? '' : 's'} but no vault metadata — likely from
+                  an older app version. Clear cloud sync data or start fresh before setting up this
+                  device.
                 </p>
               </div>
             )}
@@ -384,8 +382,8 @@ export function SetupWizard() {
             {remoteStatus?.kind === 'corrupt' && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
                 <p className="text-sm text-red-800">
-                  Cloud vault metadata is unreadable ({remoteStatus.reason}). Clear cloud sync
-                  data or start fresh to continue.
+                  Cloud vault metadata is unreadable ({remoteStatus.reason}). Clear cloud sync data
+                  or start fresh to continue.
                 </p>
               </div>
             )}

@@ -131,6 +131,8 @@ T11 → T12 → T13
 
 ### T3: Persist storageChoice on SyncConfig
 
+**Status**: ✅ Done
+
 **What**: Add `storageChoice` to the sync-config record; round-trip and treat missing field as `null`.
 **Where**: `src/sync/sync-config.ts`
 **Depends on**: T2
@@ -144,11 +146,11 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] `SyncConfig.storageChoice` is `StorageChoice | null`; default `null`
-- [ ] Load of pre-feature records (no field) returns `storageChoice: null`
-- [ ] Save/load round-trips `local-only` and `google-drive`
-- [ ] Existing `sync-config.test.ts` cases still pass (add `storageChoice: null` where needed)
-- [ ] Gate: quick unit tests pass
+- [x] `SyncConfig.storageChoice` is `StorageChoice | null`; default `null`
+- [x] Load of pre-feature records (no field) returns `storageChoice: null`
+- [x] Save/load round-trips `local-only` and `google-drive`
+- [x] Existing `sync-config.test.ts` cases still pass (add `storageChoice: null` where needed)
+- [x] Gate: quick unit tests pass
 
 **Tests**: unit (`src/sync/sync-config.test.ts` — extend)
 **Gate**: quick

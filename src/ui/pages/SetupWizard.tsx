@@ -23,7 +23,7 @@ import {
   type RemoteVaultStatus,
 } from '../../sync/vault-metadata.ts';
 import { clearCloudSyncData, startFreshVault } from '../../sync/sync-engine.ts';
-import { vaultActionsForProbe } from '../../sync/storage-choice.ts';
+import { freezeStorageChoice, vaultActionsForProbe } from '../../sync/storage-choice.ts';
 
 type Step =
   | 'welcome'
@@ -65,6 +65,8 @@ export function SetupWizard() {
   const [googleTokens, setGoogleTokens] = useState<GoogleTokens | null>(null);
   const [restorePassphrase, setRestorePassphrase] = useState('');
   const [thisDeviceOnly, setThisDeviceOnly] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showStartFreshConfirm, setShowStartFreshConfirm] = useState(false);
 
   const resolveCloudProvider = useCallback(async (): Promise<CloudProvider | null> => {
     const config = syncConfig ?? (await loadSyncConfig());
@@ -111,9 +113,9 @@ export function SetupWizard() {
   }, [resolveCloudProvider]);
 
   useEffect(() => {
-    if (sessionStorage.getItem('setup-after-fresh') === 'create') {
+    if (sessionStorage.getItem('setup-after-fresh') === 'sync') {
       sessionStorage.removeItem('setup-after-fresh');
-      setStep('passphrase');
+      setStep('sync-choice');
     }
   }, []);
 
@@ -249,6 +251,7 @@ export function SetupWizard() {
         return;
       }
       const restoredDek = await restoreVaultFromRemote(cloudProvider, restorePassphrase);
+      await freezeCompletedSetup();
       unlock(restoredDek);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Restore failed.');
@@ -260,6 +263,7 @@ export function SetupWizard() {
   async function handleClearCloudFromSetup() {
     setLoading(true);
     setError(null);
+    setShowClearConfirm(false);
     try {
       const cloudProvider = await resolveCloudProvider();
       if (!cloudProvider) {
@@ -278,6 +282,7 @@ export function SetupWizard() {
   async function handleStartFreshFromSetup() {
     setLoading(true);
     setError(null);
+    setShowStartFreshConfirm(false);
     try {
       const cloudProvider = await resolveCloudProvider();
       if (!cloudProvider) {
@@ -285,9 +290,41 @@ export function SetupWizard() {
         return;
       }
       await startFreshVault(cloudProvider);
-      await runProbe();
+      setThisDeviceOnly(false);
+      setRemoteStatus(null);
+      setProbeError(null);
+      setGoogleTokens(null);
+      setWebdav(DEFAULT_WEBDAV);
+      setSyncConfig({ provider: null, webdav: null, google: null, storageChoice: null });
+      setStep('sync-choice');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start fresh.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function freezeCompletedSetup() {
+    if (thisDeviceOnly) {
+      await freezeStorageChoice('local-only');
+      return;
+    }
+    const config = syncConfig ?? (await loadSyncConfig());
+    if (config.provider === 'google-drive' || config.provider === 'webdav') {
+      await freezeStorageChoice(config.provider);
+      return;
+    }
+    await freezeStorageChoice('local-only');
+  }
+
+  async function handleSkip() {
+    setError(null);
+    setLoading(true);
+    try {
+      await freezeCompletedSetup();
+      skipToLocalOnly();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to skip encryption.');
     } finally {
       setLoading(false);
     }
@@ -312,6 +349,7 @@ export function SetupWizard() {
       const newDek = await generateDek();
       const wrappedDek = await wrapDek(newDek, kek);
       await saveKeyData({ wrappedDek, salt, iterations: 600_000 });
+      await freezeCompletedSetup();
 
       setDek(newDek);
 
@@ -520,34 +558,105 @@ export function SetupWizard() {
 
               <button
                 type="button"
-                onClick={skipToLocalOnly}
-                disabled={skipDisabled}
+                onClick={() => void handleSkip()}
+                disabled={skipDisabled || loading}
                 className="w-full py-3 px-4 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Skip — continue without a passphrase
               </button>
             </div>
 
-            {(remoteStatus?.kind === 'legacy' || remoteStatus?.kind === 'corrupt') &&
+            {(remoteStatus?.kind === 'legacy' ||
+              remoteStatus?.kind === 'corrupt' ||
+              remoteStatus?.kind === 'ready') &&
               hasConfiguredProvider && (
                 <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
                   <p className="text-xs text-gray-500">Fix cloud state:</p>
                   <button
                     type="button"
-                    onClick={() => void handleClearCloudFromSetup()}
+                    onClick={() => {
+                      setShowStartFreshConfirm(false);
+                      setShowClearConfirm(true);
+                    }}
                     disabled={loading}
                     className="w-full py-2 px-3 text-sm font-medium text-red-700 bg-white border border-red-200 rounded-lg hover:bg-red-50 disabled:opacity-50"
                   >
-                    {loading ? 'Working…' : 'Clear cloud sync data'}
+                    Clear cloud sync data
                   </button>
                   <button
                     type="button"
-                    onClick={() => void handleStartFreshFromSetup()}
+                    onClick={() => {
+                      setShowClearConfirm(false);
+                      setShowStartFreshConfirm(true);
+                    }}
                     disabled={loading}
                     className="w-full py-2 px-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
                   >
                     Start fresh vault (clears cloud + local keys)
                   </button>
+
+                  {showStartFreshConfirm && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
+                      <p className="text-sm font-medium text-red-800">Start a fresh vault?</p>
+                      <p className="text-sm text-red-700">
+                        Clears remote sync files and vault metadata, removes your local passphrase,
+                        and opens setup to choose cloud sync again. Other devices still have the old
+                        vault until you restore or start fresh there too. This cannot be undone
+                        without your recovery sheet.
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => void handleStartFreshFromSetup()}
+                          disabled={loading}
+                          className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                        >
+                          {loading ? 'Starting…' : 'Yes, start fresh vault'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowStartFreshConfirm(false)}
+                          disabled={loading}
+                          className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {showClearConfirm && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
+                      <p className="text-sm font-medium text-red-800">Clear remote sync files?</p>
+                      <p className="text-sm text-red-700">
+                        Deletes all <code className="px-1 bg-red-100 rounded">changes-*.bin</code>{' '}
+                        files, cloud{' '}
+                        <code className="px-1 bg-red-100 rounded">vault-metadata.json</code>, and
+                        resets local sync history (push/pull watermarks). Use this when pull fails
+                        because of leftover files from a previous vault or database. Your local data
+                        and passphrase are kept — push again afterward to re-upload from this
+                        device.
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => void handleClearCloudFromSetup()}
+                          disabled={loading}
+                          className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                        >
+                          {loading ? 'Clearing…' : 'Yes, clear remote sync data'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowClearConfirm(false)}
+                          disabled={loading}
+                          className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

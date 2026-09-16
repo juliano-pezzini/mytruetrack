@@ -279,6 +279,8 @@ T11 → T12 → T13
 
 ### T8: Freeze on complete; confirm Clear/Start fresh; land on sync-choice
 
+**Status**: ✅ Done
+
 **What**: Freeze `storageChoice` on Create, Restore, and Skip success. Setup Clear/Start fresh use Settings-style confirm. `setup-after-fresh=sync` opens `sync-choice`. Start fresh calls `startFreshVault`.
 **Where**: `src/ui/pages/SetupWizard.tsx`
 **Depends on**: T7
@@ -292,11 +294,11 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] Create / Restore / Skip call `freezeStorageChoice` with the matching choice
-- [ ] Clear and Start fresh require a second confirm; cancel leaves remote data
-- [ ] After confirmed Start fresh, step is `sync-choice` (not passphrase)
-- [ ] `setup-after-fresh === 'sync'` skips Welcome into `sync-choice`; `'create'` is gone
-- [ ] Gate: build
+- [x] Create / Restore / Skip call `freezeStorageChoice` with the matching choice
+- [x] Clear and Start fresh require a second confirm; cancel leaves remote data
+- [x] After confirmed Start fresh, step is `sync-choice` (not passphrase)
+- [x] `setup-after-fresh === 'sync'` skips Welcome into `sync-choice`; `'create'` is gone
+- [x] Gate: build
 
 **Tests**: none
 **Gate**: build

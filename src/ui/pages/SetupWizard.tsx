@@ -69,8 +69,10 @@ export function SetupWizard() {
   const [showStartFreshConfirm, setShowStartFreshConfirm] = useState(false);
 
   const resolveCloudProvider = useCallback(async (): Promise<CloudProvider | null> => {
-    const config = syncConfig ?? (await loadSyncConfig());
-    if (!syncConfig) setSyncConfig(config);
+    // Read the saved config. React state lags the save on the same click, and
+    // depending on that state restarts the choice-step probe in a loop.
+    const config = await loadSyncConfig();
+    setSyncConfig(config);
     if (!config.provider) return null;
 
     const resolved = await resolveActiveProvider(config);
@@ -82,7 +84,7 @@ export function SetupWizard() {
       return resolved.provider;
     }
     return null;
-  }, [syncConfig]);
+  }, []);
 
   const runProbe = useCallback(async (): Promise<RemoteVaultStatus | null> => {
     setProbeLoading(true);

@@ -64,6 +64,12 @@ T9 → T10
 T11 → T12 → T13
 ```
 
+### Phase 5: Connect probe settles
+
+```
+T14
+```
+
 ---
 
 ## Task Breakdown
@@ -452,15 +458,46 @@ T11 → T12 → T13
 
 ---
 
+### Phase 5: Connect probe settles
+
+### T14: Probe the saved folder once
+
+**Status**: ✅ Done
+
+**What**: After a successful WebDAV connect, read the saved provider and probe once so an empty folder enables Create and Skip.
+**Where**: `src/ui/pages/SetupWizard.tsx`, `e2e/setup-connect-probe.spec.ts`
+**Depends on**: T13
+**Reuses**: `loadSyncConfig`, `resolveActiveProvider`, `probeRemoteVault`
+**Requirement**: SSF-04, SSF-06
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`
+
+**Done when**:
+
+- [x] One Continue against an empty WebDAV folder shows Create passphrase and Skip enabled
+- [x] The choice screen does not stay on "Checking cloud vault" and does not show "Could not check the cloud folder"
+- [x] Gate: full (`npm test` and `npm run test:e2e`)
+
+**Tests**: e2e
+**Gate**: full
+
+**Commit**: `fix(ui): probe the saved cloud folder once during setup`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
 
 Phase 1:  T1 → T2 → T3 → T4 → T5
 Phase 2:  T6 → T7 → T8
 Phase 3:  T9 → T10
 Phase 4:  T11 → T12 → T13
+Phase 5:  T14
 ```
 
 Execution is strictly sequential. ~13 tasks pack as two batches (~T1–T8 and ~T9–T13) if Execute uses sub-agents.
@@ -484,6 +521,7 @@ Execution is strictly sequential. ~13 tasks pack as two batches (~T1–T8 and ~T
 | T11: E2E helper | 1 helper | ✅ Granular |
 | T12: E2E skip specs | 1 spec file | ✅ Granular |
 | T13: E2E passphrase specs | 1 spec file | ✅ Granular |
+| T14: Probe saved folder once | 1 resolver + 1 e2e | ✅ Granular |
 
 **Granularity check**: all tasks ✅ (T4 is two cohesive helpers in one file).
 
@@ -506,6 +544,7 @@ Execution is strictly sequential. ~13 tasks pack as two batches (~T1–T8 and ~T
 | T11 | T8 | T11 start of phase 4 | ✅ Match (T8 prior phase) |
 | T12 | T11 | T11 → T12 | ✅ Match |
 | T13 | T12 | T12 → T13 | ✅ Match |
+| T14 | T13 | T14 start of phase 5 | ✅ Match (T13 prior phase) |
 
 ---
 
@@ -526,5 +565,6 @@ Execution is strictly sequential. ~13 tasks pack as two batches (~T1–T8 and ~T
 | T11 | E2E helper | none (helper only) | none | ✅ OK |
 | T12 | E2E setup | e2e | e2e | ✅ OK |
 | T13 | E2E setup | e2e | e2e | ✅ OK |
+| T14 | UI + e2e | e2e | e2e | ✅ OK |
 
 ---

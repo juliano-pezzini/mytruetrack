@@ -1,31 +1,14 @@
 # State
 
-**Last Updated:** 2026-09-16
-**Current Work:** Setup sync-first (AD-011) — Execute complete, validation PASS
-(`.specs/features/setup-sync-first/validation.md`). Awaiting interactive UAT. Not pushed.
+**Last Updated:** 2026-09-14
+**Current Work:** Cloud vault metadata (AD-010) — Execute complete; Verifier PASS
+(`.specs/features/cloud-vault-metadata/validation.md`). Optional UAT for Setup/Restore UI.
+Commits `3611a16..7373ae2`. Planning artifacts (`context.md`, `design.md`, `validation.md`)
+still untracked.
 
 ---
 
 ## Recent Decisions (Last 60 days)
-
-### AD-011: Storage choice frozen at setup (2026-09-16)
-
-**Decision:** Cloud vs this-device-only is chosen during setup, before any DEK is generated,
-and recorded as `SyncConfig.storageChoice`. After setup completes, Settings cannot first-connect
-or switch providers. Google Reconnect and WebDAV credential retry apply only to the frozen
-choice. Start fresh clears sync config and returns to Use cloud sync (not Create). Existing
-origins without the field are inferred from `provider` or a ready local vault.
-
-**Reason:** Create-then-connect in Settings is how leftover Drive peer segments decrypt-fail
-after an origin wipe. Probe/restore (AD-010) only run if a provider is already connected.
-
-**Trade-off:** This-device-only cannot enable Drive later until a future export/import
-feature. Token expiry still needs Reconnect.
-
-**Impact:** `.specs/features/setup-sync-first/`. Replaces AD-010 Start fresh routing into
-Create. Does not change `vault-metadata.json` or `CloudProvider` (AD-003, AD-010).
-
-**Status:** active
 
 ### AD-010: Cloud `vault-metadata.json` as portable vault identity (2026-09-13)
 

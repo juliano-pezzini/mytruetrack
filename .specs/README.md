@@ -9,8 +9,7 @@ Spec-driven workflow workspace (per `tlc-spec-driven` skill).
 │   ├── ROADMAP.md   Milestones + phases
 │   └── STATE.md     Recent decisions, deferred ideas, blockers, todos
 ├── codebase/        Brownfield mapping (added once code exists)
-├── features/        Per-feature specs, designs, tasks
-│   └── 8.1-architecture-spike/
+├── features/        In-flight specs only. Shipped write-ups are in project/spec-archive.md
 └── quick/           Ad-hoc task notes (gitignored)
 ```
 

@@ -11,7 +11,7 @@ Goal: ship a working local-first PWA with encrypted multi-device sync and featur
 
 ### 8.1 — Architecture Spike (research) ✅
 
-Validate the riskiest technical bets before committing to the stack. **All 5 bets validated — see [spike-report.md](../features/8.1-architecture-spike/spike-report.md).**
+Validate the riskiest technical bets before committing to the stack. **All 5 bets validated — see [the archived spike report](https://github.com/juliano-pezzini/mytruetrack/issues/89).**
 
 - [x] Prototype cr-sqlite end-to-end with two browser instances syncing via a shared blob
 - [x] Prototype WebAuthn-wrapped encryption key (passphrase + biometric unlock)

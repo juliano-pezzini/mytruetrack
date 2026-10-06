@@ -12,6 +12,7 @@ describe('sync-config', () => {
     const config = await loadSyncConfig();
     expect(config.provider).toBeNull();
     expect(config.webdav).toBeNull();
+    expect(config.storageChoice).toBeNull();
   });
 
   it('saveSyncConfig + loadSyncConfig round-trips webdav config', async () => {
@@ -64,6 +65,45 @@ describe('sync-config', () => {
     expect(loaded.webdav).toBeNull();
   });
 
+  it('loadSyncConfig returns storageChoice null for pre-feature records', async () => {
+    const db = await openDB('mytruetrack-sync-config', 1, {
+      upgrade(database) {
+        if (!database.objectStoreNames.contains('config')) {
+          database.createObjectStore('config');
+        }
+      },
+    });
+    await db.put('config', { provider: 'google-drive', webdav: null, google: null }, 'active');
+
+    const loaded = await loadSyncConfig();
+    expect(loaded.storageChoice).toBeNull();
+    expect(loaded.provider).toBe('google-drive');
+  });
+
+  it('saveSyncConfig + loadSyncConfig round-trips local-only storageChoice', async () => {
+    await saveSyncConfig({
+      storageChoice: 'local-only',
+      provider: null,
+      webdav: null,
+      google: null,
+    });
+    const loaded = await loadSyncConfig();
+    expect(loaded.storageChoice).toBe('local-only');
+    expect(loaded.provider).toBeNull();
+  });
+
+  it('saveSyncConfig + loadSyncConfig round-trips google-drive storageChoice', async () => {
+    await saveSyncConfig({
+      storageChoice: 'google-drive',
+      provider: 'google-drive',
+      webdav: null,
+      google: { accessToken: 'access-123', expiresAt: 1_700_000_000_000 },
+    });
+    const loaded = await loadSyncConfig();
+    expect(loaded.storageChoice).toBe('google-drive');
+    expect(loaded.provider).toBe('google-drive');
+  });
+
   it('loadSyncConfig normalizes records missing the google field', async () => {
     const db = await openDB('mytruetrack-sync-config', 1, {
       upgrade(database) {
@@ -78,6 +118,7 @@ describe('sync-config', () => {
 
     expect(loaded.provider).toBe('webdav');
     expect(loaded.google).toBeNull();
+    expect(loaded.storageChoice).toBeNull();
   });
 
   it('loadSyncConfig strips legacy refreshToken from google tokens', async () => {

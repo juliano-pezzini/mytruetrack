@@ -8,6 +8,7 @@ import { pushDeltas } from './crsql-changes.ts';
 import { generateDek, generateSalt } from '../crypto/key-derivation.ts';
 import { saveKeyData, hasKeyData, clearKeyData } from '../crypto/key-store.ts';
 import { VAULT_METADATA_FILENAME } from './vault-metadata.ts';
+import { loadSyncConfig, saveSyncConfig, clearSyncConfig } from './sync-config.ts';
 
 // Cloud push/pull now uses cr-sqlite `crsql_changes` deltas, which are unavailable under
 // sql.js. Those are covered by crsql-changes.test.ts (protocol) and e2e (real merge).
@@ -15,6 +16,7 @@ import { VAULT_METADATA_FILENAME } from './vault-metadata.ts';
 describe('startFreshVault', () => {
   beforeEach(async () => {
     await clearKeyData();
+    await clearSyncConfig();
   });
 
   it('clears cloud sync data and local key store', async () => {
@@ -45,10 +47,18 @@ describe('startFreshVault', () => {
     await pushDeltas(db, provider, dek);
     expect(await provider.download(VAULT_METADATA_FILENAME)).not.toBeNull();
     expect(await hasKeyData()).toBe(true);
+    await saveSyncConfig({
+      storageChoice: 'google-drive',
+      provider: 'google-drive',
+      webdav: null,
+      google: { accessToken: 'tok', expiresAt: 1 },
+    });
 
     await startFreshVault(provider);
     expect(await provider.list()).toEqual([]);
     expect(await hasKeyData()).toBe(false);
+    expect((await loadSyncConfig()).storageChoice).toBeNull();
+    expect((await loadSyncConfig()).provider).toBeNull();
   });
 
   it('does not clear key store when cloud clear fails', async () => {
@@ -69,9 +79,34 @@ describe('startFreshVault', () => {
     };
     await base.upload('changes-aa-1.bin', new Uint8Array([1]));
     await base.upload(VAULT_METADATA_FILENAME, new Uint8Array([123]));
+    await saveSyncConfig({
+      storageChoice: 'google-drive',
+      provider: 'google-drive',
+      webdav: null,
+      google: null,
+    });
 
     await expect(startFreshVault(provider)).rejects.toThrow(/metadata delete failed/i);
     expect(await hasKeyData()).toBe(true);
+    expect((await loadSyncConfig()).storageChoice).toBe('google-drive');
+  });
+
+  it('skips remote delete when provider is null and still clears local identity', async () => {
+    await saveKeyData({
+      wrappedDek: new Uint8Array([1]),
+      salt: generateSalt(),
+      iterations: 600_000,
+    });
+    await saveSyncConfig({
+      storageChoice: 'local-only',
+      provider: null,
+      webdav: null,
+      google: null,
+    });
+
+    await startFreshVault(null);
+    expect(await hasKeyData()).toBe(false);
+    expect((await loadSyncConfig()).storageChoice).toBeNull();
   });
 });
 

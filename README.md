@@ -19,14 +19,14 @@ TypeScript · React · Vite · SQLite-WASM · cr-sqlite (CRDT) · IndexedDB · W
 
 ## Deploy (GitHub Pages)
 
-The app is a static Vite PWA. Pushes to `main` build and publish it as a **project site** at `https://<user>.github.io/mytruetrack/` (hash routes: `/#/accounts`, etc.).
+The app is a static Vite PWA. Pushes to `main`, or a manual run of **Deploy GitHub Pages**, build and publish it as a **project site** at `https://<user>.github.io/<repo>/` (hash routes: `/#/accounts`, etc.).
 
 1. Repo **Settings → Pages → Source: GitHub Actions**.
 2. Optional: add Actions secret `VITE_GOOGLE_CLIENT_ID` so Google Drive sync is compiled in.
 3. In Google Cloud Console, add Authorized JavaScript origin `https://<user>.github.io` (scheme + host only; no path).
-4. Open `https://<user>.github.io/mytruetrack/` after the **Deploy GitHub Pages** workflow succeeds.
+4. Open `https://<user>.github.io/<repo>/` after the **Deploy GitHub Pages** workflow succeeds.
 
-Local and PR builds keep `base: '/'`. Only the Pages workflow sets `VITE_BASE_PATH=/mytruetrack/`.
+Local and PR builds keep `base: '/'`. The Pages workflow sets `VITE_BASE_PATH` to `/<repo>/`, or `/` when the repository is a user site named `<owner>.github.io`.
 
 ## License
 

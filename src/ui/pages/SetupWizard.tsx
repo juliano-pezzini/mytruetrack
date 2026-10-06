@@ -23,9 +23,11 @@ import {
   type RemoteVaultStatus,
 } from '../../sync/vault-metadata.ts';
 import { clearCloudSyncData, startFreshVault } from '../../sync/sync-engine.ts';
+import { freezeStorageChoice, vaultActionsForProbe } from '../../sync/storage-choice.ts';
 
 type Step =
   | 'welcome'
+  | 'sync-choice'
   | 'choice'
   | 'passphrase'
   | 'recovery'
@@ -62,10 +64,15 @@ export function SetupWizard() {
   const [webdav, setWebdav] = useState<WebDavConfig>(DEFAULT_WEBDAV);
   const [googleTokens, setGoogleTokens] = useState<GoogleTokens | null>(null);
   const [restorePassphrase, setRestorePassphrase] = useState('');
+  const [thisDeviceOnly, setThisDeviceOnly] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showStartFreshConfirm, setShowStartFreshConfirm] = useState(false);
 
   const resolveCloudProvider = useCallback(async (): Promise<CloudProvider | null> => {
-    const config = syncConfig ?? (await loadSyncConfig());
-    if (!syncConfig) setSyncConfig(config);
+    // Read the saved config. React state lags the save on the same click, and
+    // depending on that state restarts the choice-step probe in a loop.
+    const config = await loadSyncConfig();
+    setSyncConfig(config);
     if (!config.provider) return null;
 
     const resolved = await resolveActiveProvider(config);
@@ -77,9 +84,9 @@ export function SetupWizard() {
       return resolved.provider;
     }
     return null;
-  }, [syncConfig]);
+  }, []);
 
-  const runProbe = useCallback(async () => {
+  const runProbe = useCallback(async (): Promise<RemoteVaultStatus | null> => {
     setProbeLoading(true);
     setProbeError(null);
     try {
@@ -87,35 +94,43 @@ export function SetupWizard() {
       setSyncConfig(config);
       if (!config.provider) {
         setRemoteStatus(null);
-        return;
+        return null;
       }
       const cloudProvider = await resolveCloudProvider();
       if (!cloudProvider) {
         setRemoteStatus(null);
-        return;
+        setProbeError('Could not reach cloud storage.');
+        return null;
       }
       const status = await probeRemoteVault(cloudProvider);
       setRemoteStatus(status);
+      return status;
     } catch (err) {
       setProbeError(err instanceof Error ? err.message : String(err));
       setRemoteStatus(null);
+      return null;
     } finally {
       setProbeLoading(false);
     }
   }, [resolveCloudProvider]);
 
   useEffect(() => {
-    if (sessionStorage.getItem('setup-after-fresh') === 'create') {
+    if (sessionStorage.getItem('setup-after-fresh') === 'sync') {
       sessionStorage.removeItem('setup-after-fresh');
-      setStep('passphrase');
+      setStep('sync-choice');
     }
   }, []);
 
   useEffect(() => {
-    if (step === 'choice') {
-      void runProbe();
+    if (step !== 'choice') return;
+    if (thisDeviceOnly) {
+      setRemoteStatus(null);
+      setProbeLoading(false);
+      setProbeError(null);
+      return;
     }
-  }, [step, runProbe]);
+    void runProbe();
+  }, [step, thisDeviceOnly, runProbe]);
 
   useEffect(() => {
     if (step !== 'connect-cloud') return;
@@ -142,33 +157,59 @@ export function SetupWizard() {
     setStep('restore');
   }
 
-  async function handleSaveConnectAndRestore() {
+  async function handleSaveConnectAndProbe() {
     setLoading(true);
     setError(null);
     try {
       if (connectProvider === 'webdav') {
         const testProvider = createWebDavProvider(webdav);
         await testProvider.list();
-        await saveSyncConfig({ provider: 'webdav', webdav, google: null });
-        setSyncConfig({ provider: 'webdav', webdav, google: null });
+        await saveSyncConfig({ provider: 'webdav', webdav, google: null, storageChoice: null });
+        setSyncConfig({ provider: 'webdav', webdav, google: null, storageChoice: null });
       } else if (connectProvider === 'google-drive') {
         if (!googleTokens) {
           setError('Connect with Google before continuing.');
           return;
         }
-        await saveSyncConfig({ provider: 'google-drive', webdav: null, google: googleTokens });
-        setSyncConfig({ provider: 'google-drive', webdav: null, google: googleTokens });
+        await saveSyncConfig({
+          provider: 'google-drive',
+          webdav: null,
+          google: googleTokens,
+          storageChoice: null,
+        });
+        setSyncConfig({
+          provider: 'google-drive',
+          webdav: null,
+          google: googleTokens,
+          storageChoice: null,
+        });
       } else {
-        setError('Choose a cloud provider to restore from.');
+        setError('Choose a cloud provider to continue.');
         return;
       }
-      await runProbe();
-      setStep('restore');
+      const status = await runProbe();
+      if (!status) {
+        setError('Could not check the cloud folder. Try again or go back.');
+        return;
+      }
+      setThisDeviceOnly(false);
+      setStep('choice');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not connect to cloud.');
     } finally {
       setLoading(false);
     }
+  }
+
+  async function cancelConnect() {
+    setError(null);
+    setGoogleTokens(null);
+    setWebdav(DEFAULT_WEBDAV);
+    setRemoteStatus(null);
+    setProbeError(null);
+    await saveSyncConfig({ provider: null, webdav: null, google: null, storageChoice: null });
+    setSyncConfig({ provider: null, webdav: null, google: null, storageChoice: null });
+    setStep('sync-choice');
   }
 
   async function handleConnectGoogleSetup() {
@@ -177,8 +218,18 @@ export function SetupWizard() {
     try {
       const tokens = await connectGoogleDrive();
       setGoogleTokens(tokens);
-      await saveSyncConfig({ provider: 'google-drive', webdav: null, google: tokens });
-      setSyncConfig({ provider: 'google-drive', webdav: null, google: tokens });
+      await saveSyncConfig({
+        provider: 'google-drive',
+        webdav: null,
+        google: tokens,
+        storageChoice: null,
+      });
+      setSyncConfig({
+        provider: 'google-drive',
+        webdav: null,
+        google: tokens,
+        storageChoice: null,
+      });
       setConnectProvider('google-drive');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Google connect failed.');
@@ -202,6 +253,7 @@ export function SetupWizard() {
         return;
       }
       const restoredDek = await restoreVaultFromRemote(cloudProvider, restorePassphrase);
+      await freezeCompletedSetup();
       unlock(restoredDek);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Restore failed.');
@@ -213,6 +265,7 @@ export function SetupWizard() {
   async function handleClearCloudFromSetup() {
     setLoading(true);
     setError(null);
+    setShowClearConfirm(false);
     try {
       const cloudProvider = await resolveCloudProvider();
       if (!cloudProvider) {
@@ -231,6 +284,7 @@ export function SetupWizard() {
   async function handleStartFreshFromSetup() {
     setLoading(true);
     setError(null);
+    setShowStartFreshConfirm(false);
     try {
       const cloudProvider = await resolveCloudProvider();
       if (!cloudProvider) {
@@ -238,9 +292,41 @@ export function SetupWizard() {
         return;
       }
       await startFreshVault(cloudProvider);
-      await runProbe();
+      setThisDeviceOnly(false);
+      setRemoteStatus(null);
+      setProbeError(null);
+      setGoogleTokens(null);
+      setWebdav(DEFAULT_WEBDAV);
+      setSyncConfig({ provider: null, webdav: null, google: null, storageChoice: null });
+      setStep('sync-choice');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start fresh.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function freezeCompletedSetup() {
+    if (thisDeviceOnly) {
+      await freezeStorageChoice('local-only');
+      return;
+    }
+    const config = syncConfig ?? (await loadSyncConfig());
+    if (config.provider === 'google-drive' || config.provider === 'webdav') {
+      await freezeStorageChoice(config.provider);
+      return;
+    }
+    await freezeStorageChoice('local-only');
+  }
+
+  async function handleSkip() {
+    setError(null);
+    setLoading(true);
+    try {
+      await freezeCompletedSetup();
+      skipToLocalOnly();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to skip encryption.');
     } finally {
       setLoading(false);
     }
@@ -265,6 +351,7 @@ export function SetupWizard() {
       const newDek = await generateDek();
       const wrappedDek = await wrapDek(newDek, kek);
       await saveKeyData({ wrappedDek, salt, iterations: 600_000 });
+      await freezeCompletedSetup();
 
       setDek(newDek);
 
@@ -318,12 +405,24 @@ export function SetupWizard() {
   }
 
   const hasConfiguredProvider = Boolean(syncConfig?.provider);
+  const vaultActions = thisDeviceOnly
+    ? vaultActionsForProbe({ kind: 'local-only' })
+    : remoteStatus
+      ? vaultActionsForProbe(remoteStatus)
+      : { create: false, restore: false, skip: false };
   const remoteReady = remoteStatus?.kind === 'ready';
-  const remoteBlocked =
-    remoteStatus?.kind === 'legacy' || remoteStatus?.kind === 'corrupt' || remoteReady;
-  const createDisabled = remoteBlocked || probeLoading;
-  const restoreDisabled =
-    remoteStatus?.kind === 'legacy' || remoteStatus?.kind === 'corrupt' || probeLoading;
+  const createDisabled = !vaultActions.create || probeLoading;
+  const restoreDisabled = !vaultActions.restore || probeLoading;
+  const skipDisabled = !vaultActions.skip || probeLoading;
+
+  async function chooseThisDeviceOnly() {
+    setError(null);
+    await saveSyncConfig({ provider: null, webdav: null, google: null });
+    setSyncConfig({ provider: null, webdav: null, google: null, storageChoice: null });
+    setThisDeviceOnly(true);
+    setRemoteStatus(null);
+    setStep('choice');
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -335,10 +434,47 @@ export function SetupWizard() {
             <p className="text-gray-500 mb-8">Private, local-first personal finance tracking.</p>
             <button
               type="button"
-              onClick={() => setStep('choice')}
+              onClick={() => setStep('sync-choice')}
               className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
             >
               Get Started
+            </button>
+          </div>
+        )}
+
+        {step === 'sync-choice' && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Use cloud sync?</h2>
+            <p className="text-sm text-gray-500 mb-6">
+              Connect a cloud folder first if you already have encrypted data there. Creating a
+              passphrase before connecting can leave you unable to pull that history.
+            </p>
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setThisDeviceOnly(false);
+                  setError(null);
+                  setStep('connect-cloud');
+                }}
+                className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Connect cloud storage
+              </button>
+              <button
+                type="button"
+                onClick={() => void chooseThisDeviceOnly()}
+                className="w-full py-3 px-4 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+              >
+                This device only
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => setStep('welcome')}
+              className="w-full text-sm text-gray-500 hover:text-gray-700 mt-4"
+            >
+              Back
             </button>
           </div>
         )}
@@ -352,8 +488,10 @@ export function SetupWizard() {
               unencrypted — even in the cloud.
             </p>
 
-            {probeLoading && <p className="text-sm text-gray-500 mb-4">Checking cloud vault…</p>}
-            {probeError && (
+            {probeLoading && !thisDeviceOnly && (
+              <p className="text-sm text-gray-500 mb-4">Checking cloud vault…</p>
+            )}
+            {probeError && !thisDeviceOnly && (
               <p className="text-sm text-amber-700 mb-4">
                 Could not check cloud: {probeError}. You can still create a new local vault.
               </p>
@@ -389,7 +527,7 @@ export function SetupWizard() {
             )}
 
             <div className="space-y-3">
-              {remoteReady && (
+              {vaultActions.restore && (
                 <button
                   type="button"
                   onClick={beginRestore}
@@ -409,7 +547,7 @@ export function SetupWizard() {
                 Create a passphrase
               </button>
 
-              {!remoteReady && (
+              {!thisDeviceOnly && !vaultActions.restore && (
                 <button
                   type="button"
                   onClick={beginRestore}
@@ -422,34 +560,105 @@ export function SetupWizard() {
 
               <button
                 type="button"
-                onClick={skipToLocalOnly}
-                disabled={remoteBlocked}
+                onClick={() => void handleSkip()}
+                disabled={skipDisabled || loading}
                 className="w-full py-3 px-4 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Skip — continue without a passphrase
               </button>
             </div>
 
-            {(remoteStatus?.kind === 'legacy' || remoteStatus?.kind === 'corrupt') &&
+            {(remoteStatus?.kind === 'legacy' ||
+              remoteStatus?.kind === 'corrupt' ||
+              remoteStatus?.kind === 'ready') &&
               hasConfiguredProvider && (
                 <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
                   <p className="text-xs text-gray-500">Fix cloud state:</p>
                   <button
                     type="button"
-                    onClick={() => void handleClearCloudFromSetup()}
+                    onClick={() => {
+                      setShowStartFreshConfirm(false);
+                      setShowClearConfirm(true);
+                    }}
                     disabled={loading}
                     className="w-full py-2 px-3 text-sm font-medium text-red-700 bg-white border border-red-200 rounded-lg hover:bg-red-50 disabled:opacity-50"
                   >
-                    {loading ? 'Working…' : 'Clear cloud sync data'}
+                    Clear cloud sync data
                   </button>
                   <button
                     type="button"
-                    onClick={() => void handleStartFreshFromSetup()}
+                    onClick={() => {
+                      setShowClearConfirm(false);
+                      setShowStartFreshConfirm(true);
+                    }}
                     disabled={loading}
                     className="w-full py-2 px-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
                   >
                     Start fresh vault (clears cloud + local keys)
                   </button>
+
+                  {showStartFreshConfirm && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
+                      <p className="text-sm font-medium text-red-800">Start a fresh vault?</p>
+                      <p className="text-sm text-red-700">
+                        Clears remote sync files and vault metadata, removes your local passphrase,
+                        and opens setup to choose cloud sync again. Other devices still have the old
+                        vault until you restore or start fresh there too. This cannot be undone
+                        without your recovery sheet.
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => void handleStartFreshFromSetup()}
+                          disabled={loading}
+                          className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                        >
+                          {loading ? 'Starting…' : 'Yes, start fresh vault'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowStartFreshConfirm(false)}
+                          disabled={loading}
+                          className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {showClearConfirm && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
+                      <p className="text-sm font-medium text-red-800">Clear remote sync files?</p>
+                      <p className="text-sm text-red-700">
+                        Deletes all <code className="px-1 bg-red-100 rounded">changes-*.bin</code>{' '}
+                        files, cloud{' '}
+                        <code className="px-1 bg-red-100 rounded">vault-metadata.json</code>, and
+                        resets local sync history (push/pull watermarks). Use this when pull fails
+                        because of leftover files from a previous vault or database. Your local data
+                        and passphrase are kept — push again afterward to re-upload from this
+                        device.
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => void handleClearCloudFromSetup()}
+                          disabled={loading}
+                          className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                        >
+                          {loading ? 'Clearing…' : 'Yes, clear remote sync data'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowClearConfirm(false)}
+                          disabled={loading}
+                          className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -458,6 +667,17 @@ export function SetupWizard() {
             <p className="text-xs text-gray-400 mt-4 text-center">
               You can always add a passphrase later in Settings.
             </p>
+            <button
+              type="button"
+              onClick={() => {
+                setThisDeviceOnly(false);
+                setStep('sync-choice');
+                setError(null);
+              }}
+              className="w-full text-sm text-gray-500 hover:text-gray-700 mt-3"
+            >
+              Back
+            </button>
           </div>
         )}
 
@@ -465,7 +685,8 @@ export function SetupWizard() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
             <h2 className="text-xl font-bold text-gray-900 mb-2">Connect cloud storage</h2>
             <p className="text-sm text-gray-500 mb-6">
-              Restore downloads your vault key from the same cloud folder you use for sync.
+              Connect a Google Drive or WebDAV folder. The app checks that folder before you create
+              or restore a vault.
             </p>
 
             <div className="space-y-2 mb-4">
@@ -552,15 +773,15 @@ export function SetupWizard() {
 
             <button
               type="button"
-              onClick={() => void handleSaveConnectAndRestore()}
+              onClick={() => void handleSaveConnectAndProbe()}
               disabled={loading}
               className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 mb-3"
             >
-              {loading ? 'Connecting…' : 'Continue to restore'}
+              {loading ? 'Connecting…' : 'Continue'}
             </button>
             <button
               type="button"
-              onClick={() => setStep('choice')}
+              onClick={() => void cancelConnect()}
               className="w-full text-sm text-gray-500 hover:text-gray-700"
             >
               Back

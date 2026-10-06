@@ -8,6 +8,7 @@ permissions:
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: pages
@@ -31,10 +32,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Resolve Pages base path
+        id: base
+        env:
+          REPO_NAME: ${{ github.event.repository.name }}
+        run: |
+          if [[ "$REPO_NAME" == *.github.io ]]; then
+            echo "path=/" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=/${REPO_NAME}/" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build
         run: npm run build
         env:
-          VITE_BASE_PATH: /mytruetrack/
+          VITE_BASE_PATH: ${{ steps.base.outputs.path }}
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
 
       - uses: actions/upload-pages-artifact@v5

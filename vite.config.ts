@@ -18,7 +18,7 @@ const securityHeaders = {
 };
 
 export default defineConfig({
-  // Pages project site uses `/mytruetrack/`; local/PR builds keep `/`.
+  // Pages project sites use `/<repo>/`. A `<owner>.github.io` user site and local/PR builds keep `/`.
   base: process.env.VITE_BASE_PATH ?? '/',
   plugins: [react(), tailwindcss()],
   resolve: {

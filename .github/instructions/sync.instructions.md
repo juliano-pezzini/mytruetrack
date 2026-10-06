@@ -1,0 +1,14 @@
+---
+applyTo: "src/sync/**,src/ui/pages/SetupWizard.tsx,src/ui/components/SyncSection.tsx,src/ui/components/SyncStatusIndicator.tsx,src/app/auto-sync-provider.tsx"
+---
+
+# Sync
+
+Cloud sync is peer CRDT segments, not one latest blob.
+
+- The vault probe reads `vault-metadata.json`. Results are `empty`, `ready`, `legacy`, or `corrupt`.
+- Deltas are append-only `changes-<siteId>-<dbVersion>.bin` files. Pull applies other peers only. This device does not replay its own site file.
+- One Google OAuth client shares a single Drive appDataFolder across origins, including localhost and the deployed site. A probe on one origin can see a vault created on the other.
+- Setup saves `SyncConfig.storageChoice` before any data-encryption key exists. After setup, Settings cannot first-connect or switch providers. Google Reconnect and a WebDAV retry stay on the same endpoint. This-device-only cannot turn sync on later. Start fresh clears the choice and returns to the sync question.
+- Auto-sync logs failures and leaves the app usable. The header shows Syncing or Sync pending only. It does not show an idle synced badge.
+- Encrypt before upload and decrypt after download. Do not ask the user to merge conflicts.

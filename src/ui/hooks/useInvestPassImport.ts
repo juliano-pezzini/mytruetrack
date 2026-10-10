@@ -15,13 +15,7 @@ import { getAccountMap, saveMapping } from '../../storage/investpass-account-map
 import { processInvestPassImport } from '../../workers/investpass-import.ts';
 
 export type ImportStatus =
-  | 'idle'
-  | 'connecting'
-  | 'fetching'
-  | 'mapping'
-  | 'importing'
-  | 'done'
-  | 'error';
+  'idle' | 'connecting' | 'fetching' | 'mapping' | 'importing' | 'done' | 'error';
 
 export type UseInvestPassImportReturn = {
   status: ImportStatus;

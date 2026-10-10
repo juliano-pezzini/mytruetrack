@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { clearStorage, gotoApp } from './helpers.ts';
+import { clearStorage, gotoApp, chooseThisDeviceOnly } from './helpers.ts';
 
 test.beforeEach(async ({ page }) => {
   await clearStorage(page);
@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('create passphrase → recovery step → done → dashboard', async ({ page }) => {
-  await page.getByRole('button', { name: 'Get Started' }).click();
+  await chooseThisDeviceOnly(page);
   await page.getByRole('button', { name: 'Create a passphrase' }).click();
 
   // Fill passphrase fields
@@ -41,7 +41,7 @@ test('create passphrase → recovery step → done → dashboard', async ({ page
 });
 
 test('passphrase too short shows error', async ({ page }) => {
-  await page.getByRole('button', { name: 'Get Started' }).click();
+  await chooseThisDeviceOnly(page);
   await page.getByRole('button', { name: 'Create a passphrase' }).click();
 
   await page.getByLabel('Passphrase', { exact: true }).fill('short');
@@ -52,7 +52,7 @@ test('passphrase too short shows error', async ({ page }) => {
 });
 
 test('mismatched passphrases shows error', async ({ page }) => {
-  await page.getByRole('button', { name: 'Get Started' }).click();
+  await chooseThisDeviceOnly(page);
   await page.getByRole('button', { name: 'Create a passphrase' }).click();
 
   await page.getByLabel('Passphrase', { exact: true }).fill('correct-horse-battery-staple');

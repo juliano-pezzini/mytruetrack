@@ -69,15 +69,22 @@ export async function gotoApp(page: Page): Promise<void> {
 }
 
 /**
+ * Leave Welcome via This device only. Create, Restore, and Skip stay unreachable
+ * until this choice (SSF-01).
+ */
+export async function chooseThisDeviceOnly(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Get Started' }).click();
+  await page.getByRole('button', { name: 'This device only' }).click();
+}
+
+/**
  * Set up the vault in local-only mode (no passphrase).
  * Leaves the page on the Dashboard.
  */
 export async function setupLocalOnly(page: Page): Promise<void> {
   await clearStorage(page); // navigate to '/' and wipe all storage
   await gotoApp(page); // reload with empty storage → vault shows needs-setup
-  // Welcome → Get Started
-  await page.getByRole('button', { name: 'Get Started' }).click();
-  // Choice → Skip (local-only)
+  await chooseThisDeviceOnly(page);
   await page.getByRole('button', { name: /Skip.*passphrase/i }).click();
   await page.waitForURL(/#\/?$/);
   await page.getByRole('heading', { name: 'Dashboard' }).waitFor();

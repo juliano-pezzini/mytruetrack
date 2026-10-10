@@ -67,7 +67,8 @@ function detectPlatformLabel(): string {
 /** Auto-generated label from browser + platform (non-empty). */
 export function generateDefaultDeviceLabel(): string {
   const browser = detectBrowserId();
-  const browserName = browser === 'unknown' ? 'Browser' : browser.charAt(0).toUpperCase() + browser.slice(1);
+  const browserName =
+    browser === 'unknown' ? 'Browser' : browser.charAt(0).toUpperCase() + browser.slice(1);
   const platform = detectPlatformLabel();
   return `${browserName} · ${platform}`;
 }

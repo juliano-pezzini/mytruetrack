@@ -12,6 +12,8 @@ import type { CloudProvider } from './cloud-provider.ts';
 import { pushDeltas, pullDeltas, clearRemoteChangeSegments } from './crsql-changes.ts';
 import { clearKeyData } from '../crypto/key-store.ts';
 import { SYNC_TABLES } from './sync-tables.ts';
+import { clearSyncConfig } from './sync-config.ts';
+import { clearSyncState } from './sync-state.ts';
 
 export { SYNC_TABLES };
 
@@ -93,8 +95,17 @@ export async function clearCloudSyncData(provider: CloudProvider): Promise<numbe
   return clearRemoteChangeSegments(provider);
 }
 
-/** Delete remote sync history and local vault key material for a clean Create flow. */
-export async function startFreshVault(provider: CloudProvider): Promise<void> {
-  await clearCloudSyncData(provider);
+/** Delete remote sync history and local vault identity so setup can choose storage again. */
+export async function startFreshVault(provider: CloudProvider | null): Promise<void> {
+  if (provider) {
+    await clearCloudSyncData(provider);
+  }
   await clearKeyData();
+  await clearSyncConfig();
+  await clearSyncState();
+  try {
+    globalThis.localStorage?.removeItem('vault-skipped');
+  } catch {
+    // Node unit tests have no DOM storage.
+  }
 }

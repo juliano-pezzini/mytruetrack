@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test';
-import { clearStorage, gotoApp } from './helpers.ts';
+import { clearStorage, gotoApp, chooseThisDeviceOnly } from './helpers.ts';
 
 test('vault locked after reload → unlock page shown', async ({ page }) => {
   await clearStorage(page);
   await gotoApp(page);
 
   // Setup with passphrase
-  await page.getByRole('button', { name: 'Get Started' }).click();
+  await chooseThisDeviceOnly(page);
   await page.getByRole('button', { name: 'Create a passphrase' }).click();
   await page.getByLabel('Passphrase', { exact: true }).fill('correct-horse-battery-staple');
   await page.getByLabel('Confirm passphrase').fill('correct-horse-battery-staple');
@@ -40,7 +40,7 @@ test('unlock with correct passphrase → dashboard', async ({ page }) => {
   await gotoApp(page);
 
   // Setup
-  await page.getByRole('button', { name: 'Get Started' }).click();
+  await chooseThisDeviceOnly(page);
   await page.getByRole('button', { name: 'Create a passphrase' }).click();
   await page.getByLabel('Passphrase', { exact: true }).fill('correct-horse-battery-staple');
   await page.getByLabel('Confirm passphrase').fill('correct-horse-battery-staple');
@@ -68,7 +68,7 @@ test('unlock with wrong passphrase → error', async ({ page }) => {
   await gotoApp(page);
 
   // Setup
-  await page.getByRole('button', { name: 'Get Started' }).click();
+  await chooseThisDeviceOnly(page);
   await page.getByRole('button', { name: 'Create a passphrase' }).click();
   await page.getByLabel('Passphrase', { exact: true }).fill('correct-horse-battery-staple');
   await page.getByLabel('Confirm passphrase').fill('correct-horse-battery-staple');

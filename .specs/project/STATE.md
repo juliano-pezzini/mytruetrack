@@ -1,13 +1,35 @@
 # State
 
-**Last Updated:** 2026-07-12
-**Current Work:** Local persistence + CRDT delta sync COMPLETE (AD-008) — cr-sqlite via an
-IndexedDB-backed VFS, per-site `crsql_changes` delta sync. 330 unit tests, 50 e2e tests, all
-passing. Auto-sync (AD-007) and Phase 8 — Local-First Foundation complete prior.
+**Last Updated:** 2026-09-14
+**Current Work:** Cloud vault metadata (AD-010) — Execute complete; Verifier PASS
+(`.specs/features/cloud-vault-metadata/validation.md`). Optional UAT for Setup/Restore UI.
+Commits `3611a16..7373ae2`. Planning artifacts (`context.md`, `design.md`, `validation.md`)
+still untracked.
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-010: Cloud `vault-metadata.json` as portable vault identity (2026-09-13)
+
+**Decision:** Encrypted multi-device sync uses a well-known file `vault-metadata.json` in the
+same `CloudProvider` folder as `changes-*.bin`. The file carries versioned JSON with
+base64 `wrappedDek` + `salt` + `iterations` and a device registry keyed by `crsql_site_id`.
+It is upserted on every encrypted push (including segment no-ops), deleted by Clear cloud /
+Start fresh, and is the sole source for Setup **Restore existing vault**. Providers stay
+unchanged (AD-003); logic lives in a sync sidecar (`vault-metadata.ts`).
+
+**Reason:** Passphrase alone cannot reconstruct a random DEK; without exporting wrapped key
+material, second devices and recreated origins fail to decrypt peer segments (Drive pull
+decrypt investigation, Recommendation A).
+
+**Trade-off:** First successful metadata writer wins vault identity; a device with a
+different local vault must Restore or Start fresh. Wrapped DEK ciphertext is readable to
+anyone with the user’s cloud app access — passphrase remains the secrecy boundary.
+
+**Impact:** Spec/design under `.specs/features/cloud-vault-metadata/`. Extends clear-cloud
+to remove metadata; SetupWizard gains probe/restore; local-only (`dek` null) pushes never
+write the file.
 
 ### AD-009: WebAuthn biometric unlock — PRF preferred, non-extractable wrapped-key fallback (2026-07-12)
 

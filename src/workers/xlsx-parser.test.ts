@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import * as XLSX from 'xlsx';
-import { parseXlsx } from './xlsx-parser.ts';
+import { parseXlsx, readXlsxGrid } from './xlsx-parser.ts';
 import { toCents } from '../domain/money.ts';
 
 /** Helper: build an XLSX buffer from an array of arrays. */
@@ -164,5 +164,61 @@ describe('xlsx-parser', () => {
     expect(result).toHaveLength(1);
     // The exact date depends on the serial → ISO conversion
     expect(result[0]!.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('reads the first sheet into a header grid', () => {
+    const data = buildXlsx([
+      ['Date', 'Desc', 'Amount'],
+      ['2026-01-15', 'Salary', 10],
+    ]);
+
+    expect(readXlsxGrid(data)).toEqual({
+      headers: ['Date', 'Desc', 'Amount'],
+      rows: [['2026-01-15', 'Salary', '10']],
+    });
+  });
+
+  it('returns an empty grid when the sheet has no range', () => {
+    const ws: XLSX.WorkSheet = {};
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Empty');
+    const data = new Uint8Array(XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer);
+
+    expect(readXlsxGrid(data)).toEqual({ headers: [], rows: [] });
+  });
+
+  it('parses a real date cell and a string amount', () => {
+    const ws = XLSX.utils.aoa_to_sheet([
+      ['Date', 'Desc', 'Amount'],
+      ['2026-01-15', 'Dated', 12.5],
+    ]);
+    const dateCell = ws[XLSX.utils.encode_cell({ r: 1, c: 0 })]!;
+    dateCell.t = 'd';
+    dateCell.v = new Date(Date.UTC(2026, 0, 15, 15));
+    const amountCell = ws[XLSX.utils.encode_cell({ r: 1, c: 2 })]!;
+    amountCell.t = 's';
+    amountCell.v = '12.50';
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+    const data = new Uint8Array(XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer);
+
+    const result = parseXlsx(data);
+    expect(result[0]!.date).toBe('2026-01-15');
+    expect(toCents(result[0]!.amount)).toBe(1250);
+  });
+
+  it('throws when a date cell cannot be parsed', () => {
+    const ws = XLSX.utils.aoa_to_sheet([
+      ['Date', 'Desc', 'Amount'],
+      ['nope', 'Bad date', 10],
+    ]);
+    const dateCell = ws[XLSX.utils.encode_cell({ r: 1, c: 0 })]!;
+    dateCell.t = 's';
+    dateCell.v = 'not-a-date';
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+    const data = new Uint8Array(XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer);
+
+    expect(() => parseXlsx(data)).toThrow(/Cannot parse date/);
   });
 });

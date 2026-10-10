@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-09-14
 **Current Work:** Cloud vault metadata (AD-010) — Execute complete; Verifier PASS
-(`.specs/features/cloud-vault-metadata/validation.md`). Optional UAT for Setup/Restore UI.
+(https://github.com/juliano-pezzini/mytruetrack/issues/102). Optional UAT for Setup/Restore UI.
 Commits `3611a16..7373ae2`. Planning artifacts (`context.md`, `design.md`, `validation.md`)
 still untracked.
 
@@ -27,7 +27,7 @@ decrypt investigation, Recommendation A).
 different local vault must Restore or Start fresh. Wrapped DEK ciphertext is readable to
 anyone with the user’s cloud app access — passphrase remains the secrecy boundary.
 
-**Impact:** Spec/design under `.specs/features/cloud-vault-metadata/`. Extends clear-cloud
+**Impact:** Spec/design archived in https://github.com/juliano-pezzini/mytruetrack/issues/102. Extends clear-cloud
 to remove metadata; SetupWizard gains probe/restore; local-only (`dek` null) pushes never
 write the file.
 
@@ -116,7 +116,7 @@ after writes. Provider construction + Google token refresh were extracted into a
 manual `SyncSection`. A subtle header `SyncStatusIndicator` surfaces syncing/pending only.
 
 **Reason:** Manual push/pull was error-prone (data loss if user forgets to push, stale data
-if they forget to pull). See `.specs/features/auto-sync/spec.md`.
+if they forget to pull). See https://github.com/juliano-pezzini/mytruetrack/issues/101.
 
 **Trade-off:** Auto-sync failures are logged silently (never block the UI); the indicator
 shows nothing when idle to avoid a misleading "synced" badge in local-only mode. No periodic
@@ -203,7 +203,7 @@ dynamically to preserve offline-first boot.
 - **ofx-js** (v1.1.1): Parses OFX 1.x (SGML) and 2.x (XML) correctly. 15 KB, zero dependencies.
 - **Bundle size**: 657 KB gzipped total (33% of 2 MB budget). Ample room for React + UI.
 
-**Reason:** Empirical evidence from throwaway prototypes. See `.specs/features/8.1-architecture-spike/spike-report.md`.
+**Reason:** Empirical evidence from throwaway prototypes. See https://github.com/juliano-pezzini/mytruetrack/issues/89.
 
 **Trade-off:** cr-sqlite project maintenance should be monitored. Argon2 deferred (PBKDF2 sufficient for launch).
 
@@ -225,7 +225,7 @@ dynamically to preserve offline-first boot.
 
 ## Todos
 
-- [x] Run Phase 8.1 Architecture Spike (see `.specs/features/8.1-architecture-spike/spike-report.md`)
+- [x] Run Phase 8.1 Architecture Spike (see https://github.com/juliano-pezzini/mytruetrack/issues/89)
 - [ ] Set up Vite + React + TypeScript scaffold once spike confirms stack
 - [x] Set up ESLint + Prettier + Vitest + Playwright (Playwright E2E: 46 tests, all passing)
 - [x] Set up GitHub Actions CI (typecheck, lint, unit tests, e2e) — see AD-005

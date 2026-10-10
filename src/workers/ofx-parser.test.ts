@@ -173,6 +173,47 @@ NEWFILEUID:NONE
 </OFX>
 `.trim();
 
+function bankOfx(tranList: string): string {
+  return `
+OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+SECURITY:NONE
+ENCODING:USASCII
+CHARSET:1252
+COMPRESSION:NONE
+OLDFILEUID:NONE
+NEWFILEUID:NONE
+
+<OFX>
+<SIGNONMSGSRSV1>
+<SONRS>
+<STATUS><CODE>0<SEVERITY>INFO</STATUS>
+<DTSERVER>20260501
+<LANGUAGE>ENG
+</SONRS>
+</SIGNONMSGSRSV1>
+<BANKMSGSRSV1>
+<STMTTRNRS>
+<TRNUID>9001
+<STATUS><CODE>0<SEVERITY>INFO</STATUS>
+<STMTRS>
+<CURDEF>BRL
+<BANKACCTFROM>
+<BANKID>001
+<ACCTID>EDGE
+<ACCTTYPE>CHECKING
+</BANKACCTFROM>
+<BANKTRANLIST>
+${tranList}
+</BANKTRANLIST>
+</STMTRS>
+</STMTTRNRS>
+</BANKMSGSRSV1>
+</OFX>
+`.trim();
+}
+
 describe('ofx-parser', () => {
   describe('bank statement', () => {
     it('parses 3 transactions', async () => {
@@ -271,6 +312,40 @@ describe('ofx-parser', () => {
 
       expect(result.balance).toBeNull();
       expect(result.balanceDate).toBeNull();
+    });
+
+    it('infers type from the amount sign when TRNTYPE is missing', async () => {
+      const ofx = bankOfx(`
+<STMTTRN>
+<DTPOSTED>20260505[0:GMT]
+<TRNAMT>-10.00
+<MEMO>ONLY MEMO
+</STMTTRN>
+<STMTTRN>
+<DTPOSTED>20260506
+<TRNAMT>20.00
+</STMTTRN>`);
+
+      const result = await parseOfx(ofx);
+      expect(result.transactions[0]!.type).toBe('debit');
+      expect(result.transactions[0]!.date).toBe('2026-05-05');
+      expect(result.transactions[0]!.description).toBe('ONLY MEMO');
+      expect(result.transactions[0]!.externalId).toBeNull();
+      expect(result.transactions[1]!.type).toBe('credit');
+      expect(result.transactions[1]!.description).toBe('Unknown');
+    });
+
+    it('throws on an OFX date that is too short', async () => {
+      const ofx = bankOfx(`
+<STMTTRN>
+<TRNTYPE>DEBIT
+<DTPOSTED>202605
+<TRNAMT>-1.00
+<FITID>SHORT
+<NAME>SHORT DATE
+</STMTTRN>`);
+
+      await expect(parseOfx(ofx)).rejects.toThrow(/Invalid OFX date/);
     });
 
     it('throws on unsupported OFX format', async () => {

@@ -24,6 +24,7 @@ let browserDbPromise: Promise<Database> | null = null;
  * Node.js (tests): sql.js, in-memory.
  */
 export async function initDatabase(): Promise<Database> {
+  /* v8 ignore start -- cr-sqlite connection cache; Node tests use sql.js */
   if (isBrowser) {
     // Cache the connection promise, but drop it if it rejects so a transient failure
     // (migration error, storage hiccup) can be retried without a full page reload.
@@ -33,6 +34,7 @@ export async function initDatabase(): Promise<Database> {
     });
     return browserDbPromise;
   }
+  /* v8 ignore stop */
   return openAndMigrate();
 }
 
@@ -41,6 +43,7 @@ async function openAndMigrate(): Promise<Database> {
 
   await runMigrations(db, allMigrations);
 
+  /* v8 ignore start -- cr-sqlite CRR registration; sql.js has no crsql extension */
   if (isBrowser) {
     // Register each syncable table as a conflict-free replicated relation so that
     // `crsql_changes`-based sync converges. Idempotent across reloads. sql.js has no
@@ -49,6 +52,7 @@ async function openAndMigrate(): Promise<Database> {
       await db.exec(`SELECT crsql_as_crr('${table}')`);
     }
   }
+  /* v8 ignore stop */
 
   return db;
 }
@@ -58,6 +62,7 @@ async function openAndMigrate(): Promise<Database> {
  * dynamically so Node/test bundling never resolves the WASM artifact (the `?url` suffix
  * only makes sense under Vite).
  */
+/* v8 ignore start -- Vite `?url` WASM import; not resolvable under Node */
 async function createCrSqliteDatabase(): Promise<Database> {
   const { default: initWasm } = await import('@vlcn.io/crsqlite-wasm');
   const { default: wasmUrl } = await import('@vlcn.io/crsqlite-wasm/crsqlite.wasm?url');
@@ -79,6 +84,7 @@ async function createCrSqliteDatabase(): Promise<Database> {
     },
   };
 }
+/* v8 ignore stop */
 
 /**
  * Node.js / tests: sql.js, in-memory. Synchronous calls wrapped in an async adapter so the
@@ -134,9 +140,11 @@ export function wrapSqlJs(raw: SqlJsDatabase): Database {
  * Close the database connection cleanly.
  */
 export async function closeDatabase(db: Database): Promise<void> {
+  /* v8 ignore start -- shared browser connection; Node tests each own a database */
   if (isBrowser && browserDbPromise) {
     // Allow a future initDatabase() to reopen the shared connection.
     browserDbPromise = null;
   }
+  /* v8 ignore stop */
   await db.close();
 }

@@ -42,6 +42,42 @@ Store money as integer cents. Format only for display.
 5. No `any`. Exhaustive switches end in a `never` check.
 6. Domain code takes values and returns values. Repositories are the SQLite boundary.
 
+## Area rules
+
+### Keys and encryption
+
+- Wrapped keys live in the IndexedDB database `mytruetrack-keystore`.
+- Each AES-GCM blob uses a fresh 12-byte IV, stored with the ciphertext.
+- Keep keys non-extractable where the API allows it.
+
+### Storage
+
+- Dates are ISO `TEXT` (`transaction_date`). Non-primary-key columns need a SQL default so cr-sqlite can sync them.
+- Accounts are soft-deleted (`is_active = 0`). Transactions are hard-deleted (`DELETE FROM transactions`).
+
+### Sync
+
+Cloud sync is peer CRDT segments, not one latest blob.
+
+- The vault probe reads `vault-metadata.json`. Results are `empty`, `ready`, `legacy`, or `corrupt`.
+- Deltas are append-only `changes-<siteId>-<dbVersion>.bin` files. Pull applies other peers only. This device does not replay its own site file.
+- One Google OAuth client shares a single Drive appDataFolder across origins, including localhost and the deployed site. A probe on one origin can see a vault created on the other.
+- Setup saves `SyncConfig.storageChoice` before any data-encryption key exists. After setup, Settings cannot first-connect or switch providers. Google Reconnect and a WebDAV retry stay on the same endpoint. This-device-only cannot turn sync on later. Start fresh clears the choice and returns to the sync question.
+- Auto-sync logs failures and leaves the app usable. The header shows Syncing or Sync pending only. It does not show an idle synced badge.
+- Encrypt before upload and decrypt after download.
+
+### Imports
+
+- The stored amount is a positive integer plus a `credit` or `debit` type. A non-positive amount is rejected.
+- InvestPass rows keep the extension UUID as `externalId`. The PWA does not store InvestPass credentials or API tokens. The extension holds that session.
+- Validate parsed rows before insert. Replacing the spreadsheet parser is a separate open item. Do not do it as a side effect of other import work.
+
+### Danger Zone
+
+- Both actions stay disabled until the user types `DELETE`.
+- Clear all data removes accounts, transactions, categories, tags, and rules. The passphrase, encryption keys, and sync configuration stay. The user remains signed in. When sync is on, the deletion propagates.
+- Full reset removes that data and also the passphrase, encryption keys, and cloud sync configuration on this device, then restarts onboarding.
+
 ## Style
 
 - `strict: true`. Prefer `type` for data and `interface` for contracts.

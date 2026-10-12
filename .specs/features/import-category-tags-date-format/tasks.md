@@ -366,6 +366,8 @@ T11 → T12
 
 ### T10: Add the mapper controls
 
+**Status**: Complete
+
 **What**: Add the date-format selector and the Category and Tags column pickers to `ColumnMapper`.
 **Where**: `src/ui/components/import/ColumnMapper.tsx`
 **Depends on**: T4
@@ -379,11 +381,11 @@ T11 → T12
 
 **Done when**:
 
-- [ ] The date-format control lists `DD/MM/YYYY`, `MM/DD/YYYY`, `YYYY-MM-DD`, `DD/MMM/YYYY`, and `MMM/DD/YYYY`, and uses `data-testid="map-date-format"`
-- [ ] Category and Tags pickers use `map-category` and `map-tags` and can be cleared
-- [ ] Choosing a format or a column calls `onChange` with that field updated
-- [ ] A missing `dateFormat` renders as `DD/MM/YYYY`
-- [ ] `npm test` passes
+- [x] The date-format control lists `DD/MM/YYYY`, `MM/DD/YYYY`, `YYYY-MM-DD`, `DD/MMM/YYYY`, and `MMM/DD/YYYY`, and uses `data-testid="map-date-format"`
+- [x] Category and Tags pickers use `map-category` and `map-tags` and can be cleared
+- [x] Choosing a format or a column calls `onChange` with that field updated
+- [x] A missing `dateFormat` renders as `DD/MM/YYYY`
+- [x] `npm test` passes
 
 **Tests**: unit
 **Gate**: quick

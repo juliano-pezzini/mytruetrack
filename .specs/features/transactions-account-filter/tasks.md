@@ -108,15 +108,15 @@ T3 → T4
 
 **Done when**:
 
-- [ ] `accountId === null` with a date range loads all-accounts rows via T1
-- [ ] Create/update/delete still refresh after writes
-- [ ] Gate check passes: `npm run typecheck && npm run lint`
-- [ ] No silent deletion of existing unit tests
+- [x] `accountId === null` with a date range loads all-accounts rows via T1
+- [x] Create/update/delete still refresh after writes
+- [x] Gate check passes: `npm run typecheck && npm run lint`
+- [x] No silent deletion of existing unit tests
 
 **Tests**: none
 **Gate**: build
 
-**Commit**: `feat(txn-filter): load all accounts when filter cleared`
+**Commit**: `feat(txn-filter): load all accounts when filter cleared` ✅ `done`
 
 ---
 

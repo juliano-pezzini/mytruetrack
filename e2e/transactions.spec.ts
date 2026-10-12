@@ -175,6 +175,9 @@ test('All accounts shows rows from every account with Account column', async ({ 
   await expect(page.getByRole('cell', { name: 'From Second' })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Test Bank', exact: true })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Second Bank', exact: true })).toBeVisible();
+  // Newest first (day 3 before day 2)
+  await expect(page.locator('tbody tr').nth(0)).toContainText('From Second');
+  await expect(page.locator('tbody tr').nth(1)).toContainText('From Test');
 
   await page.getByLabel('Account filter').selectOption({ label: 'Test Bank' });
   await expect(page.getByRole('cell', { name: 'From Test' })).toBeVisible();
@@ -199,4 +202,51 @@ test('create from All accounts uses account picker', async ({ page }) => {
 
   await expect(page.getByRole('cell', { name: 'Picker Created' })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Picker Bank', exact: true })).toBeVisible();
+});
+
+test('create under All without account does not add a row', async ({ page }) => {
+  await page.getByRole('button', { name: '+ New Transaction' }).click();
+  await page.getByLabel('Amount').fill('1.00');
+  await page.getByLabel('Description').fill('Should Not Appear');
+  await page.getByLabel('Date').fill(thisMonth(1));
+  await page.getByRole('button', { name: 'Create' }).click();
+  await expect(page.getByRole('cell', { name: 'Should Not Appear' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'New Transaction' })).toBeVisible();
+});
+
+test('create under single account has no picker', async ({ page }) => {
+  await page.getByLabel('Account filter').selectOption({ label: 'Test Bank' });
+  await page.getByRole('button', { name: '+ New Transaction' }).click();
+  await expect(page.getByLabel('Account', { exact: true })).toHaveCount(0);
+  await page.getByLabel('Amount').fill('7.00');
+  await page.getByLabel('Description').fill('Single Filter Create');
+  await page.getByLabel('Date').fill(thisMonth(4));
+  await page.getByLabel('Type').selectOption('debit');
+  await page.getByRole('button', { name: 'Create' }).click();
+  await expect(page.getByRole('cell', { name: 'Single Filter Create' })).toBeVisible();
+});
+
+test('switching filter closes open create form', async ({ page }) => {
+  await page.getByRole('button', { name: '+ New Transaction' }).click();
+  await expect(page.getByRole('heading', { name: 'New Transaction' })).toBeVisible();
+  await page.getByLabel('Account filter').selectOption({ label: 'Test Bank' });
+  await expect(page.getByRole('heading', { name: 'New Transaction' })).toHaveCount(0);
+});
+
+test.describe('no accounts yet', () => {
+  test.beforeEach(async ({ page }) => {
+    await setupLocalOnly(page);
+  });
+
+  test('shows create-account guidance without All accounts option', async ({ page }) => {
+    await page.getByRole('link', { name: /Transactions/i }).click();
+    await page.getByRole('heading', { name: 'Transactions' }).waitFor();
+    await expect(page.getByText('Create an account first to add transactions.')).toBeVisible();
+    await expect(page.getByLabel('Account filter').locator('option', { hasText: 'All accounts' })).toHaveCount(
+      0,
+    );
+    await expect(page.getByLabel('Account filter').locator('option', { hasText: 'No accounts' })).toHaveCount(
+      1,
+    );
+  });
 });

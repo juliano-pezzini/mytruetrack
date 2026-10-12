@@ -91,24 +91,24 @@ The Transactions screen always pins the account filter to one account (the first
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| TXNF-01 | P1: Clear filter — default All accounts | - | Pending |
+| TXNF-01 | P1: Clear filter — default All accounts | Execute | Implementing |
 | TXNF-02 | P1: Clear filter — list all active accounts for month | Execute | Implementing |
-| TXNF-03 | P1: Clear filter — list single account for month | - | Pending |
-| TXNF-04 | P1: Clear filter — Account column while All | - | Pending |
-| TXNF-05 | P1: Clear filter — hide Account column when filtered | - | Pending |
-| TXNF-06 | P1: Clear filter — hide Balance while All | - | Pending |
-| TXNF-07 | P1: Clear filter — show Balance when filtered | - | Pending |
-| TXNF-08 | P1: Clear filter — no accounts empty state | - | Pending |
-| TXNF-09 | P1: Create — New Transaction enabled on All | - | Pending |
-| TXNF-10 | P1: Create — required account picker on All | - | Pending |
-| TXNF-11 | P1: Create — reject submit with no account | - | Pending |
-| TXNF-12 | P1: Create — create on chosen account and refresh | - | Pending |
-| TXNF-13 | P1: Create — no picker when single-account filter | - | Pending |
-| TXNF-14 | P1: Create — edit has no account picker / no account change | - | Pending |
-| TXNF-15 | Edge — empty month under All accounts | - | Pending |
-| TXNF-16 | Edge — close open form on filter mode switch | - | Pending |
+| TXNF-03 | P1: Clear filter — list single account for month | Execute | Implementing |
+| TXNF-04 | P1: Clear filter — Account column while All | Execute | Implementing |
+| TXNF-05 | P1: Clear filter — hide Account column when filtered | Execute | Implementing |
+| TXNF-06 | P1: Clear filter — hide Balance while All | Execute | Implementing |
+| TXNF-07 | P1: Clear filter — show Balance when filtered | Execute | Implementing |
+| TXNF-08 | P1: Clear filter — no accounts empty state | Execute | Implementing |
+| TXNF-09 | P1: Create — New Transaction enabled on All | Execute | Implementing |
+| TXNF-10 | P1: Create — required account picker on All | Execute | Implementing |
+| TXNF-11 | P1: Create — reject submit with no account | Execute | Implementing |
+| TXNF-12 | P1: Create — create on chosen account and refresh | Execute | Implementing |
+| TXNF-13 | P1: Create — no picker when single-account filter | Execute | Implementing |
+| TXNF-14 | P1: Create — edit has no account picker / no account change | Execute | Implementing |
+| TXNF-15 | Edge — empty month under All accounts | Execute | Implementing |
+| TXNF-16 | Edge — close open form on filter mode switch | Execute | Implementing |
 
-**Coverage:** 16 total, 0 mapped to tasks, 16 unmapped (tasks phase not started)
+**Coverage:** 16 total, 16 mapped to tasks T1–T4
 
 ---
 

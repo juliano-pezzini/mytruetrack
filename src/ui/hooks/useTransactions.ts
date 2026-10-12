@@ -16,6 +16,12 @@ export function useTransactions(accountId: string | null, dateRange?: DateRange)
 
   const refresh = useCallback(async () => {
     const current = ++requestId.current;
+    // Empty string = no accounts yet (caller has nothing to list).
+    if (accountId === '') {
+      setTransactions([]);
+      setLoading(false);
+      return;
+    }
     const repo = createTransactionRepository(db);
     const rows =
       accountId === null

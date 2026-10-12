@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: skipped (medium feature; decisions in `context.md`)
-**Status**: In Progress
+**Status**: Done
 
 ---
 
@@ -165,20 +165,20 @@ T3 → T4
 
 **Done when**:
 
-- [ ] Default filter is All accounts when accounts exist
-- [ ] Selecting All accounts lists that month’s transactions across active accounts with Account column and without Balance column
-- [ ] Selecting one account filters the list, hides Account column, shows Balance
-- [ ] + New Transaction stays enabled on All accounts and uses the form picker; create refreshes the list
-- [ ] Switching filter mode closes open create/edit forms
-- [ ] Existing transaction e2e flows pass (adjusted for All-accounts default / picker)
-- [ ] New e2e covers All-accounts default visibility across two accounts and create-via-picker
-- [ ] Gate check passes: full gate command above
-- [ ] Test count: no silent deletions of prior e2e cases
+- [x] Default filter is All accounts when accounts exist
+- [x] Selecting All accounts lists that month’s transactions across active accounts with Account column and without Balance column
+- [x] Selecting one account filters the list, hides Account column, shows Balance
+- [x] + New Transaction stays enabled on All accounts and uses the form picker; create refreshes the list
+- [x] Switching filter mode closes open create/edit forms
+- [x] Existing transaction e2e flows pass (adjusted for All-accounts default / picker)
+- [x] New e2e covers All-accounts default visibility across two accounts and create-via-picker
+- [x] Gate check passes: full gate command above
+- [x] Test count: no silent deletions of prior e2e cases
 
 **Tests**: e2e
 **Gate**: full
 
-**Commit**: `feat(txn-filter): default transactions to all accounts`
+**Commit**: `feat(txn-filter): default transactions to all accounts` ✅ `done`
 
 ---
 

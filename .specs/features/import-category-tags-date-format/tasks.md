@@ -302,6 +302,8 @@ T11 → T12
 
 ### T8: Store categories and tags on import
 
+**Status**: Complete
+
 **What**: Extend `importTransactions` so non-duplicate rows are classified, missing categories and tags are created, and the transaction stores `categoryId` plus tag links. Rows with no names skip the catalog reads.
 **Where**: `src/workers/import-service.ts`
 **Depends on**: T3, T6
@@ -315,17 +317,17 @@ T11 → T12
 
 **Done when**:
 
-- [ ] A new debit category is stored as `expense` with null parent and null description, and its id is on the transaction
-- [ ] A new credit category is stored as `revenue`
-- [ ] A later row in the same import reuses that category when its direction differs
-- [ ] One existing category is linked even when its type differs
-- [ ] The first new tag is `#E11D48` and the next new tag is `#0EA5E9`, with one `transaction_tags` row each
-- [ ] A duplicate `externalId` is skipped and creates neither a category nor a tag
-- [ ] A thrown create records that row index and a later row still imports
-- [ ] A second import links the category created by the first and does not insert another
-- [ ] An empty category stays null when an auto-category rule would match the description
-- [ ] Existing import-service tests still pass
-- [ ] `npm test` passes
+- [x] A new debit category is stored as `expense` with null parent and null description, and its id is on the transaction
+- [x] A new credit category is stored as `revenue`
+- [x] A later row in the same import reuses that category when its direction differs
+- [x] One existing category is linked even when its type differs
+- [x] The first new tag is `#E11D48` and the next new tag is `#0EA5E9`, with one `transaction_tags` row each
+- [x] A duplicate `externalId` is skipped and creates neither a category nor a tag
+- [x] A thrown create records that row index and a later row still imports
+- [x] A second import links the category created by the first and does not insert another
+- [x] An empty category stays null when an auto-category rule would match the description
+- [x] Existing import-service tests still pass
+- [x] `npm test` passes
 
 **Tests**: unit
 **Gate**: quick

@@ -212,6 +212,8 @@ T11 → T12
 
 ### T5: Normalize saved column mappings
 
+**Status**: Complete
+
 **What**: Add `normalizeColumnMapping`, filling a missing date format with `dmy` and missing category and tags columns with null.
 **Where**: `src/workers/column-mapping.ts`
 **Depends on**: T4
@@ -225,9 +227,9 @@ T11 → T12
 
 **Done when**:
 
-- [ ] A config with no `dateFormat`, `categoryColumn`, or `tagsColumn` normalizes to `dmy`, null, and null
-- [ ] A config that already has `mondy` and column indexes is unchanged
-- [ ] `npm test` passes
+- [x] A config with no `dateFormat`, `categoryColumn`, or `tagsColumn` normalizes to `dmy`, null, and null
+- [x] A config that already has `mondy` and column indexes is unchanged
+- [x] `npm test` passes
 
 **Tests**: unit
 **Gate**: quick

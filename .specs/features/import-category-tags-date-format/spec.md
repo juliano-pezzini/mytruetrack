@@ -212,23 +212,23 @@ The selected default is the format with the most votes. Ties use the order in th
 | IMAP-02 | P1: Category and tags columns | Design | Pending |
 | IMAP-03 | P1: Category and tags columns | Design | Pending |
 | IMAP-04 | P1: Category and tags columns | Design | Pending |
-| IMAP-05 | P1: Category and tags columns | Design | Pending |
-| IMAP-06 | P1: Category and tags columns | Design | Pending |
+| IMAP-05 | P1: Category and tags columns | T3 | Pending |
+| IMAP-06 | P1: Category and tags columns | T3 | Done |
 | IMAP-07 | P1: Category and tags columns | T2 | Done |
-| IMAP-08 | P1: Category and tags columns | Design | Pending |
-| IMAP-09 | P1: Category and tags columns | Design | Pending |
-| IMAP-10 | P1: Category and tags columns | Design | Pending |
-| IMAP-11 | P1: Category and tags columns | Design | Pending |
-| IMAP-12 | P1: Category and tags columns | Design | Pending |
-| IMAP-13 | P1: Category and tags columns | Design | Pending |
-| IMAP-14 | P1: Category and tags columns | Design | Pending |
-| IMAP-15 | P1: Category and tags columns | Design | Pending |
+| IMAP-08 | P1: Category and tags columns | T3 | Done |
+| IMAP-09 | P1: Category and tags columns | T3 | Pending |
+| IMAP-10 | P1: Category and tags columns | T3 | Pending |
+| IMAP-11 | P1: Category and tags columns | T3 | Pending |
+| IMAP-12 | P1: Category and tags columns | T3 | Pending |
+| IMAP-13 | P1: Category and tags columns | T3 | Done |
+| IMAP-14 | P1: Category and tags columns | T3 | Done |
+| IMAP-15 | P1: Category and tags columns | T3 | Done |
 | IMAP-16 | P1: Category and tags columns | T2 | Done |
 | IMAP-17 | P1: Category and tags columns | T2 | Done |
 | IMAP-18 | P1: Category and tags columns | T2 | Done |
-| IMAP-19 | P1: Category and tags columns | Design | Pending |
-| IMAP-20 | P1: Category and tags columns | Design | Pending |
-| IMAP-21 | P1: Category and tags columns | Design | Pending |
+| IMAP-19 | P1: Category and tags columns | T3 | Pending |
+| IMAP-20 | P1: Category and tags columns | T3 | Pending |
+| IMAP-21 | P1: Category and tags columns | T3 | Done |
 | IMAP-22 | P1: Category and tags columns | Design | Pending |
 | IMAP-23 | P1: Category and tags columns | Design | Pending |
 | IMAP-24 | P1: Category and tags columns | Design | Pending |
@@ -236,7 +236,7 @@ The selected default is the format with the most votes. Ties use the order in th
 | IMAP-26 | P1: Category and tags columns | Design | Pending |
 | IMAP-27 | P1: Category and tags columns | Design | Pending |
 | IMAP-28 | P1: Category and tags columns | Design | Pending |
-| IMAP-29 | P1: Category and tags columns | Design | Pending |
+| IMAP-29 | P1: Category and tags columns | T3 | Pending |
 | IMAP-30 | P1: Date format selection | Design | Pending |
 | IMAP-31 | P1: Date format selection | T1 | Done |
 | IMAP-32 | P1: Date format selection | T1 | Done |
@@ -268,7 +268,7 @@ The selected default is the format with the most votes. Ties use the order in th
 | IMAP-58 | P1: Saved mappings keep the new fields | Design | Pending |
 | IMAP-59 | P1: Saved mappings keep the new fields | Design | Pending |
 
-**Coverage:** 59 total, 28 mapped to tasks, 31 unmapped.
+**Coverage:** 59 total, 42 mapped to tasks, 17 unmapped.
 
 Category story criteria 1–29 are IMAP-01 through IMAP-29. Date story criteria 1–27 are IMAP-30 through IMAP-56. Saved-mapping criteria 1–3 are IMAP-57 through IMAP-59.
 

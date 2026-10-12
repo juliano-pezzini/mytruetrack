@@ -150,6 +150,8 @@ T11 → T12
 
 ### T3: Plan category and tag links
 
+**Status**: Complete
+
 **What**: Add `classifyImportRows`, which links existing records or marks the first unseen name for creation.
 **Where**: `src/domain/import-classification.ts`
 **Depends on**: T2
@@ -163,16 +165,16 @@ T11 → T12
 
 **Done when**:
 
-- [ ] An empty category cell is `none` and an empty tags cell has no tag refs
-- [ ] `  Super   Market ` creates stored name `Super Market`; a debit creates `expense` and a credit creates `revenue`
-- [ ] A later row with the same key is `planned` and keeps that type
-- [ ] One existing category is linked even when its type differs from the row
-- [ ] When both types exist, a credit links to `revenue` and a debit links to `expense`
-- [ ] Several matches resolve by stored name, then id, using `<`
-- [ ] The first new tag color is `#E11D48` and the next is `#0EA5E9` when `#E11D48` is used
-- [ ] `  food ` links an existing tag named `Food`
-- [ ] A second plan against a catalog that already contains the created category links it and does not create another
-- [ ] `npm test` passes
+- [x] An empty category cell is `none` and an empty tags cell has no tag refs
+- [x] `  Super   Market ` creates stored name `Super Market`; a debit creates `expense` and a credit creates `revenue`
+- [x] A later row with the same key is `planned` and keeps that type
+- [x] One existing category is linked even when its type differs from the row
+- [x] When both types exist, a credit links to `revenue` and a debit links to `expense`
+- [x] Several matches resolve by stored name, then id, using `<`
+- [x] The first new tag color is `#E11D48` and the next is `#0EA5E9` when `#E11D48` is used
+- [x] `  food ` links an existing tag named `Food`
+- [x] A second plan against a catalog that already contains the created category links it and does not create another
+- [x] `npm test` passes
 
 **Tests**: unit
 **Gate**: quick

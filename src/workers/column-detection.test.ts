@@ -66,4 +66,50 @@ describe('column-detection', () => {
     expect(m.amountStrategy).toBe('single');
     expect(m.amountColumn).toBe(2);
   });
+
+  it('pre-selects Categoria and Etiquetas', () => {
+    const grid: ImportGrid = {
+      headers: ['Data', 'Descrição', 'Valor', 'Categoria', 'Etiquetas'],
+      rows: [['15/01/2026', 'Mercado', '10,00', 'Food', 'food']],
+    };
+    const m = guessMapping(grid);
+    expect(m.categoryColumn).toBe(3);
+    expect(m.tagsColumn).toBe(4);
+  });
+
+  it('uses the leftmost header that contains a category or tags keyword', () => {
+    const grid: ImportGrid = {
+      headers: ['Category notes', 'Categoria', 'Etiqueta', 'Tags'],
+      rows: [['2026-01-15', 'Food', 'food', 'extra']],
+    };
+    const m = guessMapping(grid);
+    expect(m.categoryColumn).toBe(0);
+    expect(m.tagsColumn).toBe(2);
+  });
+
+  it('leaves category and tags unmapped when no header contains those keywords', () => {
+    const grid: ImportGrid = {
+      headers: ['Date', 'Description', 'Amount'],
+      rows: [['2026-01-15', 'Salary', '10.00']],
+    };
+    const m = guessMapping(grid);
+    expect(m.categoryColumn).toBeNull();
+    expect(m.tagsColumn).toBeNull();
+  });
+
+  it('sets dateFormat to dmony for a 15/fev/2026 date column', () => {
+    const grid: ImportGrid = {
+      headers: ['Date', 'Description', 'Amount'],
+      rows: [['15/fev/2026', 'Rent', '10.00']],
+    };
+    expect(guessMapping(grid).dateFormat).toBe('dmony');
+  });
+
+  it('sets dateFormat to dmy for an ambiguous 01/02/2026 date column', () => {
+    const grid: ImportGrid = {
+      headers: ['Date', 'Description', 'Amount'],
+      rows: [['01/02/2026', 'Rent', '10.00']],
+    };
+    expect(guessMapping(grid).dateFormat).toBe('dmy');
+  });
 });

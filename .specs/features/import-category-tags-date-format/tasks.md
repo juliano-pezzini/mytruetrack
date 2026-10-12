@@ -270,6 +270,8 @@ T11 → T12
 
 ### T7: Detect category, tags, and date format
 
+**Status**: Complete
+
 **What**: Extend `guessMapping` with the category and tags header keywords and `detectDateFormat` on the date column.
 **Where**: `src/workers/column-detection.ts`
 **Depends on**: T1, T4
@@ -283,12 +285,12 @@ T11 → T12
 
 **Done when**:
 
-- [ ] Header `Categoria` sets `categoryColumn`, and `Etiquetas` sets `tagsColumn`
-- [ ] Headers with neither keyword leave both columns null
-- [ ] A `15/fev/2026` date column sets `dateFormat` to `dmony`
-- [ ] An ambiguous `01/02/2026` column sets `dateFormat` to `dmy`
-- [ ] Existing date, description, amount, and number-format expectations still pass
-- [ ] `npm test` passes
+- [x] Header `Categoria` sets `categoryColumn`, and `Etiquetas` sets `tagsColumn`
+- [x] Headers with neither keyword leave both columns null
+- [x] A `15/fev/2026` date column sets `dateFormat` to `dmony`
+- [x] An ambiguous `01/02/2026` column sets `dateFormat` to `dmy`
+- [x] Existing date, description, amount, and number-format expectations still pass
+- [x] `npm test` passes
 
 **Tests**: unit
 **Gate**: quick

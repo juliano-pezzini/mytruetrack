@@ -186,6 +186,8 @@ T11 → T12
 
 ### T4: Extend the import mapping types
 
+**Status**: Complete
+
 **What**: Add optional `dateFormat`, `categoryColumn`, and `tagsColumn` on `ColumnMapping`, and optional `categoryName` and `tagNames` on `ParsedTransaction`. Absence means day-first, unmapped columns, and no names, so current literals still typecheck.
 **Where**: `src/workers/types.ts`
 **Depends on**: T1
@@ -199,8 +201,8 @@ T11 → T12
 
 **Done when**:
 
-- [ ] The new fields are exported on the two types
-- [ ] `npm run typecheck` passes without edits to existing object literals
+- [x] The new fields are exported on the two types
+- [x] `npm run typecheck` passes without edits to existing object literals
 
 **Tests**: none
 **Gate**: build

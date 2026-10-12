@@ -211,7 +211,7 @@ The selected default is the format with the most votes. Ties use the order in th
 | IMAP-01 | P1: Category and tags columns | Design | Pending |
 | IMAP-02 | P1: Category and tags columns | Design | Pending |
 | IMAP-03 | P1: Category and tags columns | Design | Pending |
-| IMAP-04 | P1: Category and tags columns | Design | Pending |
+| IMAP-04 | P1: Category and tags columns | T4 | Pending |
 | IMAP-05 | P1: Category and tags columns | T3 | Pending |
 | IMAP-06 | P1: Category and tags columns | T3 | Done |
 | IMAP-07 | P1: Category and tags columns | T2 | Done |
@@ -268,7 +268,7 @@ The selected default is the format with the most votes. Ties use the order in th
 | IMAP-58 | P1: Saved mappings keep the new fields | Design | Pending |
 | IMAP-59 | P1: Saved mappings keep the new fields | Design | Pending |
 
-**Coverage:** 59 total, 42 mapped to tasks, 17 unmapped.
+**Coverage:** 59 total, 43 mapped to tasks, 16 unmapped.
 
 Category story criteria 1–29 are IMAP-01 through IMAP-29. Date story criteria 1–27 are IMAP-30 through IMAP-56. Saved-mapping criteria 1–3 are IMAP-57 through IMAP-59.
 

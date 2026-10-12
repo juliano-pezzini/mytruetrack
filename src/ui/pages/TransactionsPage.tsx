@@ -68,9 +68,14 @@ export function TransactionsPage() {
     const scoped = allAccountsMode
       ? transactions.filter((t) => activeAccountIds.has(t.accountId))
       : transactions;
-    return [...scoped].sort(
-      (a, b) => a.transactionDate.localeCompare(b.transactionDate) || a.id.localeCompare(b.id),
-    );
+    // All accounts: newest first (TXNF-02). Single account: oldest first for running balance.
+    return [...scoped].sort((a, b) => {
+      const byDate = allAccountsMode
+        ? b.transactionDate.localeCompare(a.transactionDate)
+        : a.transactionDate.localeCompare(b.transactionDate);
+      if (byDate !== 0) return byDate;
+      return allAccountsMode ? b.id.localeCompare(a.id) : a.id.localeCompare(b.id);
+    });
   }, [transactions, allAccountsMode, activeAccountIds]);
 
   const runningBalances = useMemo(() => {

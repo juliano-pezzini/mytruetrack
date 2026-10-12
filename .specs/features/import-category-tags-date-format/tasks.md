@@ -424,6 +424,8 @@ T11 → T12
 
 ### T12: Wire the wizard and the import e2e
 
+**Status**: Complete
+
 **What**: Load categories and tags in `ImportWizard`, classify the preview, keep import available when the new columns are unmapped, and cover the flow in Playwright.
 **Where**: `src/ui/components/import/ImportWizard.tsx`
 **Depends on**: T6, T8, T10, T11
@@ -437,11 +439,11 @@ T11 → T12
 
 **Done when**:
 
-- [ ] The preview uses `classifyImportRows` against the loaded catalog
-- [ ] Import stays enabled when Category and Tags are unmapped and the required amount columns are mapped
-- [ ] Changing the date format reparses the preview
-- [ ] `e2e/import.spec.ts` shows `01/02/2026` becoming `2026-01-02` after month-first is selected, and a CSV with category and tags imports those values
-- [ ] `npm test` and `npm run test:e2e` pass
+- [x] The preview uses `classifyImportRows` against the loaded catalog
+- [x] Import stays enabled when Category and Tags are unmapped and the required amount columns are mapped
+- [x] Changing the date format reparses the preview
+- [x] `e2e/import.spec.ts` shows `01/02/2026` becoming `2026-01-02` after month-first is selected, and a CSV with category and tags imports those values
+- [x] `npm test` and `npm run test:e2e` pass
 
 **Tests**: e2e
 **Gate**: full

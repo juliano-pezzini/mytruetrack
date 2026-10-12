@@ -211,7 +211,7 @@ The selected default is the format with the most votes. Ties use the order in th
 | IMAP-01 | P1: Category and tags columns | T10 | Done |
 | IMAP-02 | P1: Category and tags columns | T7 | Done |
 | IMAP-03 | P1: Category and tags columns | T7 | Done |
-| IMAP-04 | P1: Category and tags columns | T4 | Pending |
+| IMAP-04 | P1: Category and tags columns | T4, T12 | Done |
 | IMAP-05 | P1: Category and tags columns | T3, T8 | Done |
 | IMAP-06 | P1: Category and tags columns | T3 | Done |
 | IMAP-07 | P1: Category and tags columns | T2 | Done |
@@ -229,7 +229,7 @@ The selected default is the format with the most votes. Ties use the order in th
 | IMAP-19 | P1: Category and tags columns | T3, T8 | Done |
 | IMAP-20 | P1: Category and tags columns | T3, T8 | Done |
 | IMAP-21 | P1: Category and tags columns | T3 | Done |
-| IMAP-22 | P1: Category and tags columns | T11 | Pending |
+| IMAP-22 | P1: Category and tags columns | T11, T12 | Done |
 | IMAP-23 | P1: Category and tags columns | T8 | Done |
 | IMAP-24 | P1: Category and tags columns | T6, T8 | Done |
 | IMAP-25 | P1: Category and tags columns | T8 | Done |
@@ -258,7 +258,7 @@ The selected default is the format with the most votes. Ties use the order in th
 | IMAP-48 | P1: Date format selection | T1 | Done |
 | IMAP-49 | P1: Date format selection | T1 | Done |
 | IMAP-50 | P1: Date format selection | T6 | Done |
-| IMAP-51 | P1: Date format selection | Design | Pending |
+| IMAP-51 | P1: Date format selection | T12 | Done |
 | IMAP-52 | P1: Date format selection | T1 | Done |
 | IMAP-53 | P1: Date format selection | T1 | Done |
 | IMAP-54 | P1: Date format selection | T1 | Done |
@@ -268,7 +268,7 @@ The selected default is the format with the most votes. Ties use the order in th
 | IMAP-58 | P1: Saved mappings keep the new fields | T9 | Done |
 | IMAP-59 | P1: Saved mappings keep the new fields | T5, T9 | Done |
 
-**Coverage:** 59 total, 58 mapped to tasks, 1 unmapped.
+**Coverage:** 59 total, 59 mapped to tasks, 0 unmapped.
 
 Category story criteria 1–29 are IMAP-01 through IMAP-29. Date story criteria 1–27 are IMAP-30 through IMAP-56. Saved-mapping criteria 1–3 are IMAP-57 through IMAP-59.
 

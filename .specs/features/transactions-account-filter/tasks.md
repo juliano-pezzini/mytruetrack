@@ -137,16 +137,16 @@ T3 → T4
 
 **Done when**:
 
-- [ ] Create with `accounts` (and no fixed `accountId`) shows a required account select labeled for accessibility
-- [ ] Submit without a chosen account does not call `onSubmit`
-- [ ] Create with fixed `accountId` (no `accounts` / single-account mode) shows no picker and submits that account
-- [ ] Edit mode shows no account picker
-- [ ] Gate check passes: `npm run typecheck && npm run lint`
+- [x] Create with `accounts` (and no fixed `accountId`) shows a required account select labeled for accessibility
+- [x] Submit without a chosen account does not call `onSubmit`
+- [x] Create with fixed `accountId` (no `accounts` / single-account mode) shows no picker and submits that account
+- [x] Edit mode shows no account picker
+- [x] Gate check passes: `npm run typecheck && npm run lint`
 
 **Tests**: none
 **Gate**: build
 
-**Commit**: `feat(txn-filter): require account picker on all-accounts create`
+**Commit**: `feat(txn-filter): require account picker on all-accounts create` ✅ `done`
 
 ---
 

@@ -337,6 +337,8 @@ T11 → T12
 
 ### T9: Load saved mappings with the new fields
 
+**Status**: Complete
+
 **What**: Run every stored config through `normalizeColumnMapping` in `listMappings`, and cover save plus load of the new fields.
 **Where**: `src/storage/import-mappings.ts`
 **Depends on**: T5
@@ -350,9 +352,9 @@ T11 → T12
 
 **Done when**:
 
-- [ ] Saving a mapping with `mondy`, a category column, and a tags column returns those values from `listMappings`
-- [ ] A stored config missing the new fields loads as `dmy` with both columns null
-- [ ] `npm test` passes
+- [x] Saving a mapping with `mondy`, a category column, and a tags column returns those values from `listMappings`
+- [x] A stored config missing the new fields loads as `dmy` with both columns null
+- [x] `npm test` passes
 
 **Tests**: unit
 **Gate**: quick

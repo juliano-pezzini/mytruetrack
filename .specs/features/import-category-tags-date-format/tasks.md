@@ -395,6 +395,8 @@ T11 → T12
 
 ### T11: Show category and tags in the preview
 
+**Status**: Complete
+
 **What**: Render the category name, the create/planned type suffix, and the tag names in `PreviewTable`.
 **Where**: `src/ui/components/import/PreviewTable.tsx`
 **Depends on**: None
@@ -408,11 +410,11 @@ T11 → T12
 
 **Done when**:
 
-- [ ] An existing category renders as its stored name
-- [ ] A category this import will create renders as `Name (expense)` or `Name (revenue)`
-- [ ] Tags render in order joined by `, `
-- [ ] An empty category and empty tags render as blank cells
-- [ ] `npm test` passes
+- [x] An existing category renders as its stored name
+- [x] A category this import will create renders as `Name (expense)` or `Name (revenue)`
+- [x] Tags render in order joined by `, `
+- [x] An empty category and empty tags render as blank cells
+- [x] `npm test` passes
 
 **Tests**: unit
 **Gate**: quick

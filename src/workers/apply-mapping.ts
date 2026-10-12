@@ -6,8 +6,10 @@
  * wizard chooses columns/strategy/number-format and this module does the extraction.
  */
 
-import { parseAmount } from '../domain/number-format.ts';
+import { parseImportDate } from '../domain/date-format.ts';
+import { splitTagNames, storedName } from '../domain/import-names.ts';
 import { abs as moneyAbs, isPositive, isZero, type Money } from '../domain/money.ts';
+import { parseAmount } from '../domain/number-format.ts';
 import type { TransactionType } from '../domain/transaction.ts';
 import type {
   ColumnMapping,
@@ -38,50 +40,6 @@ const DEBIT_KEYWORDS = [
   'expense',
   'd',
 ];
-
-/** Parse a date cell into ISO YYYY-MM-DD. Accepts ISO and D/M/Y (day-first) forms. */
-function parseDateValue(raw: string): string {
-  const trimmed = raw.trim();
-  if (trimmed === '') throw new Error('empty date');
-
-  // ISO (optionally with a time component).
-  const iso = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (iso) {
-    const month = Number(iso[2]);
-    const day = Number(iso[3]);
-    if (month < 1 || month > 12 || day < 1 || day > 31) {
-      throw new Error(`invalid date: "${raw}"`);
-    }
-    return `${iso[1]}-${iso[2]}-${iso[3]}`;
-  }
-
-  // D/M/Y or M/D/Y with '/', '-' or '.' separators and a 4-digit year.
-  const dmy = trimmed.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})$/);
-  if (dmy) {
-    const a = Number(dmy[1]);
-    const b = Number(dmy[2]);
-    const year = dmy[3]!;
-    let day: number;
-    let month: number;
-    if (a > 12) {
-      day = a;
-      month = b;
-    } else if (b > 12) {
-      month = a;
-      day = b;
-    } else {
-      // Ambiguous → assume day-first (the dominant convention for this app's users).
-      day = a;
-      month = b;
-    }
-    if (month < 1 || month > 12 || day < 1 || day > 31) {
-      throw new Error(`invalid date: "${raw}"`);
-    }
-    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  }
-
-  throw new Error(`invalid date: "${raw}"`);
-}
 
 function cellAt(row: readonly string[], col: number | null): string {
   if (col == null || col < 0 || col >= row.length) return '';
@@ -153,7 +111,7 @@ export function applyMapping(grid: ImportGrid, mapping: ColumnMapping): MappingR
   for (let i = 0; i < grid.rows.length; i++) {
     const row = grid.rows[i]!;
     try {
-      const date = parseDateValue(cellAt(row, mapping.dateColumn));
+      const date = parseImportDate(cellAt(row, mapping.dateColumn), mapping.dateFormat ?? 'dmy');
       const descRaw = cellAt(row, mapping.descriptionColumn).trim();
       const description = descRaw === '' ? 'Unknown' : descRaw;
       const { amount, type } = extractAmountAndType(row, mapping);
@@ -163,7 +121,18 @@ export function applyMapping(grid: ImportGrid, mapping: ColumnMapping): MappingR
         continue;
       }
 
-      transactions.push({ date, description, amount, type, externalId: null });
+      const categoryName = storedName(cellAt(row, mapping.categoryColumn ?? null));
+      const tagNames = splitTagNames(cellAt(row, mapping.tagsColumn ?? null));
+
+      transactions.push({
+        date,
+        description,
+        amount,
+        type,
+        externalId: null,
+        categoryName: categoryName === '' ? null : categoryName,
+        tagNames,
+      });
     } catch (err) {
       warnings.push({ row: i, message: err instanceof Error ? err.message : String(err) });
     }

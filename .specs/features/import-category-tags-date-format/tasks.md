@@ -239,6 +239,8 @@ T11 → T12
 
 ### T6: Apply the date format and label columns
 
+**Status**: Complete
+
 **What**: Make `applyMapping` parse dates with `parseImportDate` and copy `categoryName` and `tagNames` onto each parsed transaction. A missing `dateFormat` behaves as `dmy`.
 **Where**: `src/workers/apply-mapping.ts`
 **Depends on**: T1, T4
@@ -252,13 +254,13 @@ T11 → T12
 
 **Done when**:
 
-- [ ] `mdy` parses `01/15/2026` as `2026-01-15`, and `dmy` skips that cell with warning `invalid date: "01/15/2026"` while a sibling valid row remains
-- [ ] An ISO cell parses when `dateFormat` is `dmy`
-- [ ] A mapped category cell becomes `categoryName`, and a tags cell becomes `tagNames`
-- [ ] An unmapped or blank category column yields `categoryName` null, and a blank tags cell yields an empty list
-- [ ] A row skipped for a bad date or amount is absent from `transactions`
-- [ ] Existing apply-mapping tests still pass
-- [ ] `npm test` passes
+- [x] `mdy` parses `01/15/2026` as `2026-01-15`, and `dmy` skips that cell with warning `invalid date: "01/15/2026"` while a sibling valid row remains
+- [x] An ISO cell parses when `dateFormat` is `dmy`
+- [x] A mapped category cell becomes `categoryName`, and a tags cell becomes `tagNames`
+- [x] An unmapped or blank category column yields `categoryName` null, and a blank tags cell yields an empty list
+- [x] A row skipped for a bad date or amount is absent from `transactions`
+- [x] Existing apply-mapping tests still pass
+- [x] `npm test` passes
 
 **Tests**: unit
 **Gate**: quick

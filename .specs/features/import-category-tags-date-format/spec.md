@@ -231,7 +231,7 @@ The selected default is the format with the most votes. Ties use the order in th
 | IMAP-21 | P1: Category and tags columns | T3 | Done |
 | IMAP-22 | P1: Category and tags columns | Design | Pending |
 | IMAP-23 | P1: Category and tags columns | Design | Pending |
-| IMAP-24 | P1: Category and tags columns | Design | Pending |
+| IMAP-24 | P1: Category and tags columns | T6 | Pending |
 | IMAP-25 | P1: Category and tags columns | Design | Pending |
 | IMAP-26 | P1: Category and tags columns | Design | Pending |
 | IMAP-27 | P1: Category and tags columns | Design | Pending |
@@ -246,18 +246,18 @@ The selected default is the format with the most votes. Ties use the order in th
 | IMAP-36 | P1: Date format selection | T1 | Done |
 | IMAP-37 | P1: Date format selection | T1 | Done |
 | IMAP-38 | P1: Date format selection | T1 | Done |
-| IMAP-39 | P1: Date format selection | T1 | Pending |
+| IMAP-39 | P1: Date format selection | T1, T6 | Done |
 | IMAP-40 | P1: Date format selection | T1 | Done |
 | IMAP-41 | P1: Date format selection | T1 | Done |
 | IMAP-42 | P1: Date format selection | T1 | Done |
-| IMAP-43 | P1: Date format selection | T1 | Pending |
+| IMAP-43 | P1: Date format selection | T1, T6 | Done |
 | IMAP-44 | P1: Date format selection | T1 | Done |
 | IMAP-45 | P1: Date format selection | T1 | Done |
 | IMAP-46 | P1: Date format selection | T1 | Done |
 | IMAP-47 | P1: Date format selection | T1 | Done |
 | IMAP-48 | P1: Date format selection | T1 | Done |
 | IMAP-49 | P1: Date format selection | T1 | Done |
-| IMAP-50 | P1: Date format selection | Design | Pending |
+| IMAP-50 | P1: Date format selection | T6 | Done |
 | IMAP-51 | P1: Date format selection | Design | Pending |
 | IMAP-52 | P1: Date format selection | T1 | Done |
 | IMAP-53 | P1: Date format selection | T1 | Done |
@@ -268,7 +268,7 @@ The selected default is the format with the most votes. Ties use the order in th
 | IMAP-58 | P1: Saved mappings keep the new fields | Design | Pending |
 | IMAP-59 | P1: Saved mappings keep the new fields | T5 | Pending |
 
-**Coverage:** 59 total, 44 mapped to tasks, 15 unmapped.
+**Coverage:** 59 total, 46 mapped to tasks, 13 unmapped.
 
 Category story criteria 1–29 are IMAP-01 through IMAP-29. Date story criteria 1–27 are IMAP-30 through IMAP-56. Saved-mapping criteria 1–3 are IMAP-57 through IMAP-59.
 

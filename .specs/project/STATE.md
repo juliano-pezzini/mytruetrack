@@ -1,10 +1,9 @@
 # State
 
-**Last Updated:** 2026-09-14
-**Current Work:** Cloud vault metadata (AD-010) — Execute complete; Verifier PASS
-(https://github.com/juliano-pezzini/mytruetrack/issues/102). Optional UAT for Setup/Restore UI.
-Commits `3611a16..7373ae2`. Planning artifacts (`context.md`, `design.md`, `validation.md`)
-still untracked.
+**Last Updated:** 2026-10-12
+**Current Work:** Transactions account filter (issue #9) — Execute complete; Verifier PASS
+(`.specs/features/transactions-account-filter/`). Branch `feat/transactions-account-filter`,
+commits `1d06e65..3a9cac7`. Optional interactive UAT; not pushed.
 
 ---
 
@@ -208,6 +207,18 @@ dynamically to preserve offline-first boot.
 **Trade-off:** cr-sqlite project maintenance should be monitored. Argon2 deferred (PBKDF2 sufficient for launch).
 
 **Impact:** No stack changes needed. Proceed to Phase 8.2 (Domain Port).
+
+---
+
+## Handoff
+
+**Feature:** transactions-account-filter (https://github.com/juliano-pezzini/mytruetrack/issues/9)
+**Branch:** `feat/transactions-account-filter` @ `3a9cac7`
+**Status:** Verifier PASS (`validation.md`); `validate_state.py` clean
+**Completed:** T1–T4 + fix commits for DESC sort and edge e2e; 16/16 ACs verified; sensor 3/3 killed
+**Next:** Optional UAT; open PR / push when approved; close issue #9 after merge
+**Blockers:** none
+**Uncommitted:** none expected after validation report commit
 
 ---
 

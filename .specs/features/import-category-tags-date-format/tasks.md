@@ -120,6 +120,8 @@ T11 → T12
 
 ### T2: Normalize category and tag names
 
+**Status**: Complete
+
 **What**: Add `storedName`, `nameKey`, and `splitTagNames`.
 **Where**: `src/domain/import-names.ts`
 **Depends on**: None
@@ -133,12 +135,12 @@ T11 → T12
 
 **Done when**:
 
-- [ ] `  Super   Market ` stores and matches `Super Market`, and does not match `SuperMarket`
-- [ ] `Café` does not match `Cafe`
-- [ ] `food, travel; work` yields `food`, `travel`, `work`
-- [ ] `food, food,, travel` yields `food`, `travel`
-- [ ] ` , ; ` yields no names
-- [ ] `npm test` passes
+- [x] `  Super   Market ` stores and matches `Super Market`, and does not match `SuperMarket`
+- [x] `Café` does not match `Cafe`
+- [x] `food, travel; work` yields `food`, `travel`, `work`
+- [x] `food, food,, travel` yields `food`, `travel`
+- [x] ` , ; ` yields no names
+- [x] `npm test` passes
 
 **Tests**: unit
 **Gate**: quick

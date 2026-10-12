@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { suggestCategory } from '../domain/auto-categorization-service.ts';
 import { fromCents } from '../domain/money.ts';
 import type { Database } from '../storage/database.ts';
@@ -370,6 +370,41 @@ describe('importTransactions categories and tags', () => {
       categories.find((category) => category.name === 'Later Cat')?.id,
     );
     expect(txns.find((txn) => txn.description === '')).toBeUndefined();
+  });
+
+  it('records a category resolution error for that row and still imports a later row', async () => {
+    const collidingId = '11111111-1111-4111-8111-111111111111';
+    await db.exec(`INSERT INTO categories (id, name, type) VALUES (?, ?, ?)`, [
+      collidingId,
+      'Already',
+      'expense',
+    ]);
+    const randomUUID = crypto.randomUUID.bind(crypto);
+    const spy = vi.spyOn(crypto, 'randomUUID').mockImplementation(() => {
+      spy.mockImplementation(randomUUID);
+      return collidingId;
+    });
+
+    try {
+      const result = await importTransactions(db, 'acc-1', [
+        row('First', 'debit', { categoryName: 'Broken' }),
+        row('Later', 'debit', { categoryName: 'Kept' }),
+      ]);
+
+      expect(result.imported).toBe(1);
+      expect(result.skipped).toBe(0);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0]).toMatchObject({ index: 0 });
+      expect(result.errors[0]!.message.toLowerCase()).toContain('unique');
+
+      const categories = await createCategoryRepository(db).getAll();
+      expect(categories.map((category) => category.name).sort()).toEqual(['Already', 'Kept']);
+      const txns = await createTransactionRepository(db).getByAccount('acc-1');
+      expect(txns.map((txn) => txn.description)).toEqual(['Later']);
+      expect(txns[0]!.categoryId).toBe(categories.find((category) => category.name === 'Kept')?.id);
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it('links a category created by an earlier import and does not insert another', async () => {

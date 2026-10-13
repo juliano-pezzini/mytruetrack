@@ -181,8 +181,8 @@ T16 → T17 → T18
 
 **Done when**:
 
-- [ ] Unit tests cover create with source, list filtered by source, max period_end per source, delete
-- [ ] Gate: `npm test` passes for this repository
+- [x] Unit tests cover create with source, list filtered by source, max period_end per source, delete
+- [x] Gate: `npm test` passes for this repository
 
 **Tests**: unit
 **Gate**: quick

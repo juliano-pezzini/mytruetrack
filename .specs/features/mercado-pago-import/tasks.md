@@ -158,9 +158,9 @@ T16 → T17 → T18
 
 **Done when**:
 
-- [ ] Create/update accept `bankCode`
-- [ ] Typecheck clean for the hook
-- [ ] Gate: `npm run typecheck`
+- [x] Create/update accept `bankCode`
+- [x] Typecheck clean for the hook
+- [x] Gate: `npm run typecheck`
 
 **Tests**: none
 **Gate**: build

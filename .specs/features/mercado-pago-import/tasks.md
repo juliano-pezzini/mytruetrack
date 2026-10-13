@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/mercado-pago-import/design.md`
-**Status**: Approved — In Progress (batch 1)
+**Status**: Approved — In Progress (batch 1 complete: T1–T8)
 
 ---
 
@@ -242,8 +242,8 @@ T16 → T17 → T18
 
 **Done when**:
 
-- [ ] Unit tests cover delete linked only, keep other runs, keep empty import_run_id, snapshot refresh
-- [ ] Gate: `npm test` passes for this module
+- [x] Unit tests cover delete linked only, keep other runs, keep empty import_run_id, snapshot refresh
+- [x] Gate: `npm test` passes for this module
 
 **Tests**: unit
 **Gate**: quick

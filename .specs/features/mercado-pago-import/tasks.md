@@ -409,8 +409,8 @@ T16 → T17 → T18
 
 **Done when**:
 
-- [ ] Hook unit tests: session wait cancel, success path, page error writes nothing, no 30s timer on wait, reversed period refused
-- [ ] Gate: `npm test` passes for the hook
+- [x] Hook unit tests: session wait cancel, success path, page error writes nothing, no 30s timer on wait, reversed period refused
+- [x] Gate: `npm test` passes for the hook
 
 **Tests**: unit
 **Gate**: quick

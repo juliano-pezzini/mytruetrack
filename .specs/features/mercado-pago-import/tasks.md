@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/mercado-pago-import/design.md`
-**Status**: In Progress — batch 1 done (T1–T8); batch 2 done (T9–T14); next batch 3 (T15–T19)
+**Status**: Feature implementation complete — batch 1 (T1–T8), batch 2 (T9–T14), batch 3 (T15–T19) done; Verifier pending
 
 ---
 
@@ -469,8 +469,8 @@ T16 → T17 → T18
 
 **Done when**:
 
-- [ ] New Playwright tests pass
-- [ ] Gate: `npm run test:e2e` (or the scoped file) passes with `npm test` still green
+- [x] New Playwright tests pass
+- [x] Gate: `npm run test:e2e` (or the scoped file) passes with `npm test` still green
 
 **Tests**: e2e
 **Gate**: full

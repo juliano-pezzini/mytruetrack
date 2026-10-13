@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/mercado-pago-import/design.md`
-**Status**: Approved — In Progress (batch 1 complete: T1–T8)
+**Status**: In Progress — batch 1 done (T1–T8 @ b8e51f8); starting batch 2 (T9–T14)
 
 ---
 

@@ -22,6 +22,7 @@ function monthRange(year: number, month: number) {
   return { from, to };
 }
 
+/** null = All accounts filter */
 export function TransactionsPage() {
   const { accounts } = useAccounts();
   const { categories } = useCategories();
@@ -29,12 +30,14 @@ export function TransactionsPage() {
   const [period, setPeriod] = useState(getCurrentMonth);
   const range = useMemo(() => monthRange(period.year, period.month), [period.year, period.month]);
 
-  // Auto-select first account (must be before hooks that consume it)
-  const accountId = selectedAccountId ?? accounts[0]?.id ?? null;
+  const allAccountsMode = selectedAccountId === null;
 
-  const { transactions, create, update, remove } = useTransactions(accountId, range);
+  const { transactions, create, update, remove } = useTransactions(
+    accounts.length === 0 ? '' : selectedAccountId,
+    range,
+  );
   const { balance: startBalance } = useAccountBalance(
-    accountId,
+    allAccountsMode ? null : selectedAccountId,
     // Day before the month starts
     (() => {
       const d = new Date(period.year, period.month - 1, 0);
@@ -46,6 +49,14 @@ export function TransactionsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
 
+  const accountNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const a of accounts) map.set(a.id, a.name);
+    return map;
+  }, [accounts]);
+
+  const activeAccountIds = useMemo(() => new Set(accounts.map((a) => a.id)), [accounts]);
+
   // Category lookup
   const categoryMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -53,17 +64,25 @@ export function TransactionsPage() {
     return map;
   }, [categories]);
 
-  // Running balance: start from balance at start of month, apply transactions in date order
-  const sortedTxns = useMemo(() => {
-    return [...transactions].sort(
-      (a, b) => a.transactionDate.localeCompare(b.transactionDate) || a.id.localeCompare(b.id),
-    );
-  }, [transactions]);
+  const visibleTxns = useMemo(() => {
+    const scoped = allAccountsMode
+      ? transactions.filter((t) => activeAccountIds.has(t.accountId))
+      : transactions;
+    // All accounts: newest first (TXNF-02). Single account: oldest first for running balance.
+    return [...scoped].sort((a, b) => {
+      const byDate = allAccountsMode
+        ? b.transactionDate.localeCompare(a.transactionDate)
+        : a.transactionDate.localeCompare(b.transactionDate);
+      if (byDate !== 0) return byDate;
+      return allAccountsMode ? b.id.localeCompare(a.id) : a.id.localeCompare(b.id);
+    });
+  }, [transactions, allAccountsMode, activeAccountIds]);
 
   const runningBalances = useMemo(() => {
+    if (allAccountsMode) return [] as Money[];
     const balances: Money[] = [];
     let running = startBalance;
-    for (const txn of sortedTxns) {
+    for (const txn of visibleTxns) {
       if (txn.type === 'credit') {
         running = add(running, txn.amount);
       } else {
@@ -72,7 +91,17 @@ export function TransactionsPage() {
       balances.push(running);
     }
     return balances;
-  }, [sortedTxns, startBalance]);
+  }, [visibleTxns, startBalance, allAccountsMode]);
+
+  function selectAccountFilter(next: string | null) {
+    const prevAll = selectedAccountId === null;
+    const nextAll = next === null;
+    if (prevAll !== nextAll || selectedAccountId !== next) {
+      setShowForm(false);
+      setEditingId(null);
+    }
+    setSelectedAccountId(next);
+  }
 
   function handleCreate(params: CreateTransactionParams) {
     create(params);
@@ -111,16 +140,23 @@ export function TransactionsPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <select
-            value={accountId ?? ''}
-            onChange={(e) => setSelectedAccountId(e.target.value || null)}
+            aria-label="Account filter"
+            value={selectedAccountId ?? ''}
+            onChange={(e) => selectAccountFilter(e.target.value || null)}
             className="border border-mtt-border rounded-lg px-3 py-2 text-sm bg-mtt-surface text-mtt-fg focus:outline-none focus:ring-2 focus:ring-mtt-accent"
           >
-            {accounts.length === 0 && <option value="">No accounts</option>}
-            {accounts.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name}
-              </option>
-            ))}
+            {accounts.length === 0 ? (
+              <option value="">No accounts</option>
+            ) : (
+              <>
+                <option value="">All accounts</option>
+                {accounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name}
+                  </option>
+                ))}
+              </>
+            )}
           </select>
 
           <div className="flex items-center gap-1">
@@ -168,7 +204,7 @@ export function TransactionsPage() {
           </div>
         </div>
 
-        {accountId && (
+        {accounts.length > 0 && (
           <button
             type="button"
             onClick={() => {
@@ -183,24 +219,33 @@ export function TransactionsPage() {
       </div>
 
       {/* Create form */}
-      {showForm && accountId && (
+      {showForm && accounts.length > 0 && (
         <div className="bg-mtt-surface rounded-xl border border-mtt-border p-5">
           <h3 className="text-sm font-semibold text-mtt-fg mb-3">New Transaction</h3>
-          <TransactionForm
-            onSubmit={handleCreate}
-            onCancel={() => setShowForm(false)}
-            categories={categories}
-            accountId={accountId}
-          />
+          {allAccountsMode ? (
+            <TransactionForm
+              onSubmit={handleCreate}
+              onCancel={() => setShowForm(false)}
+              categories={categories}
+              accounts={accounts}
+            />
+          ) : (
+            <TransactionForm
+              onSubmit={handleCreate}
+              onCancel={() => setShowForm(false)}
+              categories={categories}
+              accountId={selectedAccountId!}
+            />
+          )}
         </div>
       )}
 
       {/* Transactions list */}
-      {!accountId ? (
+      {accounts.length === 0 ? (
         <p className="text-mtt-muted text-sm py-8 text-center">
           Create an account first to add transactions.
         </p>
-      ) : sortedTxns.length === 0 ? (
+      ) : visibleTxns.length === 0 ? (
         <p className="text-mtt-muted text-sm py-8 text-center">No transactions for {monthLabel}.</p>
       ) : (
         <div className="bg-mtt-surface rounded-xl border border-mtt-border overflow-hidden">
@@ -210,6 +255,11 @@ export function TransactionsPage() {
                 <th className="text-left px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">
                   Date
                 </th>
+                {allAccountsMode && (
+                  <th className="text-left px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">
+                    Account
+                  </th>
+                )}
                 <th className="text-left px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">
                   Description
                 </th>
@@ -219,16 +269,18 @@ export function TransactionsPage() {
                 <th className="text-right px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">
                   Amount
                 </th>
-                <th className="text-right px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">
-                  Balance
-                </th>
+                {!allAccountsMode && (
+                  <th className="text-right px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted">
+                    Balance
+                  </th>
+                )}
                 <th className="text-right px-4 py-3 font-semibold text-[10px] uppercase tracking-widest text-mtt-muted w-28">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-mtt-border">
-              {sortedTxns.map((txn, i) => (
+              {visibleTxns.map((txn, i) => (
                 <tr key={txn.id} className="hover:bg-mtt-bg transition-colors">
                   {editingId === txn.id ? (
                     <td colSpan={6} className="px-4 py-3">
@@ -242,7 +294,7 @@ export function TransactionsPage() {
                         }}
                         submitLabel="Save"
                         categories={categories}
-                        accountId={accountId}
+                        accountId={txn.accountId}
                         onSubmit={(params) => {
                           update(txn.id, {
                             description: params.description,
@@ -260,6 +312,11 @@ export function TransactionsPage() {
                       <td className="px-4 py-3 text-mtt-muted text-xs font-mono">
                         {txn.transactionDate}
                       </td>
+                      {allAccountsMode && (
+                        <td className="px-4 py-3 text-mtt-fg text-xs">
+                          {accountNameById.get(txn.accountId) ?? '—'}
+                        </td>
+                      )}
                       <td className="px-4 py-3 text-mtt-fg font-medium">{txn.description}</td>
                       <td className="px-4 py-3">
                         {txn.categoryId && categoryMap.has(txn.categoryId) ? (
@@ -279,12 +336,14 @@ export function TransactionsPage() {
                           {(toCents(txn.amount) / 100).toFixed(2)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        <MoneyDisplay
-                          amount={runningBalances[i]!}
-                          className="text-xs text-mtt-muted"
-                        />
-                      </td>
+                      {!allAccountsMode && (
+                        <td className="px-4 py-3 text-right">
+                          <MoneyDisplay
+                            amount={runningBalances[i]!}
+                            className="text-xs text-mtt-muted"
+                          />
+                        </td>
+                      )}
                       <td className="px-4 py-3 text-right">
                         <button
                           type="button"

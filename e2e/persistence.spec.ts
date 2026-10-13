@@ -60,6 +60,7 @@ test('a transaction survives a full page reload', async ({ page }) => {
   await page.getByRole('link', { name: /Transactions/i }).click();
   await page.getByRole('heading', { name: 'Transactions' }).waitFor();
   await page.getByRole('button', { name: '+ New Transaction' }).click();
+  await page.getByLabel('Account', { exact: true }).selectOption({ label: 'Checking' });
   await page.getByLabel('Amount').fill('42.00');
   await page.getByLabel('Description').fill('Persisted Txn');
   const now = new Date();

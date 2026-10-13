@@ -1,10 +1,8 @@
 # State
 
-**Last Updated:** 2026-09-14
-**Current Work:** Cloud vault metadata (AD-010) — Execute complete; Verifier PASS
-(https://github.com/juliano-pezzini/mytruetrack/issues/102). Optional UAT for Setup/Restore UI.
-Commits `3611a16..7373ae2`. Planning artifacts (`context.md`, `design.md`, `validation.md`)
-still untracked.
+**Last Updated:** 2026-10-12
+**Current Work:** Transactions account filter shipped in #118. The write-up lives on
+https://github.com/juliano-pezzini/mytruetrack/issues/9.
 
 ---
 

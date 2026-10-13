@@ -212,12 +212,14 @@ Not performed (Verifier automated pass). User-facing UAT remains available for o
 - **Root cause**: Manifest and `INSTITUTIONS` exist without assertions; credential non-persistence untested.
 - **Fix task**: Unit/read tests for `manifest.json` name + `host_permissions`; AccountForm option count === 2; optional static/search that PWA/extension never write MP cookie/token to storage APIs in this feature surface.
 - **Done when**: ACs cited with assertions.
+- **Progress (fix iter 1)**: ✅ AccountForm options exclusivity; `manifest.test.ts` name+hosts; source-scan no-credential test.
 
 ### Fix 6: Delete-all MP logs leaves no MP txns (Review AC10) — Major
 
 - **Root cause**: Pairwise delete tests exist; no “delete every MP log” assertion.
 - **Fix task**: Two runs → delete both logs → assert zero txns with non-empty `import_run_id` for that account (manual empty remains).
 - **Done when**: AC10 evidenced.
+- **Progress (fix iter 1)**: ✅ `delete-account-import-run.test.ts` deletes both runs; zero linked txns; manual remains.
 
 ---
 

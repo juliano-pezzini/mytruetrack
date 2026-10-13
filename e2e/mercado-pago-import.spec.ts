@@ -86,3 +86,47 @@ test('toggling institution hides Mercado Pago action and keeps the account', asy
     page.getByRole('button', { name: 'Import from Mercado Pago' }),
   ).toHaveCount(0);
 });
+
+test('toggling back to Mercado Pago restores the action; mark never loads MP CDN', async ({
+  page,
+}) => {
+  const mercadopagoImageRequests: string[] = [];
+  page.on('request', (req) => {
+    const url = req.url();
+    if (/mercadopago/i.test(url) && (req.resourceType() === 'image' || /\.(png|jpe?g|svg|webp|gif)(\?|$)/i.test(url))) {
+      mercadopagoImageRequests.push(url);
+    }
+  });
+
+  await createAccount(page, 'Toggle Back MP', 'Mercado Pago');
+  await expect(page.getByRole('cell', { name: 'Toggle Back MP' })).toBeVisible();
+
+  await goDashboard(page);
+  const mpButton = page.getByRole('button', { name: 'Import from Mercado Pago' });
+  await expect(mpButton).toBeVisible();
+  await expect(mpButton.locator('img')).toHaveCount(0);
+  await expect(mpButton.locator('svg')).toHaveCount(1);
+
+  await page.getByRole('link', { name: /Accounts/i }).click();
+  let row = page.getByRole('row').filter({ hasText: 'Toggle Back MP' });
+  await row.getByRole('button', { name: 'Edit' }).click();
+  await page.getByLabel('Institution').selectOption({ label: 'Outros bancos' });
+  await page.getByRole('button', { name: 'Save' }).click();
+
+  await goDashboard(page);
+  await expect(page.getByRole('button', { name: 'Import from Mercado Pago' })).toHaveCount(0);
+
+  await page.getByRole('link', { name: /Accounts/i }).click();
+  row = page.getByRole('row').filter({ hasText: 'Toggle Back MP' });
+  await row.getByRole('button', { name: 'Edit' }).click();
+  await page.getByLabel('Institution').selectOption({ label: 'Mercado Pago' });
+  await page.getByRole('button', { name: 'Save' }).click();
+
+  await goDashboard(page);
+  await expect(page.getByRole('button', { name: 'Import from Mercado Pago' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Import from Mercado Pago' }).locator('img')).toHaveCount(
+    0,
+  );
+
+  expect(mercadopagoImageRequests).toEqual([]);
+});

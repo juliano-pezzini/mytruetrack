@@ -198,6 +198,7 @@ Not performed (Verifier automated pass). User-facing UAT remains available for o
 - **Root cause**: e2e covers hide-only; no CDN-image guard; no assert import logs survive institution change / reappear.
 - **Fix task**: Extend e2e: toggle Outros bancos → assert logs still in DB/modal after toggle back to MP; assert no `mercadopago.com` image requests on card.
 - **Done when**: AC3–AC5 have evidence.
+- **Progress (fix iter 1)**: ✅ e2e toggle-back + no CDN img; repo test bankCode change keeps `account_import_logs`.
 
 ### Fix 4: Empty category / settled_date on MP insert (Import AC7) — Major
 

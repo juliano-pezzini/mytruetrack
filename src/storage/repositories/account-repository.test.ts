@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { initDatabase, closeDatabase } from '../init.ts';
 import { createAccountRepository } from './account-repository.ts';
+import { createAccountImportLogRepository } from './account-import-log-repository.ts';
 import { fromCents, toCents } from '../../domain/money.ts';
 import type { Database } from '../database.ts';
 import type { AccountRepository } from './account-repository.ts';
@@ -258,5 +259,37 @@ describe('AccountRepository', () => {
 
     const updated = await repo.update('mp-toggle', { bankCode: '' });
     expect(updated.bankCode).toBe('');
+  });
+
+  it('changing bankCode does not delete account_import_logs for the account', async () => {
+    await repo.create({
+      id: 'mp-logs',
+      name: 'With Logs',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      bankCode: '323',
+    });
+    const logs = createAccountImportLogRepository(db);
+    await logs.create({
+      id: 'log-keep',
+      accountId: 'mp-logs',
+      source: 'mercado_pago',
+      periodStart: '2026-01-01',
+      periodEnd: '2026-01-31',
+      importedAt: '2026-02-01T00:00:00.000Z',
+      importedCount: 4,
+      skippedCount: 0,
+      errorCount: 0,
+    });
+
+    await repo.update('mp-logs', { bankCode: '' });
+    expect(await logs.listByAccount('mp-logs', 'mercado_pago')).toEqual([
+      expect.objectContaining({ id: 'log-keep', importedCount: 4 }),
+    ]);
+
+    await repo.update('mp-logs', { bankCode: '323' });
+    expect(await logs.listByAccount('mp-logs', 'mercado_pago')).toEqual([
+      expect.objectContaining({ id: 'log-keep' }),
+    ]);
   });
 });

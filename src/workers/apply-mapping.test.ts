@@ -134,4 +134,107 @@ describe('apply-mapping', () => {
     expect(transactions).toHaveLength(0);
     expect(warnings).toHaveLength(1);
   });
+
+  it('parses 01/15/2026 as month-first and skips it under day-first', () => {
+    const monthGrid: ImportGrid = {
+      headers: ['Date', 'Description', 'Amount'],
+      rows: [['01/15/2026', 'Rent', '10.00']],
+    };
+    const monthFirst = applyMapping(monthGrid, { ...baseMapping, dateFormat: 'mdy' });
+    expect(monthFirst.warnings).toEqual([]);
+    expect(monthFirst.transactions[0]?.date).toBe('2026-01-15');
+
+    const dayGrid: ImportGrid = {
+      headers: ['Date', 'Description', 'Amount'],
+      rows: [
+        ['01/15/2026', 'Rent', '10.00'],
+        ['16/01/2026', 'Sibling', '20.00'],
+      ],
+    };
+    const dayFirst = applyMapping(dayGrid, { ...baseMapping, dateFormat: 'dmy' });
+    expect(dayFirst.transactions.map((tx) => tx.description)).toEqual(['Sibling']);
+    expect(dayFirst.transactions[0]?.date).toBe('2026-01-16');
+    expect(dayFirst.warnings).toEqual([{ row: 0, message: 'invalid date: "01/15/2026"' }]);
+  });
+
+  it('parses an ISO cell when the date format is day-first', () => {
+    const grid: ImportGrid = {
+      headers: ['Date', 'Description', 'Amount'],
+      rows: [['2026-01-15', 'Salary', '10.00']],
+    };
+    const { transactions, warnings } = applyMapping(grid, { ...baseMapping, dateFormat: 'dmy' });
+    expect(warnings).toEqual([]);
+    expect(transactions[0]?.date).toBe('2026-01-15');
+  });
+
+  it('copies a mapped category as a stored name and splits the tags cell', () => {
+    const grid: ImportGrid = {
+      headers: ['Date', 'Description', 'Amount', 'Category', 'Tags'],
+      rows: [['2026-01-15', 'Groceries', '-10.00', '  Super   Market ', 'food, travel; work']],
+    };
+    const { transactions, warnings } = applyMapping(grid, {
+      ...baseMapping,
+      categoryColumn: 3,
+      tagsColumn: 4,
+    });
+    expect(warnings).toEqual([]);
+    expect(transactions[0]?.categoryName).toBe('Super Market');
+    expect(transactions[0]?.tagNames).toEqual(['food', 'travel', 'work']);
+  });
+
+  it('yields a null category and an empty tag list when those columns are unmapped or blank', () => {
+    const grid: ImportGrid = {
+      headers: ['Date', 'Description', 'Amount', 'Category', 'Tags'],
+      rows: [
+        ['2026-01-15', 'Unmapped', '10.00', 'Groceries', 'food'],
+        ['2026-01-16', 'Blank', '20.00', '   ', ' , ; '],
+        ['2026-01-17', 'Out of range', '30.00', 'Groceries', 'food'],
+      ],
+    };
+
+    const unmapped = applyMapping(grid, baseMapping);
+    expect(unmapped.transactions[0]?.categoryName).toBeNull();
+    expect(unmapped.transactions[0]?.tagNames).toEqual([]);
+
+    const blank = applyMapping(grid, {
+      ...baseMapping,
+      categoryColumn: 3,
+      tagsColumn: 4,
+    });
+    expect(blank.transactions[1]?.categoryName).toBeNull();
+    expect(blank.transactions[1]?.tagNames).toEqual([]);
+
+    const outOfRange = applyMapping(grid, {
+      ...baseMapping,
+      categoryColumn: 9,
+      tagsColumn: 9,
+    });
+    expect(outOfRange.transactions[2]?.categoryName).toBeNull();
+    expect(outOfRange.transactions[2]?.tagNames).toEqual([]);
+  });
+
+  it('omits a row skipped for a bad date or a bad amount', () => {
+    const grid: ImportGrid = {
+      headers: ['Date', 'Description', 'Amount', 'Category', 'Tags'],
+      rows: [
+        ['01/15/2026', 'Bad date', '10.00', 'Groceries', 'food'],
+        ['2026-01-16', 'Bad amount', 'nope', 'Travel', 'work'],
+        ['2026-01-17', 'Kept', '30.00', 'Rent', 'home'],
+      ],
+    };
+    const { transactions, warnings } = applyMapping(grid, {
+      ...baseMapping,
+      dateFormat: 'dmy',
+      categoryColumn: 3,
+      tagsColumn: 4,
+    });
+    expect(transactions.map((tx) => tx.description)).toEqual(['Kept']);
+    expect(transactions[0]).toMatchObject({
+      date: '2026-01-17',
+      categoryName: 'Rent',
+      tagNames: ['home'],
+    });
+    expect(warnings.map((warning) => warning.row)).toEqual([0, 1]);
+    expect(warnings[0]?.message).toBe('invalid date: "01/15/2026"');
+  });
 });

@@ -1,12 +1,22 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { Category } from '../../../domain/category.ts';
+import { classifyImportRows } from '../../../domain/import-classification.ts';
+import type { Tag } from '../../../domain/tag.ts';
+import type { Database } from '../../../storage/database.ts';
+import { createCategoryRepository } from '../../../storage/repositories/category-repository.ts';
+import { createTagRepository } from '../../../storage/repositories/tag-repository.ts';
 import { applyMapping } from '../../../workers/apply-mapping.ts';
 import { guessMapping } from '../../../workers/column-detection.ts';
 import { importTransactions } from '../../../workers/import-service.ts';
-import type { Database } from '../../../storage/database.ts';
 import type { ColumnMapping, ImportGrid, ImportResult } from '../../../workers/types.ts';
 import { ColumnMapper } from './ColumnMapper.tsx';
 import { PreviewTable } from './PreviewTable.tsx';
 import { SavedMappingSelector } from './SavedMappingSelector.tsx';
+
+type CatalogSnapshot = {
+  readonly categories: readonly Category[];
+  readonly tags: readonly Tag[];
+};
 
 type ImportWizardProps = {
   db: Database;
@@ -40,11 +50,31 @@ export function ImportWizard({ db, accountId, grid, fileName, onComplete }: Impo
   const [result, setResult] = useState<ImportResult | null>(null);
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [catalog, setCatalog] = useState<CatalogSnapshot>({ categories: [], tags: [] });
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      const [categories, tags] = await Promise.all([
+        createCategoryRepository(db).getAll(),
+        createTagRepository(db).getAll(),
+      ]);
+      if (!active) return;
+      setCatalog({ categories, tags });
+    })();
+    return () => {
+      active = false;
+    };
+  }, [db]);
 
   const complete = isMappingComplete(mapping);
   const preview = useMemo(
     () => (complete ? applyMapping(grid, mapping) : { transactions: [], warnings: [] }),
     [grid, mapping, complete],
+  );
+  const classified = useMemo(
+    () => classifyImportRows(preview.transactions, catalog.categories, catalog.tags),
+    [preview.transactions, catalog.categories, catalog.tags],
   );
 
   async function handleImport() {
@@ -84,7 +114,7 @@ export function ImportWizard({ db, accountId, grid, fileName, onComplete }: Impo
 
       {complete ? (
         <div className="bg-gray-50 rounded-lg p-4">
-          <PreviewTable result={preview} />
+          <PreviewTable result={preview} classified={classified} />
         </div>
       ) : (
         <p className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg">

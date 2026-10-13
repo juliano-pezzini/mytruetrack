@@ -153,4 +153,40 @@ describe('import-service', () => {
     expect(result.imported).toBe(1);
     expect(result.skipped).toBe(0);
   });
+
+  it('stores importRunId on newly inserted rows', async () => {
+    const result = await importTransactions(db, 'acc-1', [baseTxns[0]!], 'run-a');
+
+    expect(result.imported).toBe(1);
+    const rows = await db.execO(
+      'SELECT import_run_id FROM transactions WHERE account_id = ? AND external_id = ?',
+      ['acc-1', 'FIT001'],
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.import_run_id).toBe('run-a');
+  });
+
+  it('keeps the earlier import_run_id on skipped duplicates', async () => {
+    await importTransactions(db, 'acc-1', [baseTxns[0]!], 'run-first');
+    const second = await importTransactions(db, 'acc-1', [baseTxns[0]!], 'run-second');
+
+    expect(second.imported).toBe(0);
+    expect(second.skipped).toBe(1);
+
+    const rows = await db.execO(
+      'SELECT import_run_id FROM transactions WHERE account_id = ? AND external_id = ?',
+      ['acc-1', 'FIT001'],
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.import_run_id).toBe('run-first');
+  });
+
+  it('leaves import_run_id empty when importRunId is omitted', async () => {
+    await importTransactions(db, 'acc-1', [baseTxns[0]!]);
+    const rows = await db.execO(
+      'SELECT import_run_id from transactions WHERE account_id = ? AND external_id = ?',
+      ['acc-1', 'FIT001'],
+    );
+    expect(rows[0]!.import_run_id).toBe('');
+  });
 });

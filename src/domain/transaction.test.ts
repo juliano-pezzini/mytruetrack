@@ -18,6 +18,7 @@ describe('Transaction', () => {
     expect(txn.categoryId).toBeNull();
     expect(txn.settledDate).toBeNull();
     expect(txn.externalId).toBeNull();
+    expect(txn.importRunId).toBeNull();
   });
 
   it('creates a debit transaction with optional fields', () => {
@@ -31,11 +32,13 @@ describe('Transaction', () => {
       categoryId: 'cat-1',
       settledDate: '2026-05-06',
       externalId: 'EXT-001',
+      importRunId: 'run-1',
     });
     expect(txn.type).toBe('debit');
     expect(txn.categoryId).toBe('cat-1');
     expect(txn.settledDate).toBe('2026-05-06');
     expect(txn.externalId).toBe('EXT-001');
+    expect(txn.importRunId).toBe('run-1');
   });
 
   it('rejects zero amount', () => {

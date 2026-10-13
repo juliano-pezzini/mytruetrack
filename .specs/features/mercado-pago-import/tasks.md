@@ -221,9 +221,9 @@ T16 → T17 → T18
 
 **Done when**:
 
-- [ ] Domain/repo mapping for `importRunId` updated as needed in the same commit if required for compile
-- [ ] Import-service tests: inserted rows get the id; skipped duplicates keep the earlier id
-- [ ] Gate: `npm test` passes for import-service (and transaction-repository if touched)
+- [x] Domain/repo mapping for `importRunId` updated as needed in the same commit if required for compile
+- [x] Import-service tests: inserted rows get the id; skipped duplicates keep the earlier id
+- [x] Gate: `npm test` passes for import-service (and transaction-repository if touched)
 
 **Tests**: unit
 **Gate**: quick

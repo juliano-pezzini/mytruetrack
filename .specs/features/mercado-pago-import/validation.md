@@ -191,6 +191,7 @@ Not performed (Verifier automated pass). User-facing UAT remains available for o
 - **Root cause**: Modal wired but no unit/e2e for list rendering, ConfirmDialog (no typed DELETE), dismiss no-op, or `notifyChange` after delete.
 - **Fix task**: Component test or Playwright: open modal with seeded logs; assert list fields; open delete → cancel → data remains; confirm → gone + sync notify mock.
 - **Done when**: AC3–AC5 and delete half of AC12 cited with assertions.
+- **Progress (fix iter 1)**: ✅ `MercadoPagoImportModal.test.ts` — list fields, no typed DELETE, dismiss no-op, confirm → deleteAccountImportRun + notifyChange.
 
 ### Fix 3: Dashboard toggle-back + log retention (Dashboard AC3–AC5) — Major
 

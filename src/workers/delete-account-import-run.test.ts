@@ -181,4 +181,56 @@ describe('deleteAccountImportRun', () => {
   it('throws when the log row does not exist', async () => {
     await expect(deleteAccountImportRun(db, 'missing')).rejects.toThrow('Import log not found');
   });
+
+  it('deleting every mercado_pago log leaves no MP-inserted transactions', async () => {
+    await createLog('run-all-1', '2026-01-15');
+    await createLog('run-all-2', '2026-01-31');
+    const txns = createTransactionRepository(db);
+
+    await txns.create({
+      id: 't-mp-1',
+      accountId: 'acc-1',
+      amount: fromCents(1000),
+      description: 'MP run 1',
+      transactionDate: '2026-01-10',
+      type: 'credit',
+      externalId: 'mov-all-1',
+      importRunId: 'run-all-1',
+    });
+    await txns.create({
+      id: 't-mp-2',
+      accountId: 'acc-1',
+      amount: fromCents(2000),
+      description: 'MP run 2',
+      transactionDate: '2026-01-20',
+      type: 'debit',
+      externalId: 'mov-all-2',
+      importRunId: 'run-all-2',
+    });
+    await txns.create({
+      id: 't-manual-keep',
+      accountId: 'acc-1',
+      amount: fromCents(500),
+      description: 'Manual',
+      transactionDate: '2026-01-12',
+      type: 'debit',
+      importRunId: null,
+    });
+
+    await deleteAccountImportRun(db, 'run-all-1');
+    await deleteAccountImportRun(db, 'run-all-2');
+
+    expect(await createAccountImportLogRepository(db).listByAccount('acc-1', 'mercado_pago')).toEqual(
+      [],
+    );
+
+    const linked = await db.execO(
+      `SELECT id FROM transactions WHERE account_id = ? AND import_run_id IS NOT NULL AND import_run_id != ''`,
+      ['acc-1'],
+    );
+    expect(linked).toHaveLength(0);
+
+    expect(await txns.getById('t-manual-keep')).not.toBeNull();
+    expect((await txns.getById('t-manual-keep'))!.importRunId).toBeNull();
+  });
 });

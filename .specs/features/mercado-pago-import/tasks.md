@@ -138,8 +138,8 @@ T16 → T17 → T18
 
 **Done when**:
 
-- [ ] Repository tests cover create, update, inactive exclusion, and the exact error message
-- [ ] Gate: `npm test` passes for account-repository tests
+- [x] Repository tests cover create, update, inactive exclusion, and the exact error message
+- [x] Gate: `npm test` passes for account-repository tests
 
 **Tests**: unit
 **Gate**: quick

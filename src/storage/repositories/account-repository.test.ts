@@ -140,4 +140,123 @@ describe('AccountRepository', () => {
     const updated = await repo.update('null-desc', { description: null });
     expect(updated.description).toBeNull();
   });
+
+  it('persists bank_code on create and read', async () => {
+    const account = await repo.create({
+      id: 'mp-1',
+      name: 'Mercado Pago',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      bankCode: '323',
+    });
+    expect(account.bankCode).toBe('323');
+
+    const fetched = await repo.getById('mp-1');
+    expect(fetched!.bankCode).toBe('323');
+  });
+
+  it('defaults bank_code to empty string', async () => {
+    const account = await repo.create({
+      id: 'other-1',
+      name: 'Other Bank',
+      type: 'bank',
+      initialBalance: fromCents(0),
+    });
+    expect(account.bankCode).toBe('');
+    expect((await repo.getById('other-1'))!.bankCode).toBe('');
+  });
+
+  it('rejects a second active Mercado Pago account on create', async () => {
+    await repo.create({
+      id: 'mp-a',
+      name: 'MP One',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      bankCode: '323',
+    });
+
+    await expect(
+      repo.create({
+        id: 'mp-b',
+        name: 'MP Two',
+        type: 'wallet',
+        initialBalance: fromCents(0),
+        bankCode: '323',
+      }),
+    ).rejects.toThrow('An active Mercado Pago account already exists.');
+  });
+
+  it('rejects updating a second active account to bank_code 323', async () => {
+    await repo.create({
+      id: 'mp-first',
+      name: 'MP First',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      bankCode: '323',
+    });
+    await repo.create({
+      id: 'other',
+      name: 'Other',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      bankCode: '',
+    });
+
+    await expect(repo.update('other', { bankCode: '323' })).rejects.toThrow(
+      'An active Mercado Pago account already exists.',
+    );
+  });
+
+  it('does not count an inactive 323 toward the one-active limit', async () => {
+    await repo.create({
+      id: 'mp-old',
+      name: 'Old MP',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      bankCode: '323',
+      isActive: false,
+    });
+
+    const second = await repo.create({
+      id: 'mp-new',
+      name: 'New MP',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      bankCode: '323',
+    });
+    expect(second.bankCode).toBe('323');
+  });
+
+  it('allows a second 323 after soft-deleting the first', async () => {
+    await repo.create({
+      id: 'mp-live',
+      name: 'Live MP',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      bankCode: '323',
+    });
+    await repo.softDelete('mp-live');
+
+    const replacement = await repo.create({
+      id: 'mp-next',
+      name: 'Next MP',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      bankCode: '323',
+    });
+    expect(replacement.bankCode).toBe('323');
+  });
+
+  it('updates bankCode to empty (Outros bancos)', async () => {
+    await repo.create({
+      id: 'mp-toggle',
+      name: 'Toggle',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      bankCode: '323',
+    });
+
+    const updated = await repo.update('mp-toggle', { bankCode: '' });
+    expect(updated.bankCode).toBe('');
+  });
 });

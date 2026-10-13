@@ -264,8 +264,8 @@ T16 → T17 → T18
 
 **Done when**:
 
-- [ ] Synthetic fixtures cover credit, debit, non-BRL, missing currency, bad amount, empty title, bad datetime, day header ignored
-- [ ] Gate: `npm test` passes for the mapper
+- [x] Synthetic fixtures cover credit, debit, non-BRL, missing currency, bad amount, empty title, bad datetime, day header ignored
+- [x] Gate: `npm test` passes for the mapper
 
 **Tests**: unit
 **Gate**: quick

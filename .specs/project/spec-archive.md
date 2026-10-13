@@ -23,3 +23,4 @@ Shipped feature write-ups were copied to GitHub issues, then removed from the tr
 | `e2e-tests` | https://github.com/juliano-pezzini/mytruetrack/issues/105 | closed |
 | `investpass-import` | https://github.com/juliano-pezzini/mytruetrack/issues/106 | closed |
 | `xlsx-security-remediation` | https://github.com/juliano-pezzini/mytruetrack/issues/107 | open |
+| `import-category-tags-date-format` | https://github.com/juliano-pezzini/mytruetrack/issues/116 and https://github.com/juliano-pezzini/mytruetrack/issues/117 | open |

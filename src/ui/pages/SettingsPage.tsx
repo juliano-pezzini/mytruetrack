@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { formatAppVersion } from '../app-version.ts';
 import { SyncSection } from '../components/SyncSection.tsx';
 import { SecuritySection } from '../components/SecuritySection.tsx';
 import { DangerZone } from '../components/DangerZone.tsx';
@@ -157,7 +158,9 @@ export function SettingsPage() {
       {/* About */}
       <section>
         <h2 className="text-lg font-semibold text-mtt-fg mb-2">About</h2>
-        <p className="text-sm text-mtt-muted">mytruetrack v2.0.0-alpha</p>
+        <p className="text-sm text-mtt-muted">
+          mytruetrack {formatAppVersion(import.meta.env.VITE_APP_VERSION)}
+        </p>
       </section>
 
       {/* Danger Zone */}

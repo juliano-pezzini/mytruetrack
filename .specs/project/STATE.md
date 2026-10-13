@@ -1,12 +1,32 @@
 # State
 
 **Last Updated:** 2026-10-12
-**Current Work:** Transactions account filter shipped in #118. The write-up lives on
+**Current Work:** Sidebar app version for https://github.com/juliano-pezzini/mytruetrack/issues/119.
+Transactions account filter shipped in #118. The write-up lives on
 https://github.com/juliano-pezzini/mytruetrack/issues/9.
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-011: Sidebar version is the Pages workflow run number (2026-10-12)
+
+**Decision:** The left sidebar shows a version at the bottom, under the Encrypted badge.
+Deployed builds read `VITE_APP_VERSION`, set by `.github/workflows/pages.yml` to
+`github.run_number`. The label is semver with that integer as the minor and
+major `1` and patch `0` fixed (`v1.43.0`). Local and any non-numeric value show
+`dev`. `package.json` stays `0.0.0` and is not the displayed version.
+
+**Reason:** https://github.com/juliano-pezzini/mytruetrack/issues/119 asks for a number in
+the left bar that increases on every deploy. The Pages workflow already runs on each
+push to `main`, and `run_number` increases on every run. The workflow has `contents: read`,
+so it cannot commit a semver bump.
+
+**Trade-off:** A failed or manually re-run deploy also consumes a number, so the next
+successful deploy can skip integers. The label matches the bundle that is running, which
+updates when the service worker picks up the new build.
+
+**Impact:** `formatAppVersion` in `src/ui/app-version.ts`, rendered by `Sidebar` and by Settings → About (replaces the static `v2.0.0-alpha` label).
 
 ### AD-010: Cloud `vault-metadata.json` as portable vault identity (2026-09-13)
 

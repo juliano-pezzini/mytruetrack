@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useState } from 'react';
+import { formatAppVersion } from '../app-version.ts';
 
 function IconDashboard() {
   return (
@@ -211,7 +212,7 @@ export function Sidebar() {
         </nav>
 
         {/* Vault status badge */}
-        <div className="m-2 mb-3 flex items-center gap-2 rounded-lg border border-white/8 bg-white/5 px-3 py-2.5">
+        <div className="m-2 mb-1 flex items-center gap-2 rounded-lg border border-white/8 bg-white/5 px-3 py-2.5">
           <span className="text-mtt-positive flex-shrink-0">
             <IconLock />
           </span>
@@ -220,6 +221,9 @@ export function Sidebar() {
             <p className="text-[10px] text-white/35 mt-0.5 leading-none">Local · end-to-end</p>
           </div>
         </div>
+        <p className="px-4 pb-3 text-center text-[10px] leading-none tracking-wide text-white/35 tabular-nums">
+          {formatAppVersion(import.meta.env.VITE_APP_VERSION)}
+        </p>
       </aside>
     </>
   );

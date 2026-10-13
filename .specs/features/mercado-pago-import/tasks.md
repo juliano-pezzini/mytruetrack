@@ -201,8 +201,8 @@ T16 → T17 → T18
 
 **Done when**:
 
-- [ ] Unit tests cover first run, later run, after deleting max, empty after all deletes
-- [ ] Gate: `npm test` passes for this domain module
+- [x] Unit tests cover first run, later run, after deleting max, empty after all deletes
+- [x] Gate: `npm test` passes for this domain module
 
 **Tests**: unit
 **Gate**: quick

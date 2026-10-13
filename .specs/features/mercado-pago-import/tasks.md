@@ -326,8 +326,8 @@ T16 → T17 → T18
 
 **Done when**:
 
-- [ ] Manifest name and host_permissions match the design
-- [ ] Gate: extension package still loads (typecheck/test as used today)
+- [x] Manifest name and host_permissions match the design
+- [x] Gate: extension package still loads (typecheck/test as used today)
 
 **Tests**: none
 **Gate**: build

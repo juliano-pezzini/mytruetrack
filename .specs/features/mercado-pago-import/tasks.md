@@ -429,8 +429,8 @@ T16 → T17 → T18
 
 **Done when**:
 
-- [ ] Component typechecks and wires hook + delete-run
-- [ ] Gate: `npm run typecheck`
+- [x] Component typechecks and wires hook + delete-run
+- [x] Gate: `npm run typecheck`
 
 **Tests**: none
 **Gate**: build

@@ -184,6 +184,7 @@ Not performed (Verifier automated pass). User-facing UAT remains available for o
 - **Fix task**: Add `mercado-pago-import` (or import-service) test that deletes by `import_run_id` / txn then re-processes same movement and expects `imported === 1`.
 - **Verify**: New test fails if dedup set is not refreshed from DB after delete.
 - **Done when**: AC10 has `file:line` asserting re-insert.
+- **Progress (fix iter 1)**: ✅ Test added — `mercado-pago-import.test.ts` re-insert after `deleteAccountImportRun`.
 
 ### Fix 2: Modal delete UX (Review AC3–AC5, AC12 delete notify) — Major
 

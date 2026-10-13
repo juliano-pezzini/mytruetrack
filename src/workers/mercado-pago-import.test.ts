@@ -4,6 +4,7 @@ import type { Database } from '../storage/database.ts';
 import { createAccountImportLogRepository } from '../storage/repositories/account-import-log-repository.ts';
 import { fromCents } from '../domain/money.ts';
 import { processMercadoPagoImport } from './mercado-pago-import.ts';
+import { deleteAccountImportRun } from './delete-account-import-run.ts';
 
 function movement(overrides: Record<string, unknown> = {}) {
   return {
@@ -209,5 +210,44 @@ describe('processMercadoPagoImport', () => {
       'AmtMoveId00000001',
     ]);
     expect(rows[0]!.amount).toBe(fromCents(1575));
+  });
+
+  it('re-inserts a movement_id after its transaction was deleted with the import run', async () => {
+    const pages = [
+      pageWithItems([movement({ movement_id: 'ReImportMoveId0001', title: 'Again' })]),
+    ];
+    const first = await processMercadoPagoImport(
+      db,
+      'acc-1',
+      { start: '2026-01-01', end: '2026-01-15' },
+      pages,
+      { todaySaoPaulo: '2026-01-15', importedAt: '2026-01-15T00:00:00.000Z' },
+    );
+    expect(first.imported).toBe(1);
+
+    await deleteAccountImportRun(db, first.logId);
+
+    const gone = await db.execO(`SELECT id FROM transactions WHERE external_id = ?`, [
+      'ReImportMoveId0001',
+    ]);
+    expect(gone).toHaveLength(0);
+
+    const second = await processMercadoPagoImport(
+      db,
+      'acc-1',
+      { start: '2026-01-15', end: '2026-01-31' },
+      pages,
+      { todaySaoPaulo: '2026-01-31', importedAt: '2026-01-31T00:00:00.000Z' },
+    );
+
+    expect(second.imported).toBe(1);
+    expect(second.skipped).toBe(0);
+
+    const rows = await db.execO(
+      `SELECT import_run_id FROM transactions WHERE external_id = ?`,
+      ['ReImportMoveId0001'],
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.import_run_id).toBe(second.logId);
   });
 });

@@ -118,8 +118,8 @@ T16 → T17 → T18
 
 **Done when**:
 
-- [ ] Domain tests assert `bankCode` defaults and is retained
-- [ ] Gate: `npm test` passes for account domain tests
+- [x] Domain tests assert `bankCode` defaults and is retained
+- [x] Gate: `npm test` passes for account domain tests
 
 **Tests**: unit
 **Gate**: quick

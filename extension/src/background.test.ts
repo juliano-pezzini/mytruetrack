@@ -2,9 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Must stub chrome globally BEFORE any imports that use it
 const addListenerExternal = vi.fn();
+const tabsCreate = vi.fn().mockResolvedValue({ id: 1 });
 vi.stubGlobal('chrome', {
   runtime: {
     onConnectExternal: { addListener: addListenerExternal },
+  },
+  tabs: {
+    create: tabsCreate,
   },
 });
 
@@ -14,9 +18,14 @@ vi.mock('./investpass-api.ts', () => ({
   fetchTransactions: vi.fn(),
 }));
 
+vi.mock('./mercado-pago-api.ts', () => ({
+  fetchBinnaclePeriod: vi.fn(),
+}));
+
 // These imports happen AFTER the stubs/mocks above thanks to vitest hoisting
 const { isOriginAllowed, handleConnection } = await import('./background.ts');
 const { refreshToken, fetchTransactions } = await import('./investpass-api.ts');
+const { fetchBinnaclePeriod } = await import('./mercado-pago-api.ts');
 
 function makePort(origin?: string): chrome.runtime.Port {
   const listeners: Array<(msg: unknown) => void> = [];
@@ -38,6 +47,7 @@ function makePort(origin?: string): chrome.runtime.Port {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  tabsCreate.mockResolvedValue({ id: 1 });
 });
 
 describe('isOriginAllowed', () => {
@@ -83,7 +93,7 @@ describe('handleConnection', () => {
         name: 'Coffee',
         date: '2025-06-15T00:00:00Z',
         amount: 5.5,
-        type: 'DEBIT',
+        type: 'DEBIT' as const,
         ignored: false,
         category: null,
         account: { name: 'Nubank', institution: { name: 'Nu' } },
@@ -129,6 +139,68 @@ describe('handleConnection', () => {
         type: 'ERROR',
         code: 'IMPORT_FAILED',
         message: 'auth expired',
+      });
+    });
+  });
+
+  it('handles START_MP_IMPORT → MP_IMPORT_PAYLOAD', async () => {
+    const pages = [{ total: 0, pages: 0, groups: [] }];
+    vi.mocked(fetchBinnaclePeriod).mockResolvedValue({ pages });
+
+    const port = makePort('http://localhost:5173');
+    handleConnection(port);
+
+    (port as unknown as { _send: (m: unknown) => void })._send({
+      type: 'START_MP_IMPORT',
+      periodStart: '2026-01-01',
+      periodEnd: '2026-01-31',
+    });
+
+    await vi.waitFor(() => {
+      expect(fetchBinnaclePeriod).toHaveBeenCalledWith('2026-01-01', '2026-01-31');
+      expect(port.postMessage).toHaveBeenCalledWith({ type: 'MP_IMPORT_PAYLOAD', pages });
+    });
+    expect(tabsCreate).not.toHaveBeenCalled();
+  });
+
+  it('opens Mercado Pago home and sends MP_SESSION_MISSING when session is missing', async () => {
+    vi.mocked(fetchBinnaclePeriod).mockResolvedValue({ sessionMissing: true });
+
+    const port = makePort('http://localhost:5173');
+    handleConnection(port);
+
+    (port as unknown as { _send: (m: unknown) => void })._send({
+      type: 'START_MP_IMPORT',
+      periodStart: '2026-01-01',
+      periodEnd: '2026-01-31',
+    });
+
+    await vi.waitFor(() => {
+      expect(tabsCreate).toHaveBeenCalledWith({ url: 'https://www.mercadopago.com.br/' });
+      expect(port.postMessage).toHaveBeenCalledWith({ type: 'MP_SESSION_MISSING' });
+    });
+  });
+
+  it('sends ERROR when a Mercado Pago page fails after auth', async () => {
+    vi.mocked(fetchBinnaclePeriod).mockResolvedValue({
+      pageFailure: true,
+      message: 'Binnacle page 2 failed: HTTP 500',
+    });
+
+    const port = makePort('http://localhost:5173');
+    handleConnection(port);
+
+    (port as unknown as { _send: (m: unknown) => void })._send({
+      type: 'START_MP_IMPORT',
+      periodStart: '2026-01-01',
+      periodEnd: '2026-01-31',
+    });
+
+    await vi.waitFor(() => {
+      expect(port.postMessage).toHaveBeenCalledWith({
+        type: 'ERROR',
+        code: 'MP_PAGE_FAILED',
+        message: 'Binnacle page 2 failed: HTTP 500',
       });
     });
   });

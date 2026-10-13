@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/mercado-pago-import/design.md`
-**Status**: In Progress — batch 1 done (T1–T8 @ b8e51f8); starting batch 2 (T9–T14)
+**Status**: In Progress — batch 1 done (T1–T8); batch 2 done (T9–T14); next batch 3 (T15–T19)
 
 ---
 
@@ -366,9 +366,9 @@ T16 → T17 → T18
 
 **Done when**:
 
-- [ ] Bridge unit tests cover MP message types and InvestPass regression
-- [ ] Extension background updates and tests cover both message paths
-- [ ] Gate: `npm test` and extension tests pass
+- [x] Bridge unit tests cover MP message types and InvestPass regression
+- [x] Extension background updates and tests cover both message paths
+- [x] Gate: `npm test` and extension tests pass
 
 **Tests**: unit
 **Gate**: full

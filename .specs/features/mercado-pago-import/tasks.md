@@ -284,8 +284,8 @@ T16 → T17 → T18
 
 **Done when**:
 
-- [ ] Unit tests cover success with mixed row errors, zero inserts still logs, period_end clamp, older range does not lower next max when max already higher (via log repo scoped by source)
-- [ ] Gate: `npm test` passes for this module
+- [x] Unit tests cover success with mixed row errors, zero inserts still logs, period_end clamp, older range does not lower next max when max already higher (via log repo scoped by source)
+- [x] Gate: `npm test` passes for this module
 
 **Tests**: unit
 **Gate**: quick

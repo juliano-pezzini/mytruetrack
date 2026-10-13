@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/mercado-pago-import/design.md`
-**Status**: Feature implementation complete — batch 1 (T1–T8), batch 2 (T9–T14), batch 3 (T15–T19) done; Verifier pending
+**Status**: Done — Verifier PASS (`validation.md`); T1–T19 + fix iteration 1
 
 ---
 

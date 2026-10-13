@@ -1,14 +1,44 @@
 # State
 
-**Last Updated:** 2026-09-14
-**Current Work:** Cloud vault metadata (AD-010) — Execute complete; Verifier PASS
-(https://github.com/juliano-pezzini/mytruetrack/issues/102). Optional UAT for Setup/Restore UI.
-Commits `3611a16..7373ae2`. Planning artifacts (`context.md`, `design.md`, `validation.md`)
-still untracked.
+**Last Updated:** 2026-10-13
+**Current Work:** Mercado Pago import (issue #123) — Execute complete; Verifier PASS.
+Branch `feat/mpago-importation`. Spec/design/tasks/validation under
+`.specs/features/mercado-pago-import/`. Optional interactive UAT for modal/extension session.
+
+---
+
+## Handoff
+
+- **Feature**: Mercado Pago import (`.specs/features/mercado-pago-import/`)
+- **Phase / Task**: Execute complete; Verifier PASS
+- **Completed**: T1–T19, Fix plans 1–6, validate_state clean
+- **In-progress**: none
+- **Next step**: Optional UAT with real Mercado Pago session; open PR when ready
+- **Blockers**: none
+- **Uncommitted files**: check `git status` (STATE.md may be dirty after this handoff write)
+- **Branch**: `feat/mpago-importation`
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-011: Shared `account_import_logs` + companion-extension statement imports (2026-10-13)
+
+**Decision:** Statement imports that use a companion extension share SQLite table
+`account_import_logs` with a `source` discriminator (Mercado Pago uses `mercado_pago`).
+Period frontier and log lists are scoped by `(account_id, source)`. Accounts may carry
+optional COMPE `bank_code` (`323` = Mercado Pago); at most one active account may be `323`.
+The PWA never stores provider credentials; the extension holds the browser session.
+Transactions link via `import_run_id`.
+
+**Reason:** InvestPass and Mercado Pago share the same import shape; a provider-named log
+table would force a second schema for the next source. Issue #123 locked the product
+contract; naming was generalized during Specify/Design.
+
+**Trade-off:** Frontiers must always filter by `source` or they mix providers on one account.
+
+**Impact:** Spec/design/validation in `.specs/features/mercado-pago-import/`. Extends
+account form, dashboard card, companion extension (`mytruetrack Import`), bridge messages.
 
 ### AD-010: Cloud `vault-metadata.json` as portable vault identity (2026-09-13)
 

@@ -212,6 +212,24 @@ describe('processMercadoPagoImport', () => {
     expect(rows[0]!.amount).toBe(fromCents(1575));
   });
 
+  it('stores empty category_id and settled_date on inserted rows', async () => {
+    await processMercadoPagoImport(
+      db,
+      'acc-1',
+      { start: '2026-01-01', end: '2026-01-31' },
+      [pageWithItems([movement({ movement_id: 'EmptyCatMoveId0001', title: 'No cat' })])],
+      { todaySaoPaulo: '2026-01-31', importedAt: '2026-01-31T00:00:00.000Z' },
+    );
+
+    const rows = await db.execO(
+      `SELECT category_id, settled_date FROM transactions WHERE external_id = ?`,
+      ['EmptyCatMoveId0001'],
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.category_id).toBe('');
+    expect(rows[0]!.settled_date).toBe('');
+  });
+
   it('re-inserts a movement_id after its transaction was deleted with the import run', async () => {
     const pages = [
       pageWithItems([movement({ movement_id: 'ReImportMoveId0001', title: 'Again' })]),

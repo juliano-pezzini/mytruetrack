@@ -205,6 +205,7 @@ Not performed (Verifier automated pass). User-facing UAT remains available for o
 - **Root cause**: Mapper/import omit fields but no read-back assertion.
 - **Fix task**: After `processMercadoPagoImport`, assert `category_id` empty and `settled_date` empty.
 - **Done when**: AC7 fully matched.
+- **Progress (fix iter 1)**: ✅ `mercado-pago-import.test.ts` asserts empty `category_id` and `settled_date`.
 
 ### Fix 5: Form exclusivity + extension manifest + no-credential store — Minor/Major
 

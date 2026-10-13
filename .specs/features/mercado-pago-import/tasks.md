@@ -304,8 +304,8 @@ T16 → T17 → T18
 
 **Done when**:
 
-- [ ] Unit test for start > end returns invalid
-- [ ] Gate: `npm test` passes for the period module
+- [x] Unit test for start > end returns invalid
+- [x] Gate: `npm test` passes for the period module
 
 **Tests**: unit
 **Gate**: quick

@@ -27,3 +27,8 @@ export function suggestAccountImportPeriod(
 
   return { start: maxEnd, end: todaySaoPaulo };
 }
+
+/** True when start and end are ordered start ≤ end (inclusive period). */
+export function isValidAccountImportPeriod(start: string, end: string): boolean {
+  return start <= end;
+}

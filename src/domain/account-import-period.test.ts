@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { suggestAccountImportPeriod } from './account-import-period.ts';
+import {
+  isValidAccountImportPeriod,
+  suggestAccountImportPeriod,
+} from './account-import-period.ts';
 
 describe('suggestAccountImportPeriod', () => {
   it('suggests first day of current São Paulo month through today when there are no logs', () => {
@@ -41,5 +44,19 @@ describe('suggestAccountImportPeriod', () => {
   it('returns current month through today again when all logs are gone', () => {
     const result = suggestAccountImportPeriod([], '2026-02-05');
     expect(result).toEqual({ start: '2026-02-01', end: '2026-02-05' });
+  });
+});
+
+describe('isValidAccountImportPeriod', () => {
+  it('returns false when start is after end', () => {
+    expect(isValidAccountImportPeriod('2026-02-10', '2026-02-01')).toBe(false);
+  });
+
+  it('returns true when start equals end', () => {
+    expect(isValidAccountImportPeriod('2026-02-01', '2026-02-01')).toBe(true);
+  });
+
+  it('returns true when start is before end', () => {
+    expect(isValidAccountImportPeriod('2026-01-01', '2026-01-31')).toBe(true);
   });
 });

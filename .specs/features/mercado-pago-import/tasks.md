@@ -346,8 +346,8 @@ T16 → T17 → T18
 
 **Done when**:
 
-- [ ] Unit tests with mocked fetch cover multi-page walk, session missing, page failure mid-walk
-- [ ] Gate: extension vitest passes
+- [x] Unit tests with mocked fetch cover multi-page walk, session missing, page failure mid-walk
+- [x] Gate: extension vitest passes
 
 **Tests**: unit
 **Gate**: full

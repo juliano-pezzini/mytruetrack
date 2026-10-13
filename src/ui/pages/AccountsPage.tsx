@@ -37,16 +37,16 @@ export function AccountsPage() {
 
   const filtered = typeFilter === 'all' ? accounts : accounts.filter((a) => a.type === typeFilter);
 
-  function handleCreate(params: CreateAccountParams) {
-    create(params);
+  async function handleCreate(params: CreateAccountParams) {
+    await create(params);
     setShowForm(false);
   }
 
-  function handleUpdate(
+  async function handleUpdate(
     account: Account,
-    changes: Partial<Pick<Account, 'name' | 'type' | 'description'>>,
+    changes: Partial<Pick<Account, 'name' | 'type' | 'description' | 'bankCode'>>,
   ) {
-    update(account.id, changes);
+    await update(account.id, changes);
     setEditingId(null);
   }
 
@@ -124,6 +124,7 @@ export function AccountsPage() {
                           type: account.type,
                           initialBalance: (toCents(account.initialBalance) / 100).toFixed(2),
                           description: account.description ?? '',
+                          bankCode: account.bankCode,
                         }}
                         submitLabel="Save"
                         onSubmit={(params) =>
@@ -131,6 +132,7 @@ export function AccountsPage() {
                             name: params.name,
                             type: params.type,
                             description: params.description ?? null,
+                            bankCode: params.bankCode ?? '',
                           })
                         }
                         onCancel={() => setEditingId(null)}

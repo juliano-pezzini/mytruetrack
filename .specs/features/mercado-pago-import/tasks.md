@@ -389,8 +389,8 @@ T16 → T17 → T18
 
 **Done when**:
 
-- [ ] Form submits the correct bankCode
-- [ ] Gate: `npm run typecheck`
+- [x] Form submits the correct bankCode
+- [x] Gate: `npm run typecheck`
 
 **Tests**: none
 **Gate**: build

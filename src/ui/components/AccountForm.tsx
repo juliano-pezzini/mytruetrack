@@ -4,13 +4,14 @@ import { fromDecimal } from '../../domain/money.ts';
 import type { CreateAccountParams } from '../../domain/account.ts';
 
 type AccountFormProps = {
-  onSubmit: (params: CreateAccountParams) => void;
+  onSubmit: (params: CreateAccountParams) => void | Promise<void>;
   onCancel: () => void;
   initial?: {
     name: string;
     type: AccountType;
     initialBalance: string;
     description: string;
+    bankCode?: string;
   };
   submitLabel?: string;
 };
@@ -20,6 +21,11 @@ const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
   { value: 'credit_card', label: 'Credit Card' },
   { value: 'wallet', label: 'Wallet' },
   { value: 'transitional', label: 'Transitional' },
+];
+
+const INSTITUTIONS: { value: string; label: string }[] = [
+  { value: '', label: 'Outros bancos' },
+  { value: '323', label: 'Mercado Pago' },
 ];
 
 export function AccountForm({
@@ -32,26 +38,32 @@ export function AccountForm({
   const [type, setType] = useState<AccountType>(initial?.type ?? 'bank');
   const [balance, setBalance] = useState(initial?.initialBalance ?? '0.00');
   const [description, setDescription] = useState(initial?.description ?? '');
+  const [bankCode, setBankCode] = useState(initial?.bankCode ?? '');
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setSubmitting(true);
     try {
-      onSubmit({
+      await onSubmit({
         id: crypto.randomUUID(),
         name,
         type,
         initialBalance: fromDecimal(balance),
         description: description || null,
+        bankCode,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSubmitting(false);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
       {error && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>}
       <div>
         <label htmlFor="account-name" className="block text-sm font-medium text-gray-700 mb-1">
@@ -79,6 +91,26 @@ export function AccountForm({
           {ACCOUNT_TYPES.map((t) => (
             <option key={t.value} value={t.value}>
               {t.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label
+          htmlFor="account-institution"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Institution
+        </label>
+        <select
+          id="account-institution"
+          value={bankCode}
+          onChange={(e) => setBankCode(e.target.value)}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          {INSTITUTIONS.map((inst) => (
+            <option key={inst.value || 'other'} value={inst.value}>
+              {inst.label}
             </option>
           ))}
         </select>
@@ -118,13 +150,15 @@ export function AccountForm({
         <button
           type="button"
           onClick={onCancel}
+          disabled={submitting}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          disabled={submitting}
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
         >
           {submitLabel}
         </button>

@@ -449,8 +449,8 @@ T16 → T17 → T18
 
 **Done when**:
 
-- [ ] Card opens the new modal for 323 accounts
-- [ ] Gate: `npm run typecheck`
+- [x] Card opens the new modal for 323 accounts
+- [x] Gate: `npm run typecheck`
 
 **Tests**: none
 **Gate**: build

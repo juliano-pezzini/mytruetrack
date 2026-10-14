@@ -1,22 +1,8 @@
 # State
 
-**Last Updated:** 2026-10-13
-**Current Work:** Mercado Pago import (issue #123) — Execute complete; Verifier PASS.
-Branch `feat/mpago-importation`. Spec/design/tasks/validation under
-`.specs/features/mercado-pago-import/`. Optional interactive UAT for modal/extension session.
-
----
-
-## Handoff
-
-- **Feature**: Mercado Pago import (`.specs/features/mercado-pago-import/`)
-- **Phase / Task**: Execute complete; Verifier PASS
-- **Completed**: T1–T19, Fix plans 1–6, validate_state clean
-- **In-progress**: none
-- **Next step**: Optional UAT with real Mercado Pago session; open PR when ready
-- **Blockers**: none
-- **Uncommitted files**: check `git status` (STATE.md may be dirty after this handoff write)
-- **Branch**: `feat/mpago-importation`
+**Last Updated:** 2026-10-14
+**Current Work:** Mercado Pago import (issue #123) — PR #124. Planning artifacts archived to
+the issue; feature folder removed from the tree (see `spec-archive.md`).
 
 ---
 

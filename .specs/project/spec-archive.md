@@ -22,4 +22,5 @@ Shipped feature write-ups were copied to GitHub issues, then removed from the tr
 | `drive-pull-decrypt-investigation` | https://github.com/juliano-pezzini/mytruetrack/issues/104 | closed |
 | `e2e-tests` | https://github.com/juliano-pezzini/mytruetrack/issues/105 | closed |
 | `investpass-import` | https://github.com/juliano-pezzini/mytruetrack/issues/106 | closed |
+| `mercado-pago-import` | https://github.com/juliano-pezzini/mytruetrack/issues/123 | open |
 | `xlsx-security-remediation` | https://github.com/juliano-pezzini/mytruetrack/issues/107 | open |

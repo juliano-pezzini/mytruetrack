@@ -31,6 +31,7 @@ export type TransactionRepository = {
   create(params: CreateTransactionParams): Promise<Transaction>;
   getById(id: string): Promise<Transaction | null>;
   getByAccount(accountId: string, dateRange?: DateRange): Promise<Transaction[]>;
+  getInDateRange(dateRange?: DateRange): Promise<Transaction[]>;
   update(
     id: string,
     changes: Partial<
@@ -86,6 +87,24 @@ export function createTransactionRepository(db: Database): TransactionRepository
       }
 
       const sql = `SELECT * FROM transactions WHERE ${conditions.join(' AND ')} ORDER BY transaction_date DESC`;
+      return (await db.execO(sql, params)).map(rowToTransaction);
+    },
+
+    async getInDateRange(dateRange?: DateRange): Promise<Transaction[]> {
+      const conditions: string[] = [];
+      const params: (string | number)[] = [];
+
+      if (dateRange?.from) {
+        conditions.push('transaction_date >= ?');
+        params.push(dateRange.from);
+      }
+      if (dateRange?.to) {
+        conditions.push('transaction_date <= ?');
+        params.push(dateRange.to);
+      }
+
+      const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+      const sql = `SELECT * FROM transactions ${where} ORDER BY transaction_date DESC, id DESC`;
       return (await db.execO(sql, params)).map(rowToTransaction);
     },
 

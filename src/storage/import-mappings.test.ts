@@ -81,4 +81,43 @@ describe('import-mappings', () => {
     await deleteMapping(saved.id);
     expect(await listMappings()).toHaveLength(0);
   });
+
+  it('returns a saved mondy format and category and tags columns from listMappings', async () => {
+    await saveMapping({
+      name: 'Month first',
+      config: {
+        ...config,
+        dateFormat: 'mondy',
+        categoryColumn: 3,
+        tagsColumn: 4,
+      },
+      accountId: 'acc-1',
+    });
+
+    const listed = await listMappings();
+    expect(listed).toHaveLength(1);
+    expect(listed[0]!.config.dateFormat).toBe('mondy');
+    expect(listed[0]!.config.categoryColumn).toBe(3);
+    expect(listed[0]!.config.tagsColumn).toBe(4);
+
+    const forAccount = await listMappingsForAccount('acc-1');
+    expect(forAccount[0]!.config.dateFormat).toBe('mondy');
+    expect(forAccount[0]!.config.categoryColumn).toBe(3);
+    expect(forAccount[0]!.config.tagsColumn).toBe(4);
+  });
+
+  it('loads a stored config missing the new fields as dmy with both columns null', async () => {
+    await saveMapping({ name: 'Legacy', config, accountId: 'acc-1' });
+
+    const listed = await listMappings();
+    expect(listed[0]!.config.dateFormat).toBe('dmy');
+    expect(listed[0]!.config.categoryColumn).toBeNull();
+    expect(listed[0]!.config.tagsColumn).toBeNull();
+    expect(listed[0]!.config.numberFormat).toBe('eu');
+
+    const forAccount = await listMappingsForAccount('acc-1');
+    expect(forAccount[0]!.config.dateFormat).toBe('dmy');
+    expect(forAccount[0]!.config.categoryColumn).toBeNull();
+    expect(forAccount[0]!.config.tagsColumn).toBeNull();
+  });
 });

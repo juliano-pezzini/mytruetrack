@@ -108,6 +108,51 @@ describe('TransactionRepository', () => {
     expect(await repo.getByAccount('a2')).toHaveLength(1);
   });
 
+  it('queries all accounts with date range', async () => {
+    await repo.create({
+      id: 'all-1',
+      accountId: 'a1',
+      amount: fromCents(100),
+      description: 'A1 Jan',
+      transactionDate: '2026-01-15',
+      type: 'debit',
+    });
+    await repo.create({
+      id: 'all-2',
+      accountId: 'a1',
+      amount: fromCents(200),
+      description: 'A1 Feb',
+      transactionDate: '2026-02-15',
+      type: 'credit',
+    });
+    await repo.create({
+      id: 'all-3',
+      accountId: 'a2',
+      amount: fromCents(300),
+      description: 'A2 Feb',
+      transactionDate: '2026-02-10',
+      type: 'debit',
+    });
+    await repo.create({
+      id: 'all-4',
+      accountId: 'a2',
+      amount: fromCents(400),
+      description: 'A2 Mar',
+      transactionDate: '2026-03-01',
+      type: 'debit',
+    });
+
+    const feb = await repo.getInDateRange({ from: '2026-02-01', to: '2026-02-28' });
+    expect(feb).toHaveLength(2);
+    expect(feb.map((t) => t.description)).toEqual(['A1 Feb', 'A2 Feb']);
+    expect(feb.map((t) => t.accountId).sort()).toEqual(['a1', 'a2']);
+
+    const unbounded = await repo.getInDateRange();
+    expect(unbounded).toHaveLength(4);
+    expect(unbounded[0]!.description).toBe('A2 Mar');
+    expect(unbounded[1]!.id).toBe('all-2');
+  });
+
   it('updates only provided fields', async () => {
     await repo.create({
       id: 'u1',

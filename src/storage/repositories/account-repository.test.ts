@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { initDatabase, closeDatabase } from '../init.ts';
 import { createAccountRepository } from './account-repository.ts';
+import { createAccountImportLogRepository } from './account-import-log-repository.ts';
 import { fromCents, toCents } from '../../domain/money.ts';
 import type { Database } from '../database.ts';
 import type { AccountRepository } from './account-repository.ts';
@@ -139,5 +140,156 @@ describe('AccountRepository', () => {
 
     const updated = await repo.update('null-desc', { description: null });
     expect(updated.description).toBeNull();
+  });
+
+  it('persists bank_code on create and read', async () => {
+    const account = await repo.create({
+      id: 'mp-1',
+      name: 'Mercado Pago',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      bankCode: '323',
+    });
+    expect(account.bankCode).toBe('323');
+
+    const fetched = await repo.getById('mp-1');
+    expect(fetched!.bankCode).toBe('323');
+  });
+
+  it('defaults bank_code to empty string', async () => {
+    const account = await repo.create({
+      id: 'other-1',
+      name: 'Other Bank',
+      type: 'bank',
+      initialBalance: fromCents(0),
+    });
+    expect(account.bankCode).toBe('');
+    expect((await repo.getById('other-1'))!.bankCode).toBe('');
+  });
+
+  it('rejects a second active Mercado Pago account on create', async () => {
+    await repo.create({
+      id: 'mp-a',
+      name: 'MP One',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      bankCode: '323',
+    });
+
+    await expect(
+      repo.create({
+        id: 'mp-b',
+        name: 'MP Two',
+        type: 'wallet',
+        initialBalance: fromCents(0),
+        bankCode: '323',
+      }),
+    ).rejects.toThrow('An active Mercado Pago account already exists.');
+  });
+
+  it('rejects updating a second active account to bank_code 323', async () => {
+    await repo.create({
+      id: 'mp-first',
+      name: 'MP First',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      bankCode: '323',
+    });
+    await repo.create({
+      id: 'other',
+      name: 'Other',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      bankCode: '',
+    });
+
+    await expect(repo.update('other', { bankCode: '323' })).rejects.toThrow(
+      'An active Mercado Pago account already exists.',
+    );
+  });
+
+  it('does not count an inactive 323 toward the one-active limit', async () => {
+    await repo.create({
+      id: 'mp-old',
+      name: 'Old MP',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      bankCode: '323',
+      isActive: false,
+    });
+
+    const second = await repo.create({
+      id: 'mp-new',
+      name: 'New MP',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      bankCode: '323',
+    });
+    expect(second.bankCode).toBe('323');
+  });
+
+  it('allows a second 323 after soft-deleting the first', async () => {
+    await repo.create({
+      id: 'mp-live',
+      name: 'Live MP',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      bankCode: '323',
+    });
+    await repo.softDelete('mp-live');
+
+    const replacement = await repo.create({
+      id: 'mp-next',
+      name: 'Next MP',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      bankCode: '323',
+    });
+    expect(replacement.bankCode).toBe('323');
+  });
+
+  it('updates bankCode to empty (Outros bancos)', async () => {
+    await repo.create({
+      id: 'mp-toggle',
+      name: 'Toggle',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      bankCode: '323',
+    });
+
+    const updated = await repo.update('mp-toggle', { bankCode: '' });
+    expect(updated.bankCode).toBe('');
+  });
+
+  it('changing bankCode does not delete account_import_logs for the account', async () => {
+    await repo.create({
+      id: 'mp-logs',
+      name: 'With Logs',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      bankCode: '323',
+    });
+    const logs = createAccountImportLogRepository(db);
+    await logs.create({
+      id: 'log-keep',
+      accountId: 'mp-logs',
+      source: 'mercado_pago',
+      periodStart: '2026-01-01',
+      periodEnd: '2026-01-31',
+      importedAt: '2026-02-01T00:00:00.000Z',
+      importedCount: 4,
+      skippedCount: 0,
+      errorCount: 0,
+    });
+
+    await repo.update('mp-logs', { bankCode: '' });
+    expect(await logs.listByAccount('mp-logs', 'mercado_pago')).toEqual([
+      expect.objectContaining({ id: 'log-keep', importedCount: 4 }),
+    ]);
+
+    await repo.update('mp-logs', { bankCode: '323' });
+    expect(await logs.listByAccount('mp-logs', 'mercado_pago')).toEqual([
+      expect.objectContaining({ id: 'log-keep' }),
+    ]);
   });
 });

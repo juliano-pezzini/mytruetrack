@@ -1,11 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "mytruetrack InvestPass Import",
+  "name": "mytruetrack Import",
   "version": "0.1.0",
-  "description": "Companion extension for importing InvestPass transactions into mytruetrack",
+  "description": "Companion extension for importing InvestPass and Mercado Pago transactions into mytruetrack",
   "permissions": [],
   "host_permissions": [
-    "https://pass-api.invest-pass.com/*"
+    "https://pass-api.invest-pass.com/*",
+    "https://www.mercadopago.com.br/*"
   ],
   "externally_connectable": {
     "matches": [

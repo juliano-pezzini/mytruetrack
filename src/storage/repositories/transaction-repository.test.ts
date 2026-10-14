@@ -38,6 +38,21 @@ describe('TransactionRepository', () => {
     expect(fetched!.description).toBe('Coffee');
     expect(fetched!.categoryId).toBeNull();
     expect(fetched!.externalId).toBeNull();
+    expect(fetched!.importRunId).toBeNull();
+  });
+
+  it('persists import_run_id on create and read', async () => {
+    const txn = await repo.create({
+      id: 'txn-run',
+      accountId: 'acc-1',
+      amount: fromCents(1000),
+      description: 'Imported',
+      transactionDate: '2026-06-02',
+      type: 'debit',
+      importRunId: 'log-42',
+    });
+    expect(txn.importRunId).toBe('log-42');
+    expect((await repo.getById('txn-run'))!.importRunId).toBe('log-42');
   });
 
   it('returns null for non-existent id', async () => {

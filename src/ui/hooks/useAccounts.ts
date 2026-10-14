@@ -33,7 +33,7 @@ export function useAccounts() {
   );
 
   const update = useCallback(
-    async (id: string, changes: Partial<Pick<Account, 'name' | 'type' | 'description'>>) => {
+    async (id: string, changes: Partial<Pick<Account, 'name' | 'type' | 'description' | 'bankCode'>>) => {
       const repo = createAccountRepository(db);
       const account = await repo.update(id, changes);
       await refresh();

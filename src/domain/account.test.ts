@@ -17,6 +17,31 @@ describe('Account', () => {
     expect(acct.initialBalance).toBe(100000);
     expect(acct.isActive).toBe(true);
     expect(acct.description).toBeNull();
+    expect(acct.bankCode).toBe('');
+  });
+
+  it('retains bankCode when provided', () => {
+    const acct = createAccount({
+      id: 'acct-mp',
+      name: 'Mercado Pago',
+      type: 'bank',
+      initialBalance: fromCents(0),
+      bankCode: '323',
+    });
+    expect(acct.bankCode).toBe('323');
+    expect(acct.type).toBe('bank');
+  });
+
+  it('keeps bankCode independent of account type', () => {
+    const wallet = createAccount({
+      id: 'w-mp',
+      name: 'MP Wallet',
+      type: 'wallet',
+      initialBalance: fromCents(0),
+      bankCode: '323',
+    });
+    expect(wallet.type).toBe('wallet');
+    expect(wallet.bankCode).toBe('323');
   });
 
   it('creates a credit card account with negative initial balance', () => {

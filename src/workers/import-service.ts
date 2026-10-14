@@ -30,11 +30,13 @@ type PendingRow = {
  * - Deduplicates by externalId (skips if already in DB for the same account)
  * - Creates missing categories and tags from the classified names
  * - Collects validation errors without aborting
+ * - Optional importRunId is applied only to newly inserted rows
  */
 export async function importTransactions(
   db: Database,
   accountId: string,
   transactions: readonly ParsedTransaction[],
+  importRunId?: string,
 ): Promise<ImportResult> {
   const repo = createTransactionRepository(db);
   const categoryRepo = createCategoryRepository(db);
@@ -93,6 +95,7 @@ export async function importTransactions(
         transactionDate: txn.date,
         type: txn.type,
         externalId: txn.externalId,
+        importRunId: importRunId ?? null,
         categoryId,
       };
 

@@ -1,13 +1,30 @@
 # State
 
-**Last Updated:** 2026-10-12
-**Current Work:** Sidebar app version for https://github.com/juliano-pezzini/mytruetrack/issues/119.
-Transactions account filter shipped in #118. The write-up lives on
-https://github.com/juliano-pezzini/mytruetrack/issues/9.
+**Last Updated:** 2026-10-14
+**Current Work:** Mercado Pago import (issue #123) — PR #124. Planning artifacts archived to
+the issue; feature folder removed from the tree (see `spec-archive.md`).
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-012: Shared `account_import_logs` + companion-extension statement imports (2026-10-13)
+
+**Decision:** Statement imports that use a companion extension share SQLite table
+`account_import_logs` with a `source` discriminator (Mercado Pago uses `mercado_pago`).
+Period frontier and log lists are scoped by `(account_id, source)`. Accounts may carry
+optional COMPE `bank_code` (`323` = Mercado Pago); at most one active account may be `323`.
+The PWA never stores provider credentials; the extension holds the browser session.
+Transactions link via `import_run_id`.
+
+**Reason:** InvestPass and Mercado Pago share the same import shape; a provider-named log
+table would force a second schema for the next source. Issue #123 locked the product
+contract; naming was generalized during Specify/Design.
+
+**Trade-off:** Frontiers must always filter by `source` or they mix providers on one account.
+
+**Impact:** Spec/design/validation in `.specs/features/mercado-pago-import/`. Extends
+account form, dashboard card, companion extension (`mytruetrack Import`), bridge messages.
 
 ### AD-011: Sidebar version is the Pages workflow run number (2026-10-12)
 

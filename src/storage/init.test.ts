@@ -4,6 +4,7 @@ import type { Database } from './database.ts';
 
 const EXPECTED_TABLES = [
   'accounts',
+  'account_import_logs',
   'transactions',
   'categories',
   'tags',
@@ -21,7 +22,7 @@ describe('initDatabase', () => {
     if (db) await closeDatabase(db);
   });
 
-  it('creates all 9 application tables', async () => {
+  it('creates all 10 application tables', async () => {
     db = await initDatabase();
 
     const tables = (
@@ -35,12 +36,54 @@ describe('initDatabase', () => {
     }
   });
 
-  it('accounts table has correct columns', async () => {
+  it('accounts table has correct columns including bank_code', async () => {
     db = await initDatabase();
     const cols = (await db.execO('PRAGMA table_info(accounts)')).map((r) => r.name as string);
     expect(cols).toEqual(
-      expect.arrayContaining(['id', 'name', 'type', 'initial_balance', 'is_active', 'description']),
+      expect.arrayContaining([
+        'id',
+        'name',
+        'type',
+        'initial_balance',
+        'is_active',
+        'description',
+        'bank_code',
+      ]),
     );
+  });
+
+  it('transactions table has import_run_id', async () => {
+    db = await initDatabase();
+    const cols = (await db.execO('PRAGMA table_info(transactions)')).map((r) => r.name as string);
+    expect(cols).toContain('import_run_id');
+  });
+
+  it('account_import_logs has source and period columns with defaults', async () => {
+    db = await initDatabase();
+    const cols = (await db.execO('PRAGMA table_info(account_import_logs)')).map(
+      (r) => r.name as string,
+    );
+    expect(cols).toEqual(
+      expect.arrayContaining([
+        'id',
+        'account_id',
+        'source',
+        'period_start',
+        'period_end',
+        'imported_at',
+        'imported_count',
+        'skipped_count',
+        'error_count',
+      ]),
+    );
+
+    await db.exec("INSERT INTO account_import_logs (id) VALUES ('log-1')");
+    const row = (await db.execO("SELECT * FROM account_import_logs WHERE id = 'log-1'"))[0]!;
+    expect(row.source).toBe('');
+    expect(row.account_id).toBe('');
+    expect(row.period_start).toBe('');
+    expect(row.period_end).toBe('');
+    expect(row.imported_count).toBe(0);
   });
 
   it('transactions table stores amount as INTEGER', async () => {
@@ -79,6 +122,7 @@ describe('initDatabase', () => {
     await db.exec("INSERT INTO categories (id) VALUES ('test-cat')");
     await db.exec("INSERT INTO tags (id) VALUES ('test-tag')");
     await db.exec("INSERT INTO transactions (id) VALUES ('test-txn')");
+    await db.exec("INSERT INTO account_import_logs (id) VALUES ('test-log')");
     await db.exec("INSERT INTO auto_category_rules (id) VALUES ('test-rule')");
     await db.exec("INSERT INTO learned_category_patterns (id) VALUES ('test-pat')");
     await db.exec("INSERT INTO auto_category_corrections (id) VALUES ('test-corr')");
@@ -88,6 +132,10 @@ describe('initDatabase', () => {
     expect(acc).toHaveLength(1);
     expect(acc[0]!.is_active).toBe(1);
     expect(acc[0]!.initial_balance).toBe(0);
+    expect(acc[0]!.bank_code).toBe('');
+
+    const txn = await db.execO("SELECT * FROM transactions WHERE id = 'test-txn'");
+    expect(txn[0]!.import_run_id).toBe('');
   });
 
   it('does not error on re-initialization', async () => {

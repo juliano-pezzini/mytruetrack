@@ -18,6 +18,7 @@ function rowToTransaction(row: Row): Transaction {
     settledDate: (row.settled_date as string) || null,
     type: row.type as TransactionType,
     externalId: (row.external_id as string) || null,
+    importRunId: (row.import_run_id as string) || null,
   });
 }
 
@@ -48,8 +49,8 @@ export function createTransactionRepository(db: Database): TransactionRepository
     async create(params: CreateTransactionParams): Promise<Transaction> {
       const txn = createTransaction(params);
       await db.exec(
-        `INSERT INTO transactions (id, account_id, category_id, amount, description, transaction_date, settled_date, type, external_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO transactions (id, account_id, category_id, amount, description, transaction_date, settled_date, type, external_id, import_run_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           txn.id,
           txn.accountId,
@@ -60,6 +61,7 @@ export function createTransactionRepository(db: Database): TransactionRepository
           txn.settledDate ?? '',
           txn.type,
           txn.externalId ?? '',
+          txn.importRunId ?? '',
         ],
       );
       return txn;

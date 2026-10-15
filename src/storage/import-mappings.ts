@@ -6,6 +6,7 @@
  */
 
 import { openDB } from 'idb';
+import { normalizeColumnMapping } from '../workers/column-mapping.ts';
 import type { ColumnMapping, SavedMapping } from '../workers/types.ts';
 
 const DB_NAME = 'mytruetrack-import-mappings';
@@ -22,11 +23,15 @@ async function getDb() {
   });
 }
 
+function withNormalizedConfig(mapping: SavedMapping): SavedMapping {
+  return { ...mapping, config: normalizeColumnMapping(mapping.config) };
+}
+
 /** Return all saved mappings, most-recently-used first. */
 export async function listMappings(): Promise<SavedMapping[]> {
   const db = await getDb();
   const all = (await db.getAll(STORE_NAME)) as SavedMapping[];
-  return all.sort((a, b) => b.lastUsedAt - a.lastUsedAt);
+  return all.map(withNormalizedConfig).sort((a, b) => b.lastUsedAt - a.lastUsedAt);
 }
 
 /**
@@ -35,7 +40,9 @@ export async function listMappings(): Promise<SavedMapping[]> {
  */
 export async function listMappingsForAccount(accountId: string): Promise<SavedMapping[]> {
   const all = await listMappings();
-  return all.filter((m) => m.accountId === null || m.accountId === accountId);
+  return all
+    .filter((m) => m.accountId === null || m.accountId === accountId)
+    .map(withNormalizedConfig);
 }
 
 /**

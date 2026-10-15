@@ -9,6 +9,7 @@ import { generateDek, generateSalt } from '../crypto/key-derivation.ts';
 import { saveKeyData, hasKeyData, clearKeyData } from '../crypto/key-store.ts';
 import { VAULT_METADATA_FILENAME } from './vault-metadata.ts';
 import { loadSyncConfig, saveSyncConfig, clearSyncConfig } from './sync-config.ts';
+import { SYNC_TABLES } from './sync-tables.ts';
 
 // Cloud push/pull now uses cr-sqlite `crsql_changes` deltas, which are unavailable under
 // sql.js. Those are covered by crsql-changes.test.ts (protocol) and e2e (real merge).
@@ -127,7 +128,7 @@ describe('sync-engine snapshot (local backup)', () => {
 
     const json = new TextDecoder().decode(snapshot);
     const parsed = JSON.parse(json) as { table: string; rows: unknown[] }[];
-    expect(parsed).toHaveLength(9); // 9 sync tables
+    expect(parsed).toHaveLength(SYNC_TABLES.length);
     for (const entry of parsed) {
       expect(entry.rows).toHaveLength(0);
     }

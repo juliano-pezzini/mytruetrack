@@ -16,13 +16,17 @@ export function useTransactions(accountId: string | null, dateRange?: DateRange)
 
   const refresh = useCallback(async () => {
     const current = ++requestId.current;
-    if (!accountId) {
+    // Empty string = no accounts yet (caller has nothing to list).
+    if (accountId === '') {
       setTransactions([]);
       setLoading(false);
       return;
     }
     const repo = createTransactionRepository(db);
-    const rows = await repo.getByAccount(accountId, dateRange);
+    const rows =
+      accountId === null
+        ? await repo.getInDateRange(dateRange)
+        : await repo.getByAccount(accountId, dateRange);
     // Ignore results from a refresh that was superseded while this query was in flight.
     if (current !== requestId.current) return;
     setTransactions(rows);

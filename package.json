@@ -21,7 +21,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.3.1",
     "@vlcn.io/crsqlite-wasm": "^0.16.0",
-    "idb": "^8.0.3",
+    "idb": "^8.0.4",
     "ofx-js": "^1.1.1",
     "react": "^19.3.0",
     "react-dom": "^19.2.7",
@@ -46,7 +46,7 @@
     "@types/react-dom": "^19.2.3",
     "@typescript-eslint/eslint-plugin": "^8.62.0",
     "@typescript-eslint/parser": "^8.71.1",
-    "@vitejs/plugin-react": "^6.0.3",
+    "@vitejs/plugin-react": "^6.1.2",
     "@vitest/coverage-v8": "^5.0.3",
     "audit-ci": "^7.1.0",
     "eslint": "^10.6.0",

@@ -18,6 +18,7 @@ function rowToTransaction(row: Row): Transaction {
     settledDate: (row.settled_date as string) || null,
     type: row.type as TransactionType,
     externalId: (row.external_id as string) || null,
+    importRunId: (row.import_run_id as string) || null,
   });
 }
 
@@ -30,6 +31,7 @@ export type TransactionRepository = {
   create(params: CreateTransactionParams): Promise<Transaction>;
   getById(id: string): Promise<Transaction | null>;
   getByAccount(accountId: string, dateRange?: DateRange): Promise<Transaction[]>;
+  getInDateRange(dateRange?: DateRange): Promise<Transaction[]>;
   update(
     id: string,
     changes: Partial<
@@ -47,8 +49,8 @@ export function createTransactionRepository(db: Database): TransactionRepository
     async create(params: CreateTransactionParams): Promise<Transaction> {
       const txn = createTransaction(params);
       await db.exec(
-        `INSERT INTO transactions (id, account_id, category_id, amount, description, transaction_date, settled_date, type, external_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO transactions (id, account_id, category_id, amount, description, transaction_date, settled_date, type, external_id, import_run_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           txn.id,
           txn.accountId,
@@ -59,6 +61,7 @@ export function createTransactionRepository(db: Database): TransactionRepository
           txn.settledDate ?? '',
           txn.type,
           txn.externalId ?? '',
+          txn.importRunId ?? '',
         ],
       );
       return txn;
@@ -84,6 +87,24 @@ export function createTransactionRepository(db: Database): TransactionRepository
       }
 
       const sql = `SELECT * FROM transactions WHERE ${conditions.join(' AND ')} ORDER BY transaction_date DESC`;
+      return (await db.execO(sql, params)).map(rowToTransaction);
+    },
+
+    async getInDateRange(dateRange?: DateRange): Promise<Transaction[]> {
+      const conditions: string[] = [];
+      const params: (string | number)[] = [];
+
+      if (dateRange?.from) {
+        conditions.push('transaction_date >= ?');
+        params.push(dateRange.from);
+      }
+      if (dateRange?.to) {
+        conditions.push('transaction_date <= ?');
+        params.push(dateRange.to);
+      }
+
+      const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+      const sql = `SELECT * FROM transactions ${where} ORDER BY transaction_date DESC, id DESC`;
       return (await db.execO(sql, params)).map(rowToTransaction);
     },
 

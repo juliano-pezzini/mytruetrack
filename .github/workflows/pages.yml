@@ -48,6 +48,8 @@ jobs:
         env:
           VITE_BASE_PATH: ${{ steps.base.outputs.path }}
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          # Monotonic per workflow run, so each Pages deploy shows a higher number.
+          VITE_APP_VERSION: ${{ github.run_number }}
 
       - uses: actions/upload-pages-artifact@v5
         with:

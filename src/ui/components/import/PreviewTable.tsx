@@ -1,12 +1,39 @@
+import type {
+  ClassifiedImportRow,
+  ImportCategoryRef,
+  ImportTagRef,
+} from '../../../domain/import-classification.ts';
 import { toCents } from '../../../domain/money.ts';
 import type { MappingResult } from '../../../workers/types.ts';
 
 type PreviewTableProps = {
   result: MappingResult;
+  classified?: readonly ClassifiedImportRow[];
 };
 
+function categoryLabel(ref: ImportCategoryRef | undefined): string {
+  if (ref == null) return '';
+  switch (ref.kind) {
+    case 'none':
+      return '';
+    case 'existing':
+      return ref.name;
+    case 'create':
+    case 'planned':
+      return `${ref.name} (${ref.type})`;
+    default: {
+      const _exhaustive: never = ref;
+      throw new Error(`unknown category ref: ${JSON.stringify(_exhaustive)}`);
+    }
+  }
+}
+
+function tagsLabel(tags: readonly ImportTagRef[] | undefined): string {
+  return (tags ?? []).map((tag) => tag.name).join(', ');
+}
+
 /** Shows parsed transactions plus a per-row warning list from applying a mapping. */
-export function PreviewTable({ result }: PreviewTableProps) {
+export function PreviewTable({ result, classified }: PreviewTableProps) {
   const { transactions, warnings } = result;
 
   return (
@@ -26,6 +53,8 @@ export function PreviewTable({ result }: PreviewTableProps) {
               <th className="pb-1">Description</th>
               <th className="pb-1 text-right">Amount</th>
               <th className="pb-1">Type</th>
+              <th className="pb-1">Category</th>
+              <th className="pb-1">Tags</th>
             </tr>
           </thead>
           <tbody>
@@ -41,11 +70,13 @@ export function PreviewTable({ result }: PreviewTableProps) {
                     {txn.type}
                   </span>
                 </td>
+                <td className="py-1 text-gray-900">{categoryLabel(classified?.[i]?.category)}</td>
+                <td className="py-1 text-gray-900">{tagsLabel(classified?.[i]?.tags)}</td>
               </tr>
             ))}
             {transactions.length > 5 && (
               <tr>
-                <td colSpan={4} className="py-1 text-gray-400 text-center">
+                <td colSpan={6} className="py-1 text-gray-400 text-center">
                   …and {transactions.length - 5} more
                 </td>
               </tr>

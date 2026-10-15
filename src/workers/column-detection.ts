@@ -7,6 +7,7 @@
  * back to positional defaults rather than guessing wrong.
  */
 
+import { detectDateFormat } from '../domain/date-format.ts';
 import { detectNumberFormat, type NumberFormat } from '../domain/number-format.ts';
 import type { AmountStrategy, ColumnMapping, ImportGrid } from './types.ts';
 
@@ -30,6 +31,8 @@ const KEYWORDS = {
   debit: ['debit', 'débito', 'debito', 'saída', 'saida', 'withdrawal', 'expense', 'despesa'],
   credit: ['credit', 'crédito', 'credito', 'entrada', 'deposit', 'income', 'receita'],
   type: ['type', 'tipo', 'natureza', 'd/c', 'dc', 'indicator', 'direction'],
+  category: ['category', 'categoria', 'classificação', 'classificacao'],
+  tags: ['tag', 'tags', 'etiqueta', 'etiquetas'],
 } as const;
 
 function normalize(header: string): string {
@@ -75,6 +78,9 @@ export function guessMapping(grid: ImportGrid): ColumnMapping {
   const debitColumn = findColumn(headers, KEYWORDS.debit);
   const creditColumn = findColumn(headers, KEYWORDS.credit);
   const typeColumn = findColumn(headers, KEYWORDS.type);
+  const categoryColumn = findColumn(headers, KEYWORDS.category);
+  const tagsColumn = findColumn(headers, KEYWORDS.tags);
+  const dateFormat = detectDateFormat(columnSamples(grid, dateColumn));
 
   let amountStrategy: AmountStrategy;
   if (debitColumn != null && creditColumn != null && debitColumn !== creditColumn) {
@@ -113,5 +119,8 @@ export function guessMapping(grid: ImportGrid): ColumnMapping {
     creditColumn: amountStrategy === 'separate' ? creditColumn : null,
     typeColumn: amountStrategy === 'type_column' ? typeColumn : null,
     numberFormat,
+    dateFormat,
+    categoryColumn,
+    tagsColumn,
   };
 }

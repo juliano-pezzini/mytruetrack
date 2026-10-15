@@ -5,6 +5,10 @@ test.beforeEach(async ({ page }) => {
   await setupLocalOnly(page);
 });
 
+test('sidebar shows the app version under the vault badge', async ({ page }) => {
+  await expect(page.locator('aside').getByText('dev', { exact: true })).toBeVisible();
+});
+
 test('sidebar links navigate to correct pages', async ({ page }) => {
   const navItems: Array<{ link: string; heading: string }> = [
     { link: 'Accounts', heading: 'Accounts' },

@@ -4,11 +4,14 @@ import { useAccountBalance } from '../hooks/useAccountBalance.ts';
 import { useDatabase } from '../hooks/useDatabase.ts';
 import { MoneyDisplay } from '../components/MoneyDisplay.tsx';
 import { ImportModal } from '../components/ImportModal.tsx';
+import { MercadoPagoImportModal } from '../components/MercadoPagoImportModal.tsx';
 import { createTransactionRepository } from '../../storage/repositories/transaction-repository.ts';
 import { fromCents, add, toCents, subtract } from '../../domain/money.ts';
 import type { Money } from '../../domain/money.ts';
 import type { Account, AccountType } from '../../domain/account.ts';
 import type { Transaction } from '../../domain/transaction.ts';
+
+const MERCADO_PAGO_BANK_CODE = '323';
 
 const TYPE_BADGES: Record<AccountType, { label: string; className: string }> = {
   bank: { label: 'Bank', className: 'bg-mtt-accent-pale text-mtt-accent' },
@@ -17,17 +20,34 @@ const TYPE_BADGES: Record<AccountType, { label: string; className: string }> = {
   transitional: { label: 'Transitional', className: 'bg-mtt-border text-mtt-muted' },
 };
 
+/** Local mark only — never load from a Mercado Pago CDN. */
+function MercadoPagoMark() {
+  return (
+    <svg
+      className="w-3.5 h-3.5"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l7 4.5-7 4.5z" />
+    </svg>
+  );
+}
+
 function AccountCard({
   account,
   onImport,
+  onMercadoPagoImport,
   refreshKey,
 }: {
   account: Account;
   onImport: (account: Account) => void;
+  onMercadoPagoImport: (account: Account) => void;
   refreshKey: number;
 }) {
   const today = new Date().toISOString().slice(0, 10);
   const { balance, refresh } = useAccountBalance(account.id, today);
+  const isMercadoPago = account.bankCode === MERCADO_PAGO_BANK_CODE;
 
   // useAccountBalance already refreshes on mount; only react to later refreshKey bumps.
   const didMount = useRef(false);
@@ -54,7 +74,7 @@ function AccountCard({
         </div>
         <p className="text-sm font-medium text-mtt-fg mt-0.5">{account.name}</p>
       </div>
-      <div className="flex justify-end pt-1 border-t border-mtt-border">
+      <div className="flex flex-wrap justify-end gap-3 pt-1 border-t border-mtt-border">
         <button
           type="button"
           onClick={() => onImport(account)}
@@ -70,6 +90,17 @@ function AccountCard({
           </svg>
           Import
         </button>
+        {isMercadoPago && (
+          <button
+            type="button"
+            onClick={() => onMercadoPagoImport(account)}
+            className="text-xs text-mtt-accent hover:text-mtt-accent/80 font-medium flex items-center gap-1 transition-colors"
+            aria-label="Import from Mercado Pago"
+          >
+            <MercadoPagoMark />
+            Import from Mercado Pago
+          </button>
+        )}
       </div>
     </div>
   );
@@ -79,6 +110,7 @@ export function DashboardPage() {
   const db = useDatabase();
   const { accounts } = useAccounts();
   const [importTarget, setImportTarget] = useState<Account | null>(null);
+  const [mpImportTarget, setMpImportTarget] = useState<Account | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Net worth: sum of all account balances (computed inline since we need all)
@@ -249,6 +281,7 @@ export function DashboardPage() {
                 key={a.id}
                 account={a}
                 onImport={setImportTarget}
+                onMercadoPagoImport={setMpImportTarget}
                 refreshKey={refreshKey}
               />
             ))}
@@ -336,6 +369,15 @@ export function DashboardPage() {
           accountId={importTarget.id}
           accountName={importTarget.name}
           onClose={() => setImportTarget(null)}
+          onImported={() => setRefreshKey((k) => k + 1)}
+        />
+      )}
+
+      {mpImportTarget && (
+        <MercadoPagoImportModal
+          accountId={mpImportTarget.id}
+          accountName={mpImportTarget.name}
+          onClose={() => setMpImportTarget(null)}
           onImported={() => setRefreshKey((k) => k + 1)}
         />
       )}

@@ -2,6 +2,7 @@
  * Shared types for the import pipeline (OFX, XLSX → domain transactions).
  */
 
+import type { DateFormat } from '../domain/date-format.ts';
 import type { Money } from '../domain/money.ts';
 import type { NumberFormat } from '../domain/number-format.ts';
 import type { TransactionType } from '../domain/transaction.ts';
@@ -13,6 +14,8 @@ export type ParsedTransaction = {
   readonly amount: Money; // always positive
   readonly type: TransactionType; // 'credit' | 'debit'
   readonly externalId: string | null;
+  readonly categoryName?: string | null;
+  readonly tagNames?: readonly string[];
 };
 
 /** Account info extracted from an OFX statement. */
@@ -72,6 +75,9 @@ export type ColumnMapping = {
   readonly creditColumn: number | null; // for 'separate'
   readonly typeColumn: number | null; // for 'type_column'
   readonly numberFormat: NumberFormat;
+  readonly dateFormat?: DateFormat;
+  readonly categoryColumn?: number | null;
+  readonly tagsColumn?: number | null;
 };
 
 /** A non-fatal problem found while applying a mapping to a row. */

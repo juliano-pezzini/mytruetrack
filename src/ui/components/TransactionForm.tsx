@@ -1,13 +1,17 @@
 import { useState } from 'react';
 import type { TransactionType, CreateTransactionParams } from '../../domain/transaction.ts';
 import type { Category } from '../../domain/category.ts';
+import type { Account } from '../../domain/account.ts';
 import { fromDecimal } from '../../domain/money.ts';
 
 type TransactionFormProps = {
   onSubmit: (params: CreateTransactionParams) => void;
   onCancel: () => void;
   categories: Category[];
-  accountId: string;
+  /** Fixed account for single-account create or edit. Omit when using the picker. */
+  accountId?: string;
+  /** Active accounts for the create-time picker (All-accounts mode). */
+  accounts?: readonly Account[];
   initial?: {
     amount: string;
     description: string;
@@ -23,9 +27,12 @@ export function TransactionForm({
   onCancel,
   categories,
   accountId,
+  accounts,
   initial,
   submitLabel = 'Create',
 }: TransactionFormProps) {
+  const showAccountPicker = accountId === undefined && accounts !== undefined;
+  const [selectedAccountId, setSelectedAccountId] = useState('');
   const [amount, setAmount] = useState(initial?.amount ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [date, setDate] = useState(
@@ -38,10 +45,15 @@ export function TransactionForm({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    const resolvedAccountId = accountId ?? selectedAccountId;
+    if (!resolvedAccountId) {
+      setError('Account is required');
+      return;
+    }
     try {
       onSubmit({
         id: crypto.randomUUID(),
-        accountId,
+        accountId: resolvedAccountId,
         amount: fromDecimal(amount),
         description,
         transactionDate: date,
@@ -56,6 +68,27 @@ export function TransactionForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>}
+      {showAccountPicker && (
+        <div>
+          <label htmlFor="txn-account" className="block text-sm font-medium text-gray-700 mb-1">
+            Account
+          </label>
+          <select
+            id="txn-account"
+            value={selectedAccountId}
+            onChange={(e) => setSelectedAccountId(e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
+            <option value="">— Select account —</option>
+            {accounts.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="txn-amount" className="block text-sm font-medium text-gray-700 mb-1">

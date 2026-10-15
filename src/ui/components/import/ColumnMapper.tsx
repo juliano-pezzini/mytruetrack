@@ -1,5 +1,6 @@
-import type { AmountStrategy, ColumnMapping } from '../../../workers/types.ts';
+import type { DateFormat } from '../../../domain/date-format.ts';
 import type { NumberFormat } from '../../../domain/number-format.ts';
+import type { AmountStrategy, ColumnMapping } from '../../../workers/types.ts';
 
 type ColumnMapperProps = {
   headers: readonly string[];
@@ -45,6 +46,14 @@ const STRATEGIES: ReadonlyArray<{ value: AmountStrategy; label: string }> = [
   { value: 'single', label: 'Single amount column (negative = debit)' },
   { value: 'separate', label: 'Separate debit & credit columns' },
   { value: 'type_column', label: 'Amount column + type column' },
+];
+
+const DATE_FORMATS: ReadonlyArray<{ value: DateFormat; label: string }> = [
+  { value: 'dmy', label: 'DD/MM/YYYY' },
+  { value: 'mdy', label: 'MM/DD/YYYY' },
+  { value: 'ymd', label: 'YYYY-MM-DD' },
+  { value: 'dmony', label: 'DD/MMM/YYYY' },
+  { value: 'mondy', label: 'MMM/DD/YYYY' },
 ];
 
 /**
@@ -127,6 +136,21 @@ export function ColumnMapper({ headers, mapping, onChange }: ColumnMapperProps) 
           />
         )}
 
+        <ColumnSelect
+          label="Category"
+          headers={headers}
+          value={mapping.categoryColumn ?? null}
+          onChange={(v) => set({ categoryColumn: v })}
+          testId="map-category"
+        />
+        <ColumnSelect
+          label="Tags"
+          headers={headers}
+          value={mapping.tagsColumn ?? null}
+          onChange={(v) => set({ tagsColumn: v })}
+          testId="map-tags"
+        />
+
         <label className="block">
           <span className="block text-sm font-medium text-gray-700 mb-1">Number format</span>
           <select
@@ -137,6 +161,22 @@ export function ColumnMapper({ headers, mapping, onChange }: ColumnMapperProps) 
           >
             <option value="us">1,234.56 (US)</option>
             <option value="eu">1.234,56 (EU / BR)</option>
+          </select>
+        </label>
+
+        <label className="block">
+          <span className="block text-sm font-medium text-gray-700 mb-1">Date format</span>
+          <select
+            data-testid="map-date-format"
+            value={mapping.dateFormat ?? 'dmy'}
+            onChange={(e) => set({ dateFormat: e.target.value as DateFormat })}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {DATE_FORMATS.map((format) => (
+              <option key={format.value} value={format.value}>
+                {format.label}
+              </option>
+            ))}
           </select>
         </label>
       </div>

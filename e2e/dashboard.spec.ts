@@ -19,6 +19,7 @@ async function createAccountAndTransactions(page: import('@playwright/test').Pag
   const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
 
   await page.getByRole('button', { name: '+ New Transaction' }).click();
+  await page.getByLabel('Account', { exact: true }).selectOption({ label: 'Dashboard Bank' });
   await page.getByLabel('Amount').fill('1000.00');
   await page.getByLabel('Description').fill('Salary Income');
   await page.getByLabel('Date').fill(date);
@@ -27,6 +28,7 @@ async function createAccountAndTransactions(page: import('@playwright/test').Pag
   await page.getByRole('cell', { name: 'Salary Income' }).waitFor();
 
   await page.getByRole('button', { name: '+ New Transaction' }).click();
+  await page.getByLabel('Account', { exact: true }).selectOption({ label: 'Dashboard Bank' });
   await page.getByLabel('Amount').fill('200.00');
   await page.getByLabel('Description').fill('Rent Payment');
   await page.getByLabel('Date').fill(date);

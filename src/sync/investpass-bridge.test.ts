@@ -75,6 +75,45 @@ describe('investpass-bridge', () => {
       expect(port.postMessage).toHaveBeenCalledWith(msg);
     });
 
+    it('can send START_MP_IMPORT and receive MP payload / session-missing types', () => {
+      const mock = createMockPort();
+      installChromeMock(mock.port);
+
+      const wrapper = connectToExtension('test-ext-id')!;
+      const handler = vi.fn();
+      wrapper.onMessage(handler);
+
+      wrapper.send({ type: 'START_MP_IMPORT', periodStart: '2026-01-01', periodEnd: '2026-01-31' });
+      expect(mock.port.postMessage).toHaveBeenCalledWith({
+        type: 'START_MP_IMPORT',
+        periodStart: '2026-01-01',
+        periodEnd: '2026-01-31',
+      });
+
+      mock.simulateMessage({ type: 'MP_SESSION_MISSING' });
+      mock.simulateMessage({ type: 'MP_IMPORT_PAYLOAD', pages: [{ total: 0, pages: 0, groups: [] }] });
+
+      expect(handler).toHaveBeenCalledWith({ type: 'MP_SESSION_MISSING' });
+      expect(handler).toHaveBeenCalledWith({
+        type: 'MP_IMPORT_PAYLOAD',
+        pages: [{ total: 0, pages: 0, groups: [] }],
+      });
+    });
+
+    it('still supports InvestPass START_IMPORT message shape', () => {
+      const { port } = createMockPort();
+      installChromeMock(port);
+
+      const wrapper = connectToExtension('test-ext-id')!;
+      wrapper.send({ type: 'START_IMPORT', periodStart: '2025-06-01', periodEnd: '2025-06-30' });
+
+      expect(port.postMessage).toHaveBeenCalledWith({
+        type: 'START_IMPORT',
+        periodStart: '2025-06-01',
+        periodEnd: '2025-06-30',
+      });
+    });
+
     it('onMessage() delegates to port.onMessage.addListener', () => {
       const { port } = createMockPort();
       installChromeMock(port);

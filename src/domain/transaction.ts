@@ -21,6 +21,8 @@ export type Transaction = Readonly<{
   settledDate: string | null;
   type: TransactionType;
   externalId: string | null;
+  /** Links to account_import_logs.id when inserted by an import run; null otherwise. */
+  importRunId: string | null;
 }>;
 
 export type CreateTransactionParams = {
@@ -33,6 +35,7 @@ export type CreateTransactionParams = {
   categoryId?: string | null;
   settledDate?: string | null;
   externalId?: string | null;
+  importRunId?: string | null;
 };
 
 export function createTransaction(params: CreateTransactionParams): Transaction {
@@ -55,5 +58,6 @@ export function createTransaction(params: CreateTransactionParams): Transaction 
     settledDate: params.settledDate ?? null,
     type: params.type,
     externalId: params.externalId ?? null,
+    importRunId: params.importRunId ?? null,
   };
 }

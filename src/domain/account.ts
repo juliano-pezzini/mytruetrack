@@ -16,6 +16,8 @@ export type Account = Readonly<{
   initialBalance: Money;
   isActive: boolean;
   description: string | null;
+  /** COMPE bank code. Empty string or `'323'` (Mercado Pago). Independent of `type`. */
+  bankCode: string;
 }>;
 
 export type CreateAccountParams = {
@@ -25,6 +27,7 @@ export type CreateAccountParams = {
   initialBalance: Money;
   isActive?: boolean;
   description?: string | null;
+  bankCode?: string;
 };
 
 export function createAccount(params: CreateAccountParams): Account {
@@ -40,6 +43,7 @@ export function createAccount(params: CreateAccountParams): Account {
     initialBalance: params.initialBalance,
     isActive: params.isActive ?? true,
     description: params.description ?? null,
+    bankCode: params.bankCode ?? '',
   };
 }
 

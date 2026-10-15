@@ -11,6 +11,10 @@ async function rowCount(db: Database, table: string): Promise<number> {
 
 async function seedEveryTable(db: Database): Promise<void> {
   await db.exec(`INSERT INTO accounts (id, name, type) VALUES ('a1', 'Checking', 'bank')`);
+  await db.exec(
+    `INSERT INTO account_import_logs (id, account_id, source, period_start, period_end, imported_at)
+     VALUES ('log1', 'a1', 'mercado_pago', '2026-01-01', '2026-01-31', '2026-01-31T12:00:00Z')`,
+  );
   await db.exec(`INSERT INTO categories (id, name, type) VALUES ('c1', 'Food', 'expense')`);
   await db.exec(`INSERT INTO tags (id, name, color) VALUES ('t1', 'Trip', '#fff')`);
   await db.exec(
@@ -34,7 +38,6 @@ async function seedEveryTable(db: Database): Promise<void> {
      VALUES ('cor1', 'tx1', 'c1', 'Lunch')`,
   );
 }
-
 describe('clearAllData', () => {
   let db: Database;
 

@@ -7,6 +7,7 @@
  */
 export const SYNC_TABLES = [
   'accounts',
+  'account_import_logs',
   'categories',
   'tags',
   'transactions',

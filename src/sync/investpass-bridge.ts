@@ -1,6 +1,6 @@
 /**
- * PWA-side bridge client for communicating with the InvestPass companion
- * Chrome extension via chrome.runtime.connect (externally_connectable).
+ * PWA-side import bridge client for the companion Chrome extension
+ * (InvestPass + Mercado Pago) via chrome.runtime.connect (externally_connectable).
  */
 
 import type { InvestPassTransaction } from '../workers/investpass-types.ts';
@@ -30,6 +30,9 @@ export type BridgeMessage =
   | { type: 'START_IMPORT'; periodStart: string; periodEnd: string }
   | { type: 'IMPORT_PAYLOAD'; transactions: InvestPassTransaction[] }
   | { type: 'IMPORT_RESULT'; summary: InvestPassImportResult }
+  | { type: 'START_MP_IMPORT'; periodStart: string; periodEnd: string }
+  | { type: 'MP_SESSION_MISSING' }
+  | { type: 'MP_IMPORT_PAYLOAD'; pages: unknown[] }
   | { type: 'ERROR'; code: string; message: string };
 
 // ── Port wrapper ───────────────────────────────────────────────────────
@@ -46,7 +49,7 @@ export type InvestPassPort = {
 // ── Public API ─────────────────────────────────────────────────────────
 
 /**
- * Connect to the InvestPass extension and return a typed port wrapper.
+ * Connect to the companion import extension and return a typed port wrapper.
  * Returns null if chrome.runtime is unavailable (extension not installed).
  */
 export function connectToExtension(extensionId: string): InvestPassPort | null {
@@ -76,7 +79,7 @@ export function connectToExtension(extensionId: string): InvestPassPort | null {
 const PING_TIMEOUT_MS = 2000;
 
 /**
- * Check if the InvestPass extension is available by attempting a PING/PONG
+ * Check if the companion import extension is available by attempting a PING/PONG
  * handshake with a timeout.
  */
 export async function isExtensionAvailable(extensionId: string): Promise<boolean> {

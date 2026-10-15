@@ -1,14 +1,49 @@
 # State
 
-**Last Updated:** 2026-09-14
-**Current Work:** Cloud vault metadata (AD-010) — Execute complete; Verifier PASS
-(https://github.com/juliano-pezzini/mytruetrack/issues/102). Optional UAT for Setup/Restore UI.
-Commits `3611a16..7373ae2`. Planning artifacts (`context.md`, `design.md`, `validation.md`)
-still untracked.
+**Last Updated:** 2026-10-14
+**Current Work:** Mercado Pago import (issue #123) — PR #124. Planning artifacts archived to
+the issue; feature folder removed from the tree (see `spec-archive.md`).
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-012: Shared `account_import_logs` + companion-extension statement imports (2026-10-13)
+
+**Decision:** Statement imports that use a companion extension share SQLite table
+`account_import_logs` with a `source` discriminator (Mercado Pago uses `mercado_pago`).
+Period frontier and log lists are scoped by `(account_id, source)`. Accounts may carry
+optional COMPE `bank_code` (`323` = Mercado Pago); at most one active account may be `323`.
+The PWA never stores provider credentials; the extension holds the browser session.
+Transactions link via `import_run_id`.
+
+**Reason:** InvestPass and Mercado Pago share the same import shape; a provider-named log
+table would force a second schema for the next source. Issue #123 locked the product
+contract; naming was generalized during Specify/Design.
+
+**Trade-off:** Frontiers must always filter by `source` or they mix providers on one account.
+
+**Impact:** Spec/design/validation in `.specs/features/mercado-pago-import/`. Extends
+account form, dashboard card, companion extension (`mytruetrack Import`), bridge messages.
+
+### AD-011: Sidebar version is the Pages workflow run number (2026-10-12)
+
+**Decision:** The left sidebar shows a version at the bottom, under the Encrypted badge.
+Deployed builds read `VITE_APP_VERSION`, set by `.github/workflows/pages.yml` to
+`github.run_number`. The label is semver with that integer as the minor and
+major `1` and patch `0` fixed (`v1.43.0`). Local and any non-numeric value show
+`dev`. `package.json` stays `0.0.0` and is not the displayed version.
+
+**Reason:** https://github.com/juliano-pezzini/mytruetrack/issues/119 asks for a number in
+the left bar that increases on every deploy. The Pages workflow already runs on each
+push to `main`, and `run_number` increases on every run. The workflow has `contents: read`,
+so it cannot commit a semver bump.
+
+**Trade-off:** A failed or manually re-run deploy also consumes a number, so the next
+successful deploy can skip integers. The label matches the bundle that is running, which
+updates when the service worker picks up the new build.
+
+**Impact:** `formatAppVersion` in `src/ui/app-version.ts`, rendered by `Sidebar` and by Settings → About (replaces the static `v2.0.0-alpha` label).
 
 ### AD-010: Cloud `vault-metadata.json` as portable vault identity (2026-09-13)
 

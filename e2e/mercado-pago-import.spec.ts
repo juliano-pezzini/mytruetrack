@@ -41,6 +41,31 @@ test('saves Mercado Pago institution and shows both import actions on the card',
   ).toBeVisible();
 });
 
+test('missing companion extension explains how to install it', async ({ page }) => {
+  await createAccount(page, 'MP Install', 'Mercado Pago');
+  await goDashboard(page);
+
+  await page.getByRole('button', { name: 'Import from Mercado Pago' }).click();
+  await expect(page.getByRole('heading', { name: /Import from Mercado Pago/ })).toBeVisible();
+
+  await page.getByTestId('mp-import-button').click();
+
+  await expect(page.getByTestId('mp-import-error')).toHaveText('Import extension not available');
+  const guide = page.getByTestId('mp-extension-install');
+  await expect(guide).toBeVisible();
+  await expect(guide).toContainText('Install the mytruetrack Import extension');
+  await expect(guide).toContainText('chrome://extensions');
+  await expect(guide).toContainText('edge://extensions');
+  await expect(guide).toContainText('Developer mode');
+  await expect(guide).toContainText('Load unpacked');
+  await expect(guide.getByRole('link', { name: 'Extension folder on GitHub' })).toHaveAttribute(
+    'href',
+    'https://github.com/juliano-pezzini/mytruetrack/tree/main/extension',
+  );
+
+  await expect(page.getByText('No Mercado Pago imports yet.')).toBeVisible();
+});
+
 test('rejects a second active Mercado Pago account', async ({ page }) => {
   await createAccount(page, 'First MP', 'Mercado Pago');
   await expect(page.getByRole('cell', { name: 'First MP' })).toBeVisible();

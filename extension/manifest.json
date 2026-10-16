@@ -4,16 +4,9 @@
   "version": "0.1.0",
   "description": "Companion extension for importing InvestPass and Mercado Pago transactions into mytruetrack",
   "permissions": [],
-  "host_permissions": [
-    "https://pass-api.invest-pass.com/*",
-    "https://www.mercadopago.com.br/*"
-  ],
+  "host_permissions": ["https://pass-api.invest-pass.com/*", "https://www.mercadopago.com.br/*"],
   "externally_connectable": {
-    "matches": [
-      "http://localhost:*/*",
-      "https://localhost:*/*",
-      "https://*.github.io/*"
-    ]
+    "matches": ["http://localhost:*/*", "https://localhost:*/*", "https://*.github.io/*"]
   },
   "background": {
     "service_worker": "src/background.ts",

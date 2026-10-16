@@ -33,10 +33,9 @@ export function createAccountRepository(db: Database): AccountRepository {
   async function assertNoOtherActiveMercadoPago(excludeId?: string): Promise<void> {
     const rows =
       excludeId === undefined
-        ? await db.execO(
-            'SELECT id FROM accounts WHERE bank_code = ? AND is_active = 1 LIMIT 1',
-            [MERCADO_PAGO_BANK_CODE],
-          )
+        ? await db.execO('SELECT id FROM accounts WHERE bank_code = ? AND is_active = 1 LIMIT 1', [
+            MERCADO_PAGO_BANK_CODE,
+          ])
         : await db.execO(
             'SELECT id FROM accounts WHERE bank_code = ? AND is_active = 1 AND id != ? LIMIT 1',
             [MERCADO_PAGO_BANK_CODE, excludeId],

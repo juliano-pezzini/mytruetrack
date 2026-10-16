@@ -74,9 +74,7 @@ describe('mapBinnacleItem', () => {
   });
 
   it('errors when currency_id is missing', () => {
-    const result = mapBinnacleItem(
-      movement({ amount: { fraction: '10', cents: '1000' } }),
-    );
+    const result = mapBinnacleItem(movement({ amount: { fraction: '10', cents: '1000' } }));
     expect(result).toEqual({ error: expect.stringMatching(/BRL|currency/i) });
   });
 
@@ -105,9 +103,7 @@ describe('mapBinnacleItem', () => {
   });
 
   it('derives cents from fraction×100 when cents is absent', () => {
-    const result = mapBinnacleItem(
-      movement({ amount: { currency_id: 'BRL', fraction: '12.34' } }),
-    );
+    const result = mapBinnacleItem(movement({ amount: { currency_id: 'BRL', fraction: '12.34' } }));
     expect(result).toMatchObject({ amount: fromCents(1234), type: 'credit' });
   });
 });

@@ -23,12 +23,7 @@ const TYPE_BADGES: Record<AccountType, { label: string; className: string }> = {
 /** Local mark only — never load from a Mercado Pago CDN. */
 function MercadoPagoMark() {
   return (
-    <svg
-      className="w-3.5 h-3.5"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
+    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l7 4.5-7 4.5z" />
     </svg>
   );

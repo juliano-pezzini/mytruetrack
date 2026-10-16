@@ -242,11 +242,11 @@ test.describe('no accounts yet', () => {
     await page.getByRole('link', { name: /Transactions/i }).click();
     await page.getByRole('heading', { name: 'Transactions' }).waitFor();
     await expect(page.getByText('Create an account first to add transactions.')).toBeVisible();
-    await expect(page.getByLabel('Account filter').locator('option', { hasText: 'All accounts' })).toHaveCount(
-      0,
-    );
-    await expect(page.getByLabel('Account filter').locator('option', { hasText: 'No accounts' })).toHaveCount(
-      1,
-    );
+    await expect(
+      page.getByLabel('Account filter').locator('option', { hasText: 'All accounts' }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByLabel('Account filter').locator('option', { hasText: 'No accounts' }),
+    ).toHaveCount(1);
   });
 });

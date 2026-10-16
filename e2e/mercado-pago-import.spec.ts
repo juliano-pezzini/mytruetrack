@@ -32,13 +32,14 @@ test('saves Mercado Pago institution and shows both import actions on the card',
 
   await goDashboard(page);
 
-  const card = page.locator('div').filter({ hasText: 'MP Wallet' }).filter({
-    has: page.getByRole('button', { name: 'Import', exact: true }),
-  });
+  const card = page
+    .locator('div')
+    .filter({ hasText: 'MP Wallet' })
+    .filter({
+      has: page.getByRole('button', { name: 'Import', exact: true }),
+    });
   await expect(card.getByRole('button', { name: 'Import', exact: true })).toBeVisible();
-  await expect(
-    card.getByRole('button', { name: 'Import from Mercado Pago' }),
-  ).toBeVisible();
+  await expect(card.getByRole('button', { name: 'Import from Mercado Pago' })).toBeVisible();
 });
 
 test('missing companion extension explains how to install it', async ({ page }) => {
@@ -81,13 +82,14 @@ test('non-323 account shows file Import only', async ({ page }) => {
 
   await goDashboard(page);
 
-  const card = page.locator('div').filter({ hasText: 'Other Bank' }).filter({
-    has: page.getByRole('button', { name: 'Import', exact: true }),
-  });
+  const card = page
+    .locator('div')
+    .filter({ hasText: 'Other Bank' })
+    .filter({
+      has: page.getByRole('button', { name: 'Import', exact: true }),
+    });
   await expect(card.getByRole('button', { name: 'Import', exact: true })).toBeVisible();
-  await expect(
-    page.getByRole('button', { name: 'Import from Mercado Pago' }),
-  ).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Import from Mercado Pago' })).toHaveCount(0);
 });
 
 test('toggling institution hides Mercado Pago action and keeps the account', async ({ page }) => {
@@ -107,9 +109,7 @@ test('toggling institution hides Mercado Pago action and keeps the account', asy
   await goDashboard(page);
   await expect(page.getByText('Toggle MP')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Import', exact: true })).toBeVisible();
-  await expect(
-    page.getByRole('button', { name: 'Import from Mercado Pago' }),
-  ).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Import from Mercado Pago' })).toHaveCount(0);
 });
 
 test('toggling back to Mercado Pago restores the action; mark never loads MP CDN', async ({
@@ -118,7 +118,10 @@ test('toggling back to Mercado Pago restores the action; mark never loads MP CDN
   const mercadopagoImageRequests: string[] = [];
   page.on('request', (req) => {
     const url = req.url();
-    if (/mercadopago/i.test(url) && (req.resourceType() === 'image' || /\.(png|jpe?g|svg|webp|gif)(\?|$)/i.test(url))) {
+    if (
+      /mercadopago/i.test(url) &&
+      (req.resourceType() === 'image' || /\.(png|jpe?g|svg|webp|gif)(\?|$)/i.test(url))
+    ) {
       mercadopagoImageRequests.push(url);
     }
   });
@@ -149,9 +152,9 @@ test('toggling back to Mercado Pago restores the action; mark never loads MP CDN
 
   await goDashboard(page);
   await expect(page.getByRole('button', { name: 'Import from Mercado Pago' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Import from Mercado Pago' }).locator('img')).toHaveCount(
-    0,
-  );
+  await expect(
+    page.getByRole('button', { name: 'Import from Mercado Pago' }).locator('img'),
+  ).toHaveCount(0);
 
   expect(mercadopagoImageRequests).toEqual([]);
 });

@@ -114,9 +114,10 @@ export function mapBinnacleItem(item: unknown): MapBinnacleItemResult {
   };
 }
 
-export function flattenBinnaclePages(
-  pages: readonly unknown[],
-): { rows: ParsedTransaction[]; errors: ImportError[] } {
+export function flattenBinnaclePages(pages: readonly unknown[]): {
+  rows: ParsedTransaction[];
+  errors: ImportError[];
+} {
   const rows: ParsedTransaction[] = [];
   const errors: ImportError[] = [];
   let index = 0;

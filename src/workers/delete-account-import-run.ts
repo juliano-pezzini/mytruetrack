@@ -35,9 +35,10 @@ export async function deleteAccountImportRun(db: Database, logId: string): Promi
   }
   const accountId = logRows[0]!.account_id as string;
 
-  await db.exec('DELETE FROM transaction_tags WHERE transaction_id IN (SELECT id FROM transactions WHERE import_run_id = ?)', [
-    logId,
-  ]);
+  await db.exec(
+    'DELETE FROM transaction_tags WHERE transaction_id IN (SELECT id FROM transactions WHERE import_run_id = ?)',
+    [logId],
+  );
   await db.exec('DELETE FROM transactions WHERE import_run_id = ?', [logId]);
 
   const logRepo = createAccountImportLogRepository(db);

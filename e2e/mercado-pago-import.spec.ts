@@ -59,10 +59,20 @@ test('missing companion extension explains how to install it', async ({ page }) 
   await expect(guide).toContainText('edge://extensions');
   await expect(guide).toContainText('Developer mode');
   await expect(guide).toContainText('Load unpacked');
-  await expect(guide.getByRole('link', { name: 'Extension folder on GitHub' })).toHaveAttribute(
-    'href',
-    'https://github.com/juliano-pezzini/mytruetrack/tree/main/extension',
-  );
+  const download = guide.getByRole('link', { name: 'Download the extension (.zip)' });
+  await expect(download).toHaveAttribute('href', '/mytruetrack-import.zip');
+  await expect(download).toHaveAttribute('download', 'mytruetrack-import.zip');
+  await expect(guide).toContainText('and unzip it');
+
+  const response = await page.request.get('/mytruetrack-import.zip');
+  expect(response.ok()).toBeTruthy();
+  expect(response.headers()['content-type']).toContain('application/zip');
+  const bytes = await response.body();
+  expect(bytes.subarray(0, 2).toString()).toBe('PK');
+  const listing = bytes.toString('latin1');
+  expect(listing).toContain('manifest.json');
+  expect(listing).toContain('src/background.ts');
+  expect(listing).toContain('src/mercado-pago-api.ts');
 
   await expect(page.getByText('No Mercado Pago imports yet.')).toBeVisible();
 });

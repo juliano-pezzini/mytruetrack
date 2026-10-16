@@ -38,7 +38,11 @@ vi.mock('../../workers/delete-account-import-run.ts', () => ({
 }));
 
 import { MercadoPagoImportModal } from './MercadoPagoImportModal.tsx';
-import { EXTENSION_SOURCE_URL, EXTENSION_UNAVAILABLE_MESSAGE } from '../extension-unavailable.ts';
+import {
+  EXTENSION_UNAVAILABLE_MESSAGE,
+  EXTENSION_ZIP_NAME,
+  extensionZipHref,
+} from '../extension-unavailable.ts';
 
 const SAMPLE_LOG: AccountImportLog = {
   id: 'run-list-1',
@@ -174,10 +178,9 @@ describe('MercadoPagoImportModal', () => {
     expect(guide.textContent).toMatch(/Developer mode/);
     expect(guide.textContent).toMatch(/Load unpacked/);
     expect(guide.textContent).toMatch(/extension/);
-    const link = screen.getByRole('link', { name: 'Extension folder on GitHub' });
-    expect(link.getAttribute('href')).toBe(EXTENSION_SOURCE_URL);
-    expect(link.getAttribute('target')).toBe('_blank');
-    expect(link.getAttribute('rel')).toBe('noreferrer');
+    const link = screen.getByRole('link', { name: 'Download the extension (.zip)' });
+    expect(link.getAttribute('href')).toBe(extensionZipHref());
+    expect(link.getAttribute('download')).toBe(EXTENSION_ZIP_NAME);
   });
 
   it('keeps other import errors free of install steps', async () => {

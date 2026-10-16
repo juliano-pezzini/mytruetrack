@@ -1,4 +1,4 @@
-import { EXTENSION_SOURCE_URL } from '../extension-unavailable.ts';
+import { EXTENSION_ZIP_NAME, extensionZipHref } from '../extension-unavailable.ts';
 
 /**
  * Install steps for the companion extension. Shown only when Mercado Pago
@@ -19,26 +19,25 @@ export function ExtensionInstallGuidance() {
       </p>
       <ol className="list-decimal space-y-1.5 pl-5 text-xs leading-relaxed text-mtt-fg">
         <li>
+          <a
+            href={extensionZipHref()}
+            download={EXTENSION_ZIP_NAME}
+            className="font-medium text-mtt-accent underline"
+          >
+            Download the extension (.zip)
+          </a>{' '}
+          and unzip it.
+        </li>
+        <li>
           Open <code className="font-mono">chrome://extensions</code> in Chrome, or{' '}
           <code className="font-mono">edge://extensions</code> in Edge.
         </li>
         <li>Turn on Developer mode.</li>
         <li>
-          Choose Load unpacked and select the <code className="font-mono">extension</code> folder
-          from the mytruetrack project. The card name is mytruetrack Import.
+          Choose Load unpacked and select the unzipped folder. The card name is mytruetrack Import.
         </li>
         <li>Return to this dialog and start the import again.</li>
       </ol>
-      <p className="text-xs">
-        <a
-          href={EXTENSION_SOURCE_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="font-medium text-mtt-accent underline"
-        >
-          Extension folder on GitHub
-        </a>
-      </p>
     </div>
   );
 }

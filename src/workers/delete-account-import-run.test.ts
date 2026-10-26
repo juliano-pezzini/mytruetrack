@@ -71,9 +71,9 @@ describe('deleteAccountImportRun', () => {
 
     expect(await txns.getById('t-run2')).toBeNull();
     expect(await txns.getById('t-run1')).not.toBeNull();
-    expect(await createAccountImportLogRepository(db).listByAccount('acc-1', 'mercado_pago')).toEqual(
-      [expect.objectContaining({ id: 'run-1' })],
-    );
+    expect(
+      await createAccountImportLogRepository(db).listByAccount('acc-1', 'mercado_pago'),
+    ).toEqual([expect.objectContaining({ id: 'run-1' })]);
   });
 
   it('keeps transactions whose import_run_id is empty', async () => {
@@ -220,9 +220,9 @@ describe('deleteAccountImportRun', () => {
     await deleteAccountImportRun(db, 'run-all-1');
     await deleteAccountImportRun(db, 'run-all-2');
 
-    expect(await createAccountImportLogRepository(db).listByAccount('acc-1', 'mercado_pago')).toEqual(
-      [],
-    );
+    expect(
+      await createAccountImportLogRepository(db).listByAccount('acc-1', 'mercado_pago'),
+    ).toEqual([]);
 
     const linked = await db.execO(
       `SELECT id FROM transactions WHERE account_id = ? AND import_run_id IS NOT NULL AND import_run_id != ''`,

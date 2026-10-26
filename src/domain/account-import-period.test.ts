@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  isValidAccountImportPeriod,
-  suggestAccountImportPeriod,
-} from './account-import-period.ts';
+import { isValidAccountImportPeriod, suggestAccountImportPeriod } from './account-import-period.ts';
 
 describe('suggestAccountImportPeriod', () => {
   it('suggests first day of current São Paulo month through today when there are no logs', () => {

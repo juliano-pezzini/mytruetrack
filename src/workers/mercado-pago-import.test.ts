@@ -29,13 +29,10 @@ describe('processMercadoPagoImport', () => {
 
   beforeEach(async () => {
     db = await initDatabase();
-    await db.exec(`INSERT INTO accounts (id, name, type, initial_balance, bank_code) VALUES (?, ?, ?, ?, ?)`, [
-      'acc-1',
-      'MP',
-      'bank',
-      0,
-      '323',
-    ]);
+    await db.exec(
+      `INSERT INTO accounts (id, name, type, initial_balance, bank_code) VALUES (?, ?, ?, ?, ?)`,
+      ['acc-1', 'MP', 'bank', 0, '323'],
+    );
   });
 
   afterEach(async () => {
@@ -82,9 +79,10 @@ describe('processMercadoPagoImport', () => {
       errorCount: 1,
     });
 
-    const txns = await db.execO('SELECT external_id, import_run_id, type FROM transactions WHERE account_id = ?', [
-      'acc-1',
-    ]);
+    const txns = await db.execO(
+      'SELECT external_id, import_run_id, type FROM transactions WHERE account_id = ?',
+      ['acc-1'],
+    );
     expect(txns).toHaveLength(2);
     expect(txns.every((r) => r.import_run_id === result.logId)).toBe(true);
   });
@@ -261,10 +259,9 @@ describe('processMercadoPagoImport', () => {
     expect(second.imported).toBe(1);
     expect(second.skipped).toBe(0);
 
-    const rows = await db.execO(
-      `SELECT import_run_id FROM transactions WHERE external_id = ?`,
-      ['ReImportMoveId0001'],
-    );
+    const rows = await db.execO(`SELECT import_run_id FROM transactions WHERE external_id = ?`, [
+      'ReImportMoveId0001',
+    ]);
     expect(rows).toHaveLength(1);
     expect(rows[0]!.import_run_id).toBe(second.logId);
   });

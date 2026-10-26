@@ -1,13 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useDatabase } from '../hooks/useDatabase.ts';
 import { useAutoSync } from '../hooks/useAutoSync.ts';
-import {
-  todaySaoPauloDate,
-  useMercadoPagoImport,
-} from '../hooks/useMercadoPagoImport.ts';
-import {
-  suggestAccountImportPeriod,
-} from '../../domain/account-import-period.ts';
+import { todaySaoPauloDate, useMercadoPagoImport } from '../hooks/useMercadoPagoImport.ts';
+import { suggestAccountImportPeriod } from '../../domain/account-import-period.ts';
 import {
   createAccountImportLogRepository,
   type AccountImportLog,

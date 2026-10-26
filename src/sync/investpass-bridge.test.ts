@@ -91,7 +91,10 @@ describe('investpass-bridge', () => {
       });
 
       mock.simulateMessage({ type: 'MP_SESSION_MISSING' });
-      mock.simulateMessage({ type: 'MP_IMPORT_PAYLOAD', pages: [{ total: 0, pages: 0, groups: [] }] });
+      mock.simulateMessage({
+        type: 'MP_IMPORT_PAYLOAD',
+        pages: [{ total: 0, pages: 0, groups: [] }],
+      });
 
       expect(handler).toHaveBeenCalledWith({ type: 'MP_SESSION_MISSING' });
       expect(handler).toHaveBeenCalledWith({

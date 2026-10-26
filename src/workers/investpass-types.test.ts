@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { InvestPassTransactionSchema, ImportPayloadSchema } from './investpass-types.ts';
+import {
+  InvestPassTransactionSchema,
+  ImportPayloadSchema,
+  MAX_INVESTPASS_TRANSACTIONS,
+} from './investpass-types.ts';
 import type { InvestPassImportResult } from './investpass-types.ts';
 
 const validTransaction = {
@@ -69,6 +73,18 @@ describe('ImportPayloadSchema', () => {
     const payload = { type: 'WRONG', transactions: [validTransaction] };
     const result = ImportPayloadSchema.safeParse(payload);
     expect(result.success).toBe(false);
+  });
+
+  it('rejects an oversized transaction list with a single issue', () => {
+    const result = ImportPayloadSchema.safeParse({
+      type: 'IMPORT_PAYLOAD',
+      transactions: Array.from({ length: MAX_INVESTPASS_TRANSACTIONS + 1 }, () => null),
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues).toHaveLength(1);
+      expect(result.error.issues[0]).toMatchObject({ code: 'too_big' });
+    }
   });
 });
 

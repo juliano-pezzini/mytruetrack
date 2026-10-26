@@ -6,7 +6,11 @@
 import { useState, useCallback, useRef } from 'react';
 import { useDatabase } from './useDatabase.ts';
 import { useAutoSync } from './useAutoSync.ts';
-import { connectToExtension, type BridgeMessage, type InvestPassPort } from '../../sync/investpass-bridge.ts';
+import {
+  connectToExtension,
+  type BridgeMessage,
+  type InvestPassPort,
+} from '../../sync/investpass-bridge.ts';
 import { isValidAccountImportPeriod } from '../../domain/account-import-period.ts';
 import {
   processMercadoPagoImport,
@@ -14,13 +18,7 @@ import {
 } from '../../workers/mercado-pago-import.ts';
 
 export type MercadoPagoImportStatus =
-  | 'idle'
-  | 'connecting'
-  | 'fetching'
-  | 'waiting_for_session'
-  | 'importing'
-  | 'done'
-  | 'error';
+  'idle' | 'connecting' | 'fetching' | 'waiting_for_session' | 'importing' | 'done' | 'error';
 
 export type UseMercadoPagoImportReturn = {
   status: MercadoPagoImportStatus;

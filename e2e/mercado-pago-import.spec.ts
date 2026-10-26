@@ -32,13 +32,49 @@ test('saves Mercado Pago institution and shows both import actions on the card',
 
   await goDashboard(page);
 
-  const card = page.locator('div').filter({ hasText: 'MP Wallet' }).filter({
-    has: page.getByRole('button', { name: 'Import', exact: true }),
-  });
+  const card = page
+    .locator('div')
+    .filter({ hasText: 'MP Wallet' })
+    .filter({
+      has: page.getByRole('button', { name: 'Import', exact: true }),
+    });
   await expect(card.getByRole('button', { name: 'Import', exact: true })).toBeVisible();
-  await expect(
-    card.getByRole('button', { name: 'Import from Mercado Pago' }),
-  ).toBeVisible();
+  await expect(card.getByRole('button', { name: 'Import from Mercado Pago' })).toBeVisible();
+});
+
+test('missing companion extension explains how to install it', async ({ page }) => {
+  await createAccount(page, 'MP Install', 'Mercado Pago');
+  await goDashboard(page);
+
+  await page.getByRole('button', { name: 'Import from Mercado Pago' }).click();
+  await expect(page.getByRole('heading', { name: /Import from Mercado Pago/ })).toBeVisible();
+
+  await page.getByTestId('mp-import-button').click();
+
+  await expect(page.getByTestId('mp-import-error')).toHaveText('Import extension not available');
+  const guide = page.getByTestId('mp-extension-install');
+  await expect(guide).toBeVisible();
+  await expect(guide).toContainText('Install the mytruetrack Import extension');
+  await expect(guide).toContainText('chrome://extensions');
+  await expect(guide).toContainText('edge://extensions');
+  await expect(guide).toContainText('Developer mode');
+  await expect(guide).toContainText('Load unpacked');
+  const download = guide.getByRole('link', { name: 'Download the extension (.zip)' });
+  await expect(download).toHaveAttribute('href', '/mytruetrack-import.zip');
+  await expect(download).toHaveAttribute('download', 'mytruetrack-import.zip');
+  await expect(guide).toContainText('and unzip it');
+
+  const response = await page.request.get('/mytruetrack-import.zip');
+  expect(response.ok()).toBeTruthy();
+  expect(response.headers()['content-type']).toContain('application/zip');
+  const bytes = await response.body();
+  expect(bytes.subarray(0, 2).toString()).toBe('PK');
+  const listing = bytes.toString('latin1');
+  expect(listing).toContain('manifest.json');
+  expect(listing).toContain('background.js');
+  expect(listing).toContain('"service_worker": "background.js"');
+
+  await expect(page.getByText('No Mercado Pago imports yet.')).toBeVisible();
 });
 
 test('rejects a second active Mercado Pago account', async ({ page }) => {
@@ -56,13 +92,14 @@ test('non-323 account shows file Import only', async ({ page }) => {
 
   await goDashboard(page);
 
-  const card = page.locator('div').filter({ hasText: 'Other Bank' }).filter({
-    has: page.getByRole('button', { name: 'Import', exact: true }),
-  });
+  const card = page
+    .locator('div')
+    .filter({ hasText: 'Other Bank' })
+    .filter({
+      has: page.getByRole('button', { name: 'Import', exact: true }),
+    });
   await expect(card.getByRole('button', { name: 'Import', exact: true })).toBeVisible();
-  await expect(
-    page.getByRole('button', { name: 'Import from Mercado Pago' }),
-  ).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Import from Mercado Pago' })).toHaveCount(0);
 });
 
 test('toggling institution hides Mercado Pago action and keeps the account', async ({ page }) => {
@@ -82,9 +119,7 @@ test('toggling institution hides Mercado Pago action and keeps the account', asy
   await goDashboard(page);
   await expect(page.getByText('Toggle MP')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Import', exact: true })).toBeVisible();
-  await expect(
-    page.getByRole('button', { name: 'Import from Mercado Pago' }),
-  ).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Import from Mercado Pago' })).toHaveCount(0);
 });
 
 test('toggling back to Mercado Pago restores the action; mark never loads MP CDN', async ({
@@ -93,7 +128,10 @@ test('toggling back to Mercado Pago restores the action; mark never loads MP CDN
   const mercadopagoImageRequests: string[] = [];
   page.on('request', (req) => {
     const url = req.url();
-    if (/mercadopago/i.test(url) && (req.resourceType() === 'image' || /\.(png|jpe?g|svg|webp|gif)(\?|$)/i.test(url))) {
+    if (
+      /mercadopago/i.test(url) &&
+      (req.resourceType() === 'image' || /\.(png|jpe?g|svg|webp|gif)(\?|$)/i.test(url))
+    ) {
       mercadopagoImageRequests.push(url);
     }
   });
@@ -124,9 +162,9 @@ test('toggling back to Mercado Pago restores the action; mark never loads MP CDN
 
   await goDashboard(page);
   await expect(page.getByRole('button', { name: 'Import from Mercado Pago' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Import from Mercado Pago' }).locator('img')).toHaveCount(
-    0,
-  );
+  await expect(
+    page.getByRole('button', { name: 'Import from Mercado Pago' }).locator('img'),
+  ).toHaveCount(0);
 
   expect(mercadopagoImageRequests).toEqual([]);
 });

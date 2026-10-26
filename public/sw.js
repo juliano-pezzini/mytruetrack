@@ -6,13 +6,7 @@ const CACHE_NAME = 'mytruetrack-v3';
 // Only stable public files belong here. Vite emits hashed JS/CSS/WASM under
 // `assets/`; those are filled in by the fetch handler after the first successful GET.
 // A missing precache URL fails the entire install (`cache.addAll`).
-const PRECACHE_URLS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png',
-];
+const PRECACHE_URLS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 const sw = /** @type {ServiceWorkerGlobalScope} */ (/** @type {unknown} */ (self));
 

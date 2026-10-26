@@ -29,10 +29,16 @@ export type MercadoPagoImportResult = Readonly<{
   imported: number;
   skipped: number;
   errorCount: number;
+  errors: readonly string[];
 }>;
 
 function clampPeriodEnd(requestedEnd: string, todaySaoPaulo: string): string {
   return requestedEnd > todaySaoPaulo ? todaySaoPaulo : requestedEnd;
+}
+
+/** Inclusive YYYY-MM-DD range selected on the import screen. */
+function isInsidePeriod(date: string, period: MercadoPagoImportPeriod): boolean {
+  return date >= period.start && date <= period.end;
 }
 
 /**
@@ -47,12 +53,18 @@ export async function processMercadoPagoImport(
   options: ProcessMercadoPagoImportOptions,
 ): Promise<MercadoPagoImportResult> {
   const { rows, errors: mapErrors } = flattenBinnaclePages(pages);
+  const inRange = rows.filter((row) => isInsidePeriod(row.date, period));
+  const outsidePeriod = rows.length - inRange.length;
   const logId = options.logId ?? crypto.randomUUID();
   const periodEnd = clampPeriodEnd(period.end, options.todaySaoPaulo);
   const importedAt = options.importedAt ?? new Date().toISOString();
 
-  const importResult = await importTransactions(db, accountId, rows, logId);
-  const errorCount = mapErrors.length + importResult.errors.length;
+  const importResult = await importTransactions(db, accountId, inRange, logId);
+  const skipped = importResult.skipped + outsidePeriod;
+  const errors = [
+    ...mapErrors.map((error) => error.message),
+    ...importResult.errors.map((error) => error.message),
+  ];
 
   const logs = createAccountImportLogRepository(db);
   await logs.create({
@@ -63,14 +75,16 @@ export async function processMercadoPagoImport(
     periodEnd,
     importedAt,
     importedCount: importResult.imported,
-    skippedCount: importResult.skipped,
-    errorCount,
+    skippedCount: skipped,
+    errorCount: errors.length,
+    errorMessages: errors,
   });
 
   return {
     logId,
     imported: importResult.imported,
-    skipped: importResult.skipped,
-    errorCount,
+    skipped,
+    errorCount: errors.length,
+    errors,
   };
 }

@@ -25,3 +25,6 @@ pnpm-debug.log*
 
 .specs/quick/
 test-results/*
+
+# Private key for the companion extension. The public key lives in extension/manifest.json.
+extension/*.pem

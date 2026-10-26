@@ -17,7 +17,7 @@ beforeEach(() => {
 });
 
 describe('fetchBinnaclePeriod', () => {
-  it('walks every page from 1 through pages with client/begin_date/end_date', async () => {
+  it('walks every page from 1 through pages with period=other and date_from/date_to', async () => {
     mockFetch
       .mockResolvedValueOnce(listPage(1, 2, [{ title: 'day1', items: [] }]))
       .mockResolvedValueOnce(listPage(2, 2, [{ title: 'day2', items: [] }]));
@@ -37,9 +37,15 @@ describe('fetchBinnaclePeriod', () => {
     expect(url1).toContain('/activities/api/list/binnacle');
     expect(url1).toContain('client=binnacle');
     expect(url1).toContain('page=1');
-    expect(url1).toContain('begin_date=2026-01-01');
-    expect(url1).toContain('end_date=2026-01-31');
+    expect(url1).toContain('period=other');
+    expect(url1).toContain('date_from=2026-01-01');
+    expect(url1).toContain('date_to=2026-01-31');
+    expect(url1).not.toContain('begin_date=');
+    expect(url1).not.toContain('end_date=');
     expect(url2).toContain('page=2');
+    expect(url2).toContain('period=other');
+    expect(url2).toContain('date_from=2026-01-01');
+    expect(url2).toContain('date_to=2026-01-31');
     expect(init1.credentials).toBe('include');
   });
 
@@ -67,13 +73,11 @@ describe('fetchBinnaclePeriod', () => {
   });
 
   it('returns pageFailure when a later page fails mid-walk', async () => {
-    mockFetch
-      .mockResolvedValueOnce(listPage(1, 3, []))
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        json: () => Promise.resolve({ error: 'boom' }),
-      });
+    mockFetch.mockResolvedValueOnce(listPage(1, 3, [])).mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({ error: 'boom' }),
+    });
 
     const result = await fetchBinnaclePeriod('2026-01-01', '2026-01-31');
     expect(result).toMatchObject({ pageFailure: true });
@@ -93,13 +97,11 @@ describe('fetchBinnaclePeriod', () => {
   });
 
   it('returns pageFailure when a later page body is not a list', async () => {
-    mockFetch
-      .mockResolvedValueOnce(listPage(1, 2, []))
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve({ html: true }),
-      });
+    mockFetch.mockResolvedValueOnce(listPage(1, 2, [])).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ html: true }),
+    });
 
     const result = await fetchBinnaclePeriod('2026-01-01', '2026-01-31');
     expect(result).toMatchObject({ pageFailure: true });

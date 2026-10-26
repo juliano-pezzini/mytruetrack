@@ -8,17 +8,24 @@ type MessageListener = (message: BridgeMessage) => void;
 
 function createMockPort() {
   const listeners: MessageListener[] = [];
+  const disconnectListeners: Array<() => void> = [];
   return {
     port: {
       postMessage: vi.fn(),
       onMessage: {
         addListener: vi.fn((cb: MessageListener) => listeners.push(cb)),
       },
+      onDisconnect: {
+        addListener: vi.fn((cb: () => void) => disconnectListeners.push(cb)),
+      },
       disconnect: vi.fn(),
     },
     /** Simulate the extension sending a message back to the PWA. */
     simulateMessage(msg: BridgeMessage) {
       for (const cb of listeners) cb(msg);
+    },
+    simulateDisconnect() {
+      for (const cb of [...disconnectListeners]) cb();
     },
   };
 }
@@ -91,7 +98,10 @@ describe('investpass-bridge', () => {
       });
 
       mock.simulateMessage({ type: 'MP_SESSION_MISSING' });
-      mock.simulateMessage({ type: 'MP_IMPORT_PAYLOAD', pages: [{ total: 0, pages: 0, groups: [] }] });
+      mock.simulateMessage({
+        type: 'MP_IMPORT_PAYLOAD',
+        pages: [{ total: 0, pages: 0, groups: [] }],
+      });
 
       expect(handler).toHaveBeenCalledWith({ type: 'MP_SESSION_MISSING' });
       expect(handler).toHaveBeenCalledWith({
@@ -123,6 +133,30 @@ describe('investpass-bridge', () => {
       wrapper.onMessage(handler);
 
       expect(port.onMessage.addListener).toHaveBeenCalledWith(handler);
+    });
+
+    it('onDisconnect runs when the extension closes the port', () => {
+      const mock = createMockPort();
+      installChromeMock(mock.port);
+
+      const wrapper = connectToExtension('test-ext-id')!;
+      const handler = vi.fn();
+      wrapper.onDisconnect(handler);
+      mock.simulateDisconnect();
+
+      expect(handler).toHaveBeenCalledOnce();
+    });
+
+    it('onDisconnect runs immediately when the port already closed', () => {
+      const mock = createMockPort();
+      installChromeMock(mock.port);
+
+      const wrapper = connectToExtension('test-ext-id')!;
+      mock.simulateDisconnect();
+      const handler = vi.fn();
+      wrapper.onDisconnect(handler);
+
+      expect(handler).toHaveBeenCalledOnce();
     });
   });
 

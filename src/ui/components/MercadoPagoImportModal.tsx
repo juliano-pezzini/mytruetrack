@@ -1,13 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useDatabase } from '../hooks/useDatabase.ts';
 import { useAutoSync } from '../hooks/useAutoSync.ts';
-import {
-  todaySaoPauloDate,
-  useMercadoPagoImport,
-} from '../hooks/useMercadoPagoImport.ts';
-import {
-  suggestAccountImportPeriod,
-} from '../../domain/account-import-period.ts';
+import { todaySaoPauloDate, useMercadoPagoImport } from '../hooks/useMercadoPagoImport.ts';
+import { suggestAccountImportPeriod } from '../../domain/account-import-period.ts';
 import {
   createAccountImportLogRepository,
   type AccountImportLog,
@@ -15,9 +10,53 @@ import {
 import { MERCADO_PAGO_IMPORT_SOURCE } from '../../workers/mercado-pago-import.ts';
 import { deleteAccountImportRun } from '../../workers/delete-account-import-run.ts';
 import { ConfirmDialog } from './ConfirmDialog.tsx';
+import { ExtensionInstallGuidance } from './ExtensionInstallGuidance.tsx';
+import { EXTENSION_UNAVAILABLE_MESSAGE } from '../extension-unavailable.ts';
+import { IMPORT_EXTENSION_ID } from '../../sync/import-extension-id.ts';
+import type { MercadoPagoImportStatus } from '../hooks/useMercadoPagoImport.ts';
 
-// TODO(P2): Same install-time placeholder as InvestPassImportPage — production discovery later.
-const EXTENSION_ID = 'mytruetrack-investpass-extension';
+function importStageLabel(status: MercadoPagoImportStatus): string | null {
+  switch (status) {
+    case 'connecting':
+      return 'Connecting to the extension…';
+    case 'fetching':
+      return 'Fetching Mercado Pago activity…';
+    case 'importing':
+      return 'Saving transactions…';
+    case 'idle':
+    case 'waiting_for_session':
+    case 'done':
+    case 'error':
+      return null;
+    default: {
+      const unreachable: never = status;
+      return unreachable;
+    }
+  }
+}
+
+function groupMessages(messages: readonly string[]): { message: string; count: number }[] {
+  const counts = new Map<string, number>();
+  for (const message of messages) {
+    counts.set(message, (counts.get(message) ?? 0) + 1);
+  }
+  return [...counts.entries()].map(([message, count]) => ({ message, count }));
+}
+
+function ImportErrorList({ messages }: { messages: readonly string[] }) {
+  const grouped = groupMessages(messages);
+  if (grouped.length === 0) return null;
+  return (
+    <ul data-testid="mp-import-error-messages" className="mt-2 space-y-1 text-xs">
+      {grouped.map((row) => (
+        <li key={row.message}>
+          {row.message}
+          {row.count > 1 ? ` (${row.count})` : ''}
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 type MercadoPagoImportModalProps = {
   accountId: string;
@@ -34,7 +73,8 @@ export function MercadoPagoImportModal({
 }: MercadoPagoImportModalProps) {
   const db = useDatabase();
   const { notifyChange } = useAutoSync();
-  const { status, summary, error, startImport, cancel } = useMercadoPagoImport(EXTENSION_ID);
+  const { status, summary, error, startImport, cancel } = useMercadoPagoImport(IMPORT_EXTENSION_ID);
+  const stageLabel = importStageLabel(status);
 
   const [logs, setLogs] = useState<AccountImportLog[]>([]);
   const [periodStart, setPeriodStart] = useState('');
@@ -180,6 +220,18 @@ export function MercadoPagoImportModal({
             >
               {busy ? 'Importing…' : 'Sign in to Mercado Pago'}
             </button>
+            {stageLabel && (
+              <div data-testid="mp-import-progress" className="space-y-2">
+                <p className="text-xs text-mtt-muted">{stageLabel}</p>
+                <div
+                  role="progressbar"
+                  aria-valuetext={stageLabel}
+                  className="h-1.5 overflow-hidden rounded-full bg-mtt-border"
+                >
+                  <div className="h-full w-full animate-pulse bg-mtt-accent" />
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -192,13 +244,30 @@ export function MercadoPagoImportModal({
           </div>
         )}
 
-        {status === 'done' && summary && (
+        {status === 'error' && error === EXTENSION_UNAVAILABLE_MESSAGE && (
+          <ExtensionInstallGuidance />
+        )}
+
+        {status === 'done' && summary && summary.errorCount === 0 && (
           <div
             data-testid="mp-import-summary"
             className="rounded-xl border border-mtt-positive/30 bg-mtt-positive-pale p-4 text-sm text-mtt-positive mb-4"
           >
             Import complete: {summary.imported} imported, {summary.skipped} skipped,{' '}
             {summary.errorCount} errors
+          </div>
+        )}
+
+        {status === 'done' && summary && summary.errorCount > 0 && (
+          <div
+            data-testid="mp-import-summary"
+            className="rounded-xl border border-mtt-negative/30 bg-mtt-negative-pale p-4 text-sm text-mtt-negative mb-4"
+          >
+            <p>
+              Import finished with errors: {summary.imported} imported, {summary.skipped} skipped,{' '}
+              {summary.errorCount} errors
+            </p>
+            <ImportErrorList messages={summary.errors} />
           </div>
         )}
 
@@ -221,6 +290,16 @@ export function MercadoPagoImportModal({
                       {new Date(log.importedAt).toLocaleString()} · {log.importedCount} imported,{' '}
                       {log.skippedCount} skipped, {log.errorCount} errors
                     </p>
+                    {log.errorMessages.length > 0 && (
+                      <div className="text-mtt-negative">
+                        <ImportErrorList messages={log.errorMessages} />
+                      </div>
+                    )}
+                    {log.errorCount > 0 && log.errorMessages.length === 0 && (
+                      <p className="text-xs text-mtt-muted">
+                        Row reasons were not saved for this run. Import again to see them.
+                      </p>
+                    )}
                   </div>
                   <button
                     type="button"

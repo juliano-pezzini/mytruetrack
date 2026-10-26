@@ -6,21 +6,20 @@
 import { useState, useCallback, useRef } from 'react';
 import { useDatabase } from './useDatabase.ts';
 import { useAutoSync } from './useAutoSync.ts';
-import { connectToExtension, type BridgeMessage, type InvestPassPort } from '../../sync/investpass-bridge.ts';
+import {
+  connectToExtension,
+  type BridgeMessage,
+  type InvestPassPort,
+} from '../../sync/investpass-bridge.ts';
 import { isValidAccountImportPeriod } from '../../domain/account-import-period.ts';
 import {
   processMercadoPagoImport,
   type MercadoPagoImportResult,
 } from '../../workers/mercado-pago-import.ts';
+import { EXTENSION_UNAVAILABLE_MESSAGE } from '../extension-unavailable.ts';
 
 export type MercadoPagoImportStatus =
-  | 'idle'
-  | 'connecting'
-  | 'fetching'
-  | 'waiting_for_session'
-  | 'importing'
-  | 'done'
-  | 'error';
+  'idle' | 'connecting' | 'fetching' | 'waiting_for_session' | 'importing' | 'done' | 'error';
 
 export type UseMercadoPagoImportReturn = {
   status: MercadoPagoImportStatus;
@@ -83,7 +82,7 @@ export function useMercadoPagoImport(extensionId: string): UseMercadoPagoImportR
       try {
         const port = connectToExtension(extensionId);
         if (!port) {
-          setError('Import extension not available');
+          setError(EXTENSION_UNAVAILABLE_MESSAGE);
           setStatus('error');
           return;
         }
@@ -108,6 +107,13 @@ export function useMercadoPagoImport(extensionId: string): UseMercadoPagoImportR
               reject(new DOMException('Import cancelled', 'AbortError'));
             });
           };
+
+          port.onDisconnect(() => {
+            settle(() => {
+              portRef.current = null;
+              reject(new Error(EXTENSION_UNAVAILABLE_MESSAGE));
+            });
+          });
 
           port.onMessage((msg) => {
             if (msg.type === 'MP_SESSION_MISSING') {

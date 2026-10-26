@@ -2,7 +2,8 @@
  * Map Mercado Pago binnacle JSON pages to ParsedTransaction rows.
  *
  * PoC envelope: { total, pages, groups[] }. Day groups expose movements under `items`.
- * Amount sign: signed `amount.cents` / `amount.fraction` strings (negative ⇒ debit).
+ * Amount: `fraction` is signed reais (`.` is a thousands separator); `cents` is the
+ * unsigned centavo digits (`00`–`99`). Negative ⇒ debit.
  */
 
 import { z } from 'zod';
@@ -26,8 +27,9 @@ const MovementItemSchema = z.object({
 
 const DayGroupSchema = z
   .object({
-    title: z.string().optional(),
-    right_content: z.string().optional(),
+    // Day-header chrome. The live binnacle sends right_content as an object.
+    title: z.unknown().optional(),
+    right_content: z.unknown().optional(),
     items: z.array(z.unknown()).optional(),
   })
   .passthrough();
@@ -56,27 +58,53 @@ function convertDateToSaoPaulo(isoDate: string): string | null {
 }
 
 /**
- * Prefer `cents` as full minor units when present; else derive from fraction×100.
- * Sign comes from the chosen numeric string (negative ⇒ debit).
+ * Compose signed centavos from the live binnacle split.
+ * `fraction` is signed reais (`.` thousands separator). `cents` is unsigned
+ * centavos, one or two digits. A missing `cents` is `00`. Negative ⇒ debit.
  */
 function parseSignedCents(amount: z.infer<typeof AmountSchema>): number | null {
-  if (amount.cents !== undefined && amount.cents.trim() !== '') {
-    const raw = Number(amount.cents.replace(',', '.'));
-    if (!Number.isFinite(raw) || !Number.isInteger(raw)) return null;
-    return raw;
+  const fractionRaw = amount.fraction?.trim() ?? '';
+  const centsRaw = amount.cents?.trim() ?? '';
+  if (fractionRaw === '' && centsRaw === '') return null;
+
+  let sign = 1;
+  let reaisRaw = fractionRaw;
+  if (reaisRaw.startsWith('-')) {
+    sign = -1;
+    reaisRaw = reaisRaw.slice(1).trim();
   }
-  if (amount.fraction !== undefined && amount.fraction.trim() !== '') {
-    const raw = Number(amount.fraction.replace(',', '.'));
-    if (!Number.isFinite(raw)) return null;
-    return Math.round(raw * 100);
-  }
-  return null;
+
+  const reaisDigits = reaisRaw.replace(/\./g, '');
+  if (reaisDigits !== '' && !/^\d+$/.test(reaisDigits)) return null;
+  if (centsRaw !== '' && !/^\d{1,2}$/.test(centsRaw)) return null;
+
+  const reais = reaisDigits === '' ? 0 : Number(reaisDigits);
+  const centavos = centsRaw === '' ? 0 : Number(centsRaw);
+  if (!Number.isSafeInteger(reais) || !Number.isSafeInteger(centavos)) return null;
+
+  const absolute = reais * 100 + centavos;
+  if (!Number.isSafeInteger(absolute)) return null;
+  return sign < 0 ? -absolute : absolute;
+}
+
+function firstIssue(error: z.ZodError): string {
+  const issue = error.issues[0];
+  if (!issue) return 'invalid value';
+  const path = issue.path.length > 0 ? issue.path.join('.') : 'value';
+  return `${path}: ${issue.message}`;
+}
+
+function valueKeys(value: unknown): string {
+  if (value === null || typeof value !== 'object') return typeof value;
+  return Object.keys(value).sort().join(', ');
 }
 
 export function mapBinnacleItem(item: unknown): MapBinnacleItemResult {
   const parsed = MovementItemSchema.safeParse(item);
   if (!parsed.success) {
-    return { error: 'Invalid movement item' };
+    return {
+      error: `Invalid movement item (${firstIssue(parsed.error)}; keys: ${valueKeys(item)})`,
+    };
   }
 
   const { movement_id, datetime, title, amount } = parsed.data;
@@ -114,9 +142,10 @@ export function mapBinnacleItem(item: unknown): MapBinnacleItemResult {
   };
 }
 
-export function flattenBinnaclePages(
-  pages: readonly unknown[],
-): { rows: ParsedTransaction[]; errors: ImportError[] } {
+export function flattenBinnaclePages(pages: readonly unknown[]): {
+  rows: ParsedTransaction[];
+  errors: ImportError[];
+} {
   const rows: ParsedTransaction[] = [];
   const errors: ImportError[] = [];
   let index = 0;
@@ -124,7 +153,10 @@ export function flattenBinnaclePages(
   for (const page of pages) {
     const envelope = BinnaclePageSchema.safeParse(page);
     if (!envelope.success) {
-      errors.push({ index, message: 'Invalid binnacle page envelope' });
+      errors.push({
+        index,
+        message: `Invalid binnacle page envelope (${firstIssue(envelope.error)})`,
+      });
       index++;
       continue;
     }

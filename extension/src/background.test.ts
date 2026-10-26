@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Must stub chrome globally BEFORE any imports that use it
@@ -57,8 +60,30 @@ describe('isOriginAllowed', () => {
     expect(isOriginAllowed('https://localhost:3000')).toBe(true);
   });
 
+  it('allows GitHub Pages origins', () => {
+    expect(isOriginAllowed('https://juliano-pezzini.github.io')).toBe(true);
+    expect(isOriginAllowed('https://github.io')).toBe(true);
+  });
+
+  it('accepts a sample of every externally_connectable match', () => {
+    const manifest = JSON.parse(
+      readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'manifest.json'), 'utf8'),
+    ) as { externally_connectable: { matches: string[] } };
+    const samples: Record<string, string> = {
+      'http://localhost:*/*': 'http://localhost:5173',
+      'https://localhost:*/*': 'https://localhost',
+      'https://*.github.io/*': 'https://juliano-pezzini.github.io',
+    };
+    expect(manifest.externally_connectable.matches).toEqual(Object.keys(samples));
+    for (const origin of Object.values(samples)) {
+      expect(isOriginAllowed(origin)).toBe(true);
+    }
+  });
+
   it('rejects other origins', () => {
     expect(isOriginAllowed('https://evil.com')).toBe(false);
+    expect(isOriginAllowed('http://juliano-pezzini.github.io')).toBe(false);
+    expect(isOriginAllowed('https://evil.github.io.attacker.com')).toBe(false);
     expect(isOriginAllowed(undefined)).toBe(false);
     expect(isOriginAllowed('')).toBe(false);
   });
@@ -69,6 +94,12 @@ describe('handleConnection', () => {
     const port = makePort('https://evil.com');
     handleConnection(port);
     expect(port.disconnect).toHaveBeenCalledOnce();
+  });
+
+  it('keeps a GitHub Pages connection open', () => {
+    const port = makePort('https://juliano-pezzini.github.io');
+    handleConnection(port);
+    expect(port.disconnect).not.toHaveBeenCalled();
   });
 
   it('responds PONG to PING', async () => {

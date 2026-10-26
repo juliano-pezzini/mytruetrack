@@ -2,11 +2,7 @@ import { useState } from 'react';
 import { useInvestPassImport } from '../hooks/useInvestPassImport.ts';
 import { useAccounts } from '../hooks/useAccounts.ts';
 import type { ImportStatus } from '../hooks/useInvestPassImport.ts';
-
-// TODO(P2): The extension ID is assigned at install time by Chrome. For local dev we use
-// a placeholder. In production, introduce a Settings field or auto-discovery handshake
-// so the user can connect to their installed extension.
-const EXTENSION_ID = 'mytruetrack-investpass-extension';
+import { IMPORT_EXTENSION_ID } from '../../sync/import-extension-id.ts';
 
 const STATUS_LABELS: Record<ImportStatus, string> = {
   idle: 'Ready',
@@ -40,7 +36,7 @@ export function InvestPassImportPage() {
   const [periodStart, setPeriodStart] = useState(start);
   const [periodEnd, setPeriodEnd] = useState(end);
   const { status, summary, unmappedAccounts, error, startImport, mapAccount } =
-    useInvestPassImport(EXTENSION_ID);
+    useInvestPassImport(IMPORT_EXTENSION_ID);
   const { accounts } = useAccounts();
 
   const [mappingSelections, setMappingSelections] = useState<Record<string, string>>({});

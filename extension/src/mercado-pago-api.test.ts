@@ -67,13 +67,11 @@ describe('fetchBinnaclePeriod', () => {
   });
 
   it('returns pageFailure when a later page fails mid-walk', async () => {
-    mockFetch
-      .mockResolvedValueOnce(listPage(1, 3, []))
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        json: () => Promise.resolve({ error: 'boom' }),
-      });
+    mockFetch.mockResolvedValueOnce(listPage(1, 3, [])).mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({ error: 'boom' }),
+    });
 
     const result = await fetchBinnaclePeriod('2026-01-01', '2026-01-31');
     expect(result).toMatchObject({ pageFailure: true });
@@ -93,13 +91,11 @@ describe('fetchBinnaclePeriod', () => {
   });
 
   it('returns pageFailure when a later page body is not a list', async () => {
-    mockFetch
-      .mockResolvedValueOnce(listPage(1, 2, []))
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve({ html: true }),
-      });
+    mockFetch.mockResolvedValueOnce(listPage(1, 2, [])).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ html: true }),
+    });
 
     const result = await fetchBinnaclePeriod('2026-01-01', '2026-01-31');
     expect(result).toMatchObject({ pageFailure: true });

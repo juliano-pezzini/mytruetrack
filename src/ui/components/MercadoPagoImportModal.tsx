@@ -10,6 +10,8 @@ import {
 import { MERCADO_PAGO_IMPORT_SOURCE } from '../../workers/mercado-pago-import.ts';
 import { deleteAccountImportRun } from '../../workers/delete-account-import-run.ts';
 import { ConfirmDialog } from './ConfirmDialog.tsx';
+import { ExtensionInstallGuidance } from './ExtensionInstallGuidance.tsx';
+import { EXTENSION_UNAVAILABLE_MESSAGE } from '../extension-unavailable.ts';
 
 // TODO(P2): Same install-time placeholder as InvestPassImportPage — production discovery later.
 const EXTENSION_ID = 'mytruetrack-investpass-extension';
@@ -185,6 +187,10 @@ export function MercadoPagoImportModal({
           >
             {error}
           </div>
+        )}
+
+        {status === 'error' && error === EXTENSION_UNAVAILABLE_MESSAGE && (
+          <ExtensionInstallGuidance />
         )}
 
         {status === 'done' && summary && (

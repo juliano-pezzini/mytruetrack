@@ -16,6 +16,7 @@ import {
   processMercadoPagoImport,
   type MercadoPagoImportResult,
 } from '../../workers/mercado-pago-import.ts';
+import { EXTENSION_UNAVAILABLE_MESSAGE } from '../extension-unavailable.ts';
 
 export type MercadoPagoImportStatus =
   'idle' | 'connecting' | 'fetching' | 'waiting_for_session' | 'importing' | 'done' | 'error';
@@ -81,7 +82,7 @@ export function useMercadoPagoImport(extensionId: string): UseMercadoPagoImportR
       try {
         const port = connectToExtension(extensionId);
         if (!port) {
-          setError('Import extension not available');
+          setError(EXTENSION_UNAVAILABLE_MESSAGE);
           setStatus('error');
           return;
         }

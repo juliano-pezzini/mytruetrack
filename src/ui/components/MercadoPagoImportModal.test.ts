@@ -108,14 +108,14 @@ describe('MercadoPagoImportModal', () => {
     expect(mockDeleteAccountImportRun).not.toHaveBeenCalled();
     expect(mockNotifyChange).not.toHaveBeenCalled();
     expect(screen.getByTestId('mp-import-runs')).toBeTruthy();
-    expect(within(screen.getByTestId('mp-import-runs')).getByText(/2026-01-01 → 2026-01-31/)).toBeTruthy();
+    expect(
+      within(screen.getByTestId('mp-import-runs')).getByText(/2026-01-01 → 2026-01-31/),
+    ).toBeTruthy();
   });
 
   it('confirm delete calls deleteAccountImportRun and notifyChange', async () => {
     const onImported = vi.fn();
-    mockListByAccount
-      .mockResolvedValueOnce([SAMPLE_LOG])
-      .mockResolvedValueOnce([]);
+    mockListByAccount.mockResolvedValueOnce([SAMPLE_LOG]).mockResolvedValueOnce([]);
 
     render(
       createElement(MercadoPagoImportModal, {

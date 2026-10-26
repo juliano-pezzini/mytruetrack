@@ -74,6 +74,7 @@ describe('initDatabase', () => {
         'imported_count',
         'skipped_count',
         'error_count',
+        'error_messages',
       ]),
     );
 
@@ -84,6 +85,7 @@ describe('initDatabase', () => {
     expect(row.period_start).toBe('');
     expect(row.period_end).toBe('');
     expect(row.imported_count).toBe(0);
+    expect(row.error_messages).toBe('');
   });
 
   it('transactions table stores amount as INTEGER', async () => {

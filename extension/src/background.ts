@@ -1,21 +1,25 @@
 import { refreshToken, fetchTransactions } from './investpass-api.ts';
 import { fetchBinnaclePeriod } from './mercado-pago-api.ts';
 
-// TODO(P2): Add the production PWA origin once deployed (e.g. 'https://mytruetrack.app').
-// For P1 MVP, the PWA runs on localhost only.
-const ALLOWED_ORIGINS = ['http://localhost', 'https://localhost'];
+// Keep in step with extension/manifest.json externally_connectable.matches.
 const EXTENSION_VERSION = '0.1.0';
 const MERCADO_PAGO_HOME = 'https://www.mercadopago.com.br/';
 
 function isOriginAllowed(origin: string | undefined): boolean {
   if (!origin) return false;
+  let url: URL;
   try {
-    const url = new URL(origin);
-    const base = `${url.protocol}//${url.hostname}`;
-    return ALLOWED_ORIGINS.includes(base);
+    url = new URL(origin);
   } catch {
     return false;
   }
+
+  if (url.hostname === 'localhost') {
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  }
+
+  const githubPages = url.hostname === 'github.io' || url.hostname.endsWith('.github.io');
+  return githubPages && url.protocol === 'https:';
 }
 
 type BridgeMessage =

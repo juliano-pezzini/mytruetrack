@@ -108,6 +108,13 @@ export function useMercadoPagoImport(extensionId: string): UseMercadoPagoImportR
             });
           };
 
+          port.onDisconnect(() => {
+            settle(() => {
+              portRef.current = null;
+              reject(new Error(EXTENSION_UNAVAILABLE_MESSAGE));
+            });
+          });
+
           port.onMessage((msg) => {
             if (msg.type === 'MP_SESSION_MISSING') {
               setStatus('waiting_for_session');

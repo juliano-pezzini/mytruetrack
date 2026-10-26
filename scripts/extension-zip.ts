@@ -1,35 +1,54 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { rolldown } from 'rolldown';
 
 export type ZipEntry = {
   name: string;
   data: Uint8Array;
 };
 
-/** Every file under `extensionDir`, with zip paths using `/`. */
-export function listExtensionFiles(extensionDir: string): ZipEntry[] {
-  const entries: ZipEntry[] = [];
+type PackagedManifest = {
+  background?: { service_worker?: string };
+};
 
-  const walk = (current: string): void => {
-    for (const name of readdirSync(current)) {
-      const full = join(current, name);
-      const stat = statSync(full);
-      if (stat.isDirectory()) {
-        walk(full);
-      } else if (stat.isFile()) {
-        const zipName = relative(extensionDir, full).split(sep).join('/');
-        entries.push({ name: zipName, data: new Uint8Array(readFileSync(full)) });
-      }
-    }
-  };
+/** Loadable package: manifest plus one bundled service worker. */
+export async function createExtensionZip(extensionDir: string): Promise<Uint8Array> {
+  const manifestPath = join(extensionDir, 'manifest.json');
+  const manifestBytes = new Uint8Array(readFileSync(manifestPath));
+  const manifest = JSON.parse(new TextDecoder().decode(manifestBytes)) as PackagedManifest;
+  if (manifest.background?.service_worker !== 'background.js') {
+    throw new Error('Packaged manifest service_worker must be background.js');
+  }
 
-  walk(extensionDir);
-  entries.sort((a, b) => a.name.localeCompare(b.name));
-  return entries;
+  const background = await bundleBackground(join(extensionDir, 'src', 'background.ts'));
+  return zipFiles([
+    { name: 'background.js', data: background },
+    { name: 'manifest.json', data: manifestBytes },
+  ]);
 }
 
-export function createExtensionZip(extensionDir: string): Uint8Array {
-  return zipFiles(listExtensionFiles(extensionDir));
+async function bundleBackground(entry: string): Promise<Uint8Array> {
+  const bundle = await rolldown({
+    input: entry,
+    platform: 'browser',
+  });
+  try {
+    const { output } = await bundle.generate({
+      format: 'esm',
+      sourcemap: false,
+    });
+    const chunks = output.filter((item) => item.type === 'chunk');
+    if (chunks.length !== 1) {
+      throw new Error(`Expected one extension chunk, got ${chunks.length}`);
+    }
+    const chunk = chunks[0];
+    if (chunk === undefined || chunk.imports.length > 0) {
+      throw new Error('Extension bundle must be a single file with no imports');
+    }
+    return new TextEncoder().encode(chunk.code);
+  } finally {
+    await bundle.close();
+  }
 }
 
 /**

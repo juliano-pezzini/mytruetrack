@@ -11,8 +11,8 @@ function movement(overrides: Record<string, unknown> = {}) {
     description: 'detail text',
     amount: {
       currency_id: 'BRL',
-      fraction: '10.50',
-      cents: '1050',
+      fraction: '10',
+      cents: '50',
     },
     metadata: { kind: 'transfer', detail: 'pix' },
     ...overrides,
@@ -37,7 +37,7 @@ describe('mapBinnacleItem', () => {
   it('maps a BRL credit (positive signed cents) to ParsedTransaction', () => {
     const result = mapBinnacleItem(
       movement({
-        amount: { currency_id: 'BRL', fraction: '10.50', cents: '1050' },
+        amount: { currency_id: 'BRL', fraction: '10', cents: '50' },
       }),
     );
     expect(result).toEqual({
@@ -49,12 +49,12 @@ describe('mapBinnacleItem', () => {
     });
   });
 
-  it('maps a BRL debit (negative signed cents) to ParsedTransaction', () => {
+  it('maps a negative fraction with zero centavos to a debit', () => {
     const result = mapBinnacleItem(
       movement({
         movement_id: 'DebitMovementId001',
         title: 'Payment',
-        amount: { currency_id: 'BRL', fraction: '-25.00', cents: '-2500' },
+        amount: { currency_id: 'BRL', fraction: '-25', cents: '00' },
       }),
     );
     expect(result).toEqual({
@@ -68,19 +68,19 @@ describe('mapBinnacleItem', () => {
 
   it('errors on non-BRL currency_id', () => {
     const result = mapBinnacleItem(
-      movement({ amount: { currency_id: 'USD', fraction: '10', cents: '1000' } }),
+      movement({ amount: { currency_id: 'USD', fraction: '10', cents: '00' } }),
     );
     expect(result).toEqual({ error: expect.stringMatching(/BRL|currency/i) });
   });
 
   it('errors when currency_id is missing', () => {
-    const result = mapBinnacleItem(movement({ amount: { fraction: '10', cents: '1000' } }));
+    const result = mapBinnacleItem(movement({ amount: { fraction: '10', cents: '00' } }));
     expect(result).toEqual({ error: expect.stringMatching(/BRL|currency/i) });
   });
 
   it('errors when amount is not positive', () => {
     const result = mapBinnacleItem(
-      movement({ amount: { currency_id: 'BRL', fraction: '0', cents: '0' } }),
+      movement({ amount: { currency_id: 'BRL', fraction: '0', cents: '00' } }),
     );
     expect(result).toEqual({ error: expect.stringMatching(/amount/i) });
   });
@@ -88,6 +88,21 @@ describe('mapBinnacleItem', () => {
   it('errors when title is empty', () => {
     const result = mapBinnacleItem(movement({ title: '   ' }));
     expect(result).toEqual({ error: expect.stringMatching(/title|description/i) });
+  });
+
+  it('names the missing field and the keys present on an invalid item', () => {
+    const result = mapBinnacleItem({
+      id: 'row-1',
+      date: '2026-03-15',
+      title: 'PIX',
+      amount: { currency_id: 'BRL', cents: '50' },
+    });
+    expect(result).toEqual({
+      error: expect.stringMatching(/movement_id/),
+    });
+    if ('error' in result) {
+      expect(result.error).toMatch(/keys: amount, date, id, title/);
+    }
   });
 
   it('errors when datetime is not a valid ISO datetime', () => {
@@ -102,9 +117,27 @@ describe('mapBinnacleItem', () => {
     }
   });
 
-  it('derives cents from fraction×100 when cents is absent', () => {
-    const result = mapBinnacleItem(movement({ amount: { currency_id: 'BRL', fraction: '12.34' } }));
-    expect(result).toMatchObject({ amount: fromCents(1234), type: 'credit' });
+  it('maps a thousands-separated negative fraction to a debit', () => {
+    const result = mapBinnacleItem(
+      movement({
+        movement_id: 'ThousandsDebitId001',
+        title: 'Payment',
+        amount: { currency_id: 'BRL', fraction: '-1.234', cents: '56' },
+      }),
+    );
+    expect(result).toMatchObject({ amount: fromCents(123456), type: 'debit' });
+  });
+
+  it('treats a missing cents field as zero centavos', () => {
+    const result = mapBinnacleItem(movement({ amount: { currency_id: 'BRL', fraction: '12' } }));
+    expect(result).toMatchObject({ amount: fromCents(1200), type: 'credit' });
+  });
+
+  it('rejects a cents field that is not one or two centavo digits', () => {
+    const result = mapBinnacleItem(
+      movement({ amount: { currency_id: 'BRL', fraction: '-25', cents: '2500' } }),
+    );
+    expect(result).toEqual({ error: 'amount is not a valid integer cent value' });
   });
 });
 
@@ -122,7 +155,7 @@ describe('flattenBinnaclePages', () => {
             movement({
               movement_id: 'DebitId000000002',
               title: 'Out',
-              amount: { currency_id: 'BRL', fraction: '-5.00', cents: '-500' },
+              amount: { currency_id: 'BRL', fraction: '-5', cents: '00' },
             }),
           ],
         },
@@ -141,12 +174,31 @@ describe('flattenBinnaclePages', () => {
     expect(rows.map((r) => r.type)).toEqual(['credit', 'debit']);
   });
 
+  it('keeps movements when right_content is an object', () => {
+    const page = {
+      total: 1,
+      pages: 1,
+      groups: [
+        {
+          title: { text: '15 de outubro' },
+          right_content: { text: 'Saldo do dia', amount: { fraction: '10.00' } },
+          items: [movement({ movement_id: 'HeaderObjectMove01', title: 'PIX' })],
+        },
+      ],
+    };
+
+    const { rows, errors } = flattenBinnaclePages([page]);
+    expect(errors).toHaveLength(0);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.externalId).toBe('HeaderObjectMove01');
+  });
+
   it('collects row errors without dropping valid siblings', () => {
     const page = pageWithItems([
       movement({ movement_id: 'OkMovementId00001', title: 'Good' }),
       movement({
         movement_id: 'BadCurrencyId0001',
-        amount: { currency_id: 'EUR', fraction: '1', cents: '100' },
+        amount: { currency_id: 'EUR', fraction: '1', cents: '00' },
       }),
       movement({ movement_id: 'EmptyTitleId00001', title: '' }),
     ]);
@@ -162,7 +214,7 @@ describe('flattenBinnaclePages', () => {
     const page2 = pageWithItems([
       movement({
         movement_id: 'Page2MoveId000001',
-        amount: { currency_id: 'BRL', fraction: '-1.00', cents: '-100' },
+        amount: { currency_id: 'BRL', fraction: '-1', cents: '00' },
       }),
     ]);
 

@@ -34,8 +34,10 @@ async function fetchBinnaclePage(
   const url = new URL(BINNACLE_URL);
   url.searchParams.set('client', 'binnacle');
   url.searchParams.set('page', String(page));
-  url.searchParams.set('begin_date', beginDate);
-  url.searchParams.set('end_date', endDate);
+  // Portal query. begin_date/end_date are the page URL only; the API ignores them and returns the last year.
+  url.searchParams.set('period', 'other');
+  url.searchParams.set('date_from', beginDate);
+  url.searchParams.set('date_to', endDate);
 
   return fetch(url.toString(), {
     method: 'GET',

@@ -10,19 +10,21 @@ const mockNotifyChange = vi.fn();
 const mockListByAccount = vi.fn();
 const mockDeleteAccountImportRun = vi.fn();
 
+const mpImport = vi.hoisted(() => ({
+  status: 'idle' as string,
+  summary: null as null,
+  error: null as string | null,
+  startImport: vi.fn(),
+  cancel: vi.fn(),
+}));
+
 vi.mock('../hooks/useAutoSync.ts', () => ({
   useAutoSync: () => ({ status: 'idle', notifyChange: mockNotifyChange }),
 }));
 
 vi.mock('../hooks/useMercadoPagoImport.ts', () => ({
   todaySaoPauloDate: () => '2026-10-13',
-  useMercadoPagoImport: () => ({
-    status: 'idle',
-    summary: null,
-    error: null,
-    startImport: vi.fn(),
-    cancel: vi.fn(),
-  }),
+  useMercadoPagoImport: () => mpImport,
 }));
 
 vi.mock('../../storage/repositories/account-import-log-repository.ts', () => ({
@@ -36,6 +38,11 @@ vi.mock('../../workers/delete-account-import-run.ts', () => ({
 }));
 
 import { MercadoPagoImportModal } from './MercadoPagoImportModal.tsx';
+import {
+  EXTENSION_UNAVAILABLE_MESSAGE,
+  EXTENSION_ZIP_NAME,
+  extensionZipHref,
+} from '../extension-unavailable.ts';
 
 const SAMPLE_LOG: AccountImportLog = {
   id: 'run-list-1',
@@ -58,6 +65,9 @@ describe('MercadoPagoImportModal', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mpImport.status = 'idle';
+    mpImport.summary = null;
+    mpImport.error = null;
     mockListByAccount.mockResolvedValue([SAMPLE_LOG]);
     mockDeleteAccountImportRun.mockResolvedValue(undefined);
   });
@@ -143,5 +153,51 @@ describe('MercadoPagoImportModal', () => {
     await waitFor(() => {
       expect(screen.getByText(/No Mercado Pago imports yet/i)).toBeTruthy();
     });
+  });
+
+  it('shows install steps when the companion extension is missing', async () => {
+    mpImport.status = 'error';
+    mpImport.error = EXTENSION_UNAVAILABLE_MESSAGE;
+
+    render(
+      createElement(MercadoPagoImportModal, {
+        accountId: 'acc-mp',
+        accountName: 'MP Wallet',
+        onClose: vi.fn(),
+      }),
+      { wrapper },
+    );
+
+    const error = await screen.findByTestId('mp-import-error');
+    expect(error.textContent).toBe(EXTENSION_UNAVAILABLE_MESSAGE);
+
+    const guide = screen.getByTestId('mp-extension-install');
+    expect(guide.textContent).toMatch(/Install the mytruetrack Import extension/);
+    expect(guide.textContent).toMatch(/chrome:\/\/extensions/);
+    expect(guide.textContent).toMatch(/edge:\/\/extensions/);
+    expect(guide.textContent).toMatch(/Developer mode/);
+    expect(guide.textContent).toMatch(/Load unpacked/);
+    expect(guide.textContent).toMatch(/extension/);
+    const link = screen.getByRole('link', { name: 'Download the extension (.zip)' });
+    expect(link.getAttribute('href')).toBe(extensionZipHref());
+    expect(link.getAttribute('download')).toBe(EXTENSION_ZIP_NAME);
+  });
+
+  it('keeps other import errors free of install steps', async () => {
+    mpImport.status = 'error';
+    mpImport.error = 'Page 2 failed';
+
+    render(
+      createElement(MercadoPagoImportModal, {
+        accountId: 'acc-mp',
+        accountName: 'MP Wallet',
+        onClose: vi.fn(),
+      }),
+      { wrapper },
+    );
+
+    const error = await screen.findByTestId('mp-import-error');
+    expect(error.textContent).toBe('Page 2 failed');
+    expect(screen.queryByTestId('mp-extension-install')).toBeNull();
   });
 });

@@ -23,6 +23,7 @@ const mockNotifyChange = vi.fn();
 import { connectToExtension } from '../../sync/investpass-bridge.ts';
 import { processMercadoPagoImport } from '../../workers/mercado-pago-import.ts';
 import { useMercadoPagoImport } from './useMercadoPagoImport.ts';
+import { EXTENSION_UNAVAILABLE_MESSAGE } from '../extension-unavailable.ts';
 
 const mockConnect = vi.mocked(connectToExtension);
 const mockProcess = vi.mocked(processMercadoPagoImport);
@@ -58,6 +59,21 @@ describe('useMercadoPagoImport', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it('reports the companion extension as unavailable and writes nothing', async () => {
+    mockConnect.mockReturnValue(null);
+
+    const { result } = renderHook(() => useMercadoPagoImport(EXTENSION_ID), { wrapper });
+
+    await act(async () => {
+      await result.current.startImport(ACCOUNT_ID, '2026-01-01', '2026-01-31');
+    });
+
+    expect(result.current.status).toBe('error');
+    expect(result.current.error).toBe(EXTENSION_UNAVAILABLE_MESSAGE);
+    expect(mockProcess).not.toHaveBeenCalled();
+    expect(mockNotifyChange).not.toHaveBeenCalled();
   });
 
   it('refuses a reversed period before contacting the extension', async () => {

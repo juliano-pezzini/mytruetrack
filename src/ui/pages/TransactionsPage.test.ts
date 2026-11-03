@@ -70,10 +70,7 @@ function renderTransactions(initialEntry: string) {
 
 describe('Transactions account query', () => {
   beforeEach(() => {
-    accountsState.accounts = [
-      account('acc-checking', 'Checking'),
-      account('acc-card', 'Card'),
-    ];
+    accountsState.accounts = [account('acc-checking', 'Checking'), account('acc-card', 'Card')];
     accountsState.loading = false;
   });
 

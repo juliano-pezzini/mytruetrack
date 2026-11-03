@@ -120,21 +120,21 @@ The Transactions period control moves one calendar month per click. Reaching a w
 | Requirement ID | Story | Task | Status |
 | --- | --- | --- | --- |
 | PERIOD-01 | P1: Choose a month span | T3 | In Tasks |
-| PERIOD-02 | P1: Choose a month span | T2 | In Tasks |
-| PERIOD-03 | P1: Choose a month span | T2 | In Tasks |
+| PERIOD-02 | P1: Choose a month span | T2 | Verified |
+| PERIOD-03 | P1: Choose a month span | T2 | Verified |
 | PERIOD-04 | P1: Choose a month span | T1 | Verified |
 | PERIOD-05 | P1: Choose a month span | T1 | Verified |
 | PERIOD-06 | P1: Choose a month span | T1 | Verified |
-| PERIOD-07 | P1: Choose a month span | T2 | In Tasks |
-| PERIOD-08 | P1: Choose a month span | T2 | In Tasks |
-| PERIOD-09 | P1: Choose a month span | T2 | In Tasks |
-| PERIOD-10 | P1: Choose a month span | T2 | In Tasks |
+| PERIOD-07 | P1: Choose a month span | T2 | Verified |
+| PERIOD-08 | P1: Choose a month span | T2 | Verified |
+| PERIOD-09 | P1: Choose a month span | T2 | Verified |
+| PERIOD-10 | P1: Choose a month span | T2 | Verified |
 | PERIOD-11 | P1: Choose a month span | T1 | Verified |
 | PERIOD-12 | P1: Choose a month span | T1 | Verified |
-| PERIOD-13 | P1: Choose a month span | T2 | In Tasks |
-| PERIOD-14 | P1: Choose a month span | T2 | In Tasks |
-| PERIOD-15 | P1: Choose a month span | T2 | In Tasks |
-| PERIOD-16 | P1: Choose a month span | T2 | In Tasks |
+| PERIOD-13 | P1: Choose a month span | T2 | Verified |
+| PERIOD-14 | P1: Choose a month span | T2 | Verified |
+| PERIOD-15 | P1: Choose a month span | T2 | Verified |
+| PERIOD-16 | P1: Choose a month span | T2 | Verified |
 | PERIOD-17 | P1: Show the span in the ledger | T1 | Verified |
 | PERIOD-18 | P1: Show the span in the ledger | T1 | Verified |
 | PERIOD-19 | P1: Show the span in the ledger | T1 | Verified |

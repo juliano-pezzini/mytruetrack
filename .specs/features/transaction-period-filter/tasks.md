@@ -111,13 +111,15 @@ T1 -> T2 -> T3
 
 **Done when**:
 
-- [ ] The button's accessible name is Period and its text is the span label
-- [ ] Shortcuts named This month, Last 3 months, This year, and Last 12 months call `onChange` with `monthSpanForShortcut(today, …)` and close
-- [ ] The first click sets a pending start and does not call `onChange`. A To month on or after that start calls `onChange` and closes. An earlier To month replaces the start. The same month as both ends selects that month
-- [ ] Escape and a pointerdown outside keep the applied span. There is no Apply control
-- [ ] Previous year and Next year change only that grid's year
-- [ ] Gate check passes: `npm test`
-- [ ] Test count: the new `src/ui/components/PeriodRangePicker.test.ts` cases above pass, and no existing test is deleted
+- [x] The button's accessible name is Period and its text is the span label
+- [x] Shortcuts named This month, Last 3 months, This year, and Last 12 months call `onChange` with `monthSpanForShortcut(today, …)` and close
+- [x] The first click sets a pending start and does not call `onChange`. A To month on or after that start calls `onChange` and closes. An earlier To month replaces the start. The same month as both ends selects that month
+- [x] Escape and a pointerdown outside keep the applied span. There is no Apply control
+- [x] Previous year and Next year change only that grid's year
+- [x] Gate check passes: `npm test`
+- [x] Test count: the new `src/ui/components/PeriodRangePicker.test.ts` cases above pass, and no existing test is deleted
+
+**Status**: Complete
 
 **Tests**: unit
 **Gate**: quick

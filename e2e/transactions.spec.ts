@@ -276,6 +276,11 @@ test('period span filters rows and keeps the shortcut windows', async ({ page })
 
   await pickMonthSpan(page, 2020, 1, 2020, 1);
   await expect(page.getByText('No transactions for Jan 2020.')).toBeVisible();
+
+  const futureYear = new Date().getFullYear() + 1;
+  await pickMonthSpan(page, futureYear, 1, futureYear, 1);
+  await expect(page.getByRole('button', { name: 'Period' })).toHaveText(`Jan ${futureYear}`);
+  await expect(page.getByText(`No transactions for Jan ${futureYear}.`)).toBeVisible();
 });
 
 test('leaving Transactions resets the span', async ({ page }) => {

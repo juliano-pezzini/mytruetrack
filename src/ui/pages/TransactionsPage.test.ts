@@ -5,10 +5,15 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { fromCents } from '../../domain/money.ts';
 import type { Account } from '../../domain/account.ts';
+import type { Transaction } from '../../domain/transaction.ts';
 
 const accountsState = vi.hoisted(() => ({
   accounts: [] as Account[],
   loading: false,
+}));
+
+const transactionsState = vi.hoisted(() => ({
+  transactions: [] as Transaction[],
 }));
 
 vi.mock('../hooks/useAccounts.ts', () => ({
@@ -24,7 +29,7 @@ vi.mock('../hooks/useAccounts.ts', () => ({
 
 vi.mock('../hooks/useTransactions.ts', () => ({
   useTransactions: () => ({
-    transactions: [],
+    transactions: transactionsState.transactions,
     loading: false,
     create: vi.fn(),
     update: vi.fn(),
@@ -59,6 +64,21 @@ function account(id: string, name: string): Account {
   };
 }
 
+function sameDay(id: string, accountId: string, description: string): Transaction {
+  return {
+    id,
+    accountId,
+    categoryId: null,
+    amount: fromCents(100),
+    description,
+    transactionDate: '2026-11-02',
+    settledDate: null,
+    type: 'debit',
+    externalId: null,
+    importRunId: null,
+  };
+}
+
 function renderTransactions(initialEntry: string) {
   const router = createMemoryRouter(
     [{ path: '/transactions', element: createElement(TransactionsPage) }],
@@ -72,6 +92,7 @@ describe('Transactions account query', () => {
   beforeEach(() => {
     accountsState.accounts = [account('acc-checking', 'Checking'), account('acc-card', 'Card')];
     accountsState.loading = false;
+    transactionsState.transactions = [];
   });
 
   it('selects the account from the query', () => {
@@ -115,5 +136,25 @@ describe('Transactions account query', () => {
 
     expect(router.state.location.search).toBe('');
     expect(router.state.historyAction).toBe('REPLACE');
+  });
+
+  it('orders same-date rows by id descending for all accounts and ascending for one account', () => {
+    transactionsState.transactions = [
+      sameDay('id-a', 'acc-checking', 'Alpha'),
+      sameDay('id-b', 'acc-checking', 'Beta'),
+    ];
+    renderTransactions('/transactions');
+
+    let rows = screen.getAllByRole('row').slice(1);
+    expect(rows[0]?.textContent).toContain('Beta');
+    expect(rows[1]?.textContent).toContain('Alpha');
+
+    fireEvent.change(screen.getByLabelText('Account filter'), {
+      target: { value: 'acc-checking' },
+    });
+
+    rows = screen.getAllByRole('row').slice(1);
+    expect(rows[0]?.textContent).toContain('Alpha');
+    expect(rows[1]?.textContent).toContain('Beta');
   });
 });

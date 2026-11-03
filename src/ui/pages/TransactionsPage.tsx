@@ -6,21 +6,22 @@ import { useCategories } from '../hooks/useCategories.ts';
 import { TransactionForm } from '../components/TransactionForm.tsx';
 import { MoneyDisplay } from '../components/MoneyDisplay.tsx';
 import { ConfirmDialog } from '../components/ConfirmDialog.tsx';
+import { PeriodRangePicker } from '../components/PeriodRangePicker.tsx';
 import type { Transaction, CreateTransactionParams } from '../../domain/transaction.ts';
 import { toCents, add, subtract } from '../../domain/money.ts';
 import type { Money } from '../../domain/money.ts';
 import { useAccountBalance } from '../hooks/useAccountBalance.ts';
+import {
+  currentCalendarMonth,
+  dayBeforeSpan,
+  formatSpanLabel,
+  inclusiveDateRange,
+  type MonthSpan,
+} from '../../domain/period-span.ts';
 
-function getCurrentMonth(): { year: number; month: number } {
-  const now = new Date();
-  return { year: now.getFullYear(), month: now.getMonth() + 1 };
-}
-
-function monthRange(year: number, month: number) {
-  const from = `${year}-${String(month).padStart(2, '0')}-01`;
-  const lastDay = new Date(year, month, 0).getDate();
-  const to = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-  return { from, to };
+function initialSpan(): MonthSpan {
+  const month = currentCalendarMonth(new Date());
+  return { start: month, end: month };
 }
 
 /** null = All accounts filter */
@@ -32,7 +33,8 @@ export function TransactionsPage() {
   const accountParamIsKnown =
     accountParam !== null && accounts.some((account) => account.id === accountParam);
   const selectedAccountId = accountParamIsKnown ? accountParam : null;
-  const [period, setPeriod] = useState(getCurrentMonth);
+  const [today] = useState(() => currentCalendarMonth(new Date()));
+  const [span, setSpan] = useState(initialSpan);
 
   useEffect(() => {
     if (accountsLoading || accountParam === null || accountParamIsKnown) return;
@@ -40,7 +42,8 @@ export function TransactionsPage() {
     next.delete('account');
     setSearchParams(next, { replace: true });
   }, [accountsLoading, accountParam, accountParamIsKnown, searchParams, setSearchParams]);
-  const range = useMemo(() => monthRange(period.year, period.month), [period.year, period.month]);
+  const range = useMemo(() => inclusiveDateRange(span), [span]);
+  const balanceDate = useMemo(() => dayBeforeSpan(span), [span]);
 
   const allAccountsMode = selectedAccountId === null;
 
@@ -50,11 +53,7 @@ export function TransactionsPage() {
   );
   const { balance: startBalance } = useAccountBalance(
     allAccountsMode ? null : selectedAccountId,
-    // Day before the month starts
-    (() => {
-      const d = new Date(period.year, period.month - 1, 0);
-      return d.toISOString().slice(0, 10);
-    })(),
+    balanceDate,
   );
 
   const [showForm, setShowForm] = useState(false);
@@ -130,24 +129,7 @@ export function TransactionsPage() {
     }
   }
 
-  function prevMonth() {
-    setPeriod((p) => {
-      if (p.month === 1) return { year: p.year - 1, month: 12 };
-      return { year: p.year, month: p.month - 1 };
-    });
-  }
-
-  function nextMonth() {
-    setPeriod((p) => {
-      if (p.month === 12) return { year: p.year + 1, month: 1 };
-      return { year: p.year, month: p.month + 1 };
-    });
-  }
-
-  const monthLabel = new Date(period.year, period.month - 1).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-  });
+  const monthLabel = formatSpanLabel(span);
 
   return (
     <div className="space-y-6">
@@ -174,49 +156,7 @@ export function TransactionsPage() {
             )}
           </select>
 
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={prevMonth}
-              className="p-1.5 text-mtt-muted hover:bg-mtt-border/50 rounded-md transition-colors"
-              aria-label="Previous month"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M15 18l-6-6 6-6" />
-              </svg>
-            </button>
-            <span className="text-sm font-medium text-mtt-fg min-w-[140px] text-center">
-              {monthLabel}
-            </span>
-            <button
-              type="button"
-              onClick={nextMonth}
-              className="p-1.5 text-mtt-muted hover:bg-mtt-border/50 rounded-md transition-colors"
-              aria-label="Next month"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </button>
-          </div>
+          <PeriodRangePicker span={span} today={today} onChange={setSpan} />
         </div>
 
         {accounts.length > 0 && (

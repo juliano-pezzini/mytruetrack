@@ -1,10 +1,92 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { setupLocalOnly } from './helpers.ts';
+
+const SHORT_MONTHS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+] as const;
+
+const LONG_MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+] as const;
 
 /** Return a date string (YYYY-MM-DD) for day `d` of the current month. */
 function thisMonth(d: number): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
+function shortMonth(year: number, month: number): string {
+  return `${SHORT_MONTHS[month - 1]} ${year}`;
+}
+
+function spanLabel(
+  startYear: number,
+  startMonth: number,
+  endYear: number,
+  endMonth: number,
+): string {
+  const start = shortMonth(startYear, startMonth);
+  const end = shortMonth(endYear, endMonth);
+  return start === end ? start : `${start} \u2013 ${end}`;
+}
+
+function addMonths(year: number, month: number, delta: number): { year: number; month: number } {
+  const index = year * 12 + (month - 1) + delta;
+  const nextYear = Math.floor(index / 12);
+  const monthIndex = ((index % 12) + 12) % 12;
+  return { year: nextYear, month: monthIndex + 1 };
+}
+
+async function stepGridToYear(page: Page, gridName: 'From' | 'To', targetYear: number) {
+  const grid = page.getByRole('group', { name: gridName });
+  let year = Number(await grid.locator('span').innerText());
+  while (year !== targetYear) {
+    const buttonName = year > targetYear ? 'Previous year' : 'Next year';
+    await grid.getByRole('button', { name: buttonName }).click();
+    year += year > targetYear ? -1 : 1;
+  }
+}
+
+async function pickMonthSpan(
+  page: Page,
+  startYear: number,
+  startMonth: number,
+  endYear: number,
+  endMonth: number,
+) {
+  await page.getByRole('button', { name: 'Period' }).click();
+  await stepGridToYear(page, 'From', startYear);
+  await stepGridToYear(page, 'To', endYear);
+  await page
+    .getByRole('group', { name: 'From' })
+    .getByRole('button', { name: `${LONG_MONTHS[startMonth - 1]} ${startYear}` })
+    .click();
+  await page
+    .getByRole('group', { name: 'To' })
+    .getByRole('button', { name: `${LONG_MONTHS[endMonth - 1]} ${endYear}` })
+    .click();
 }
 
 async function createAccount(
@@ -49,7 +131,12 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('shows empty state when no transactions', async ({ page }) => {
-  await expect(page.getByText(/No transactions for/i)).toBeVisible();
+  const now = new Date();
+  const label = shortMonth(now.getFullYear(), now.getMonth() + 1);
+  await expect(page.getByRole('button', { name: 'Period' })).toHaveText(label);
+  await expect(page.getByText(`No transactions for ${label}.`)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Previous month' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Next month' })).toHaveCount(0);
 });
 
 test('create a credit transaction', async ({ page }) => {
@@ -131,21 +218,78 @@ test('delete a transaction with confirmation', async ({ page }) => {
   await expect(page.getByRole('cell', { name: 'To Delete' })).not.toBeVisible();
 });
 
-test('month navigation changes displayed period', async ({ page }) => {
-  // Current month label is visible
+test('period span filters rows and keeps the shortcut windows', async ({ page }) => {
   const now = new Date();
-  const currentLabel = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
-  await expect(page.getByText(currentLabel, { exact: true })).toBeVisible();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const current = shortMonth(year, month);
+  const last12Start = addMonths(year, month, -11);
+  const last12 = spanLabel(last12Start.year, last12Start.month, year, month);
 
-  // Navigate to previous month
-  await page.getByRole('button', { name: 'Previous month' }).click();
-  const prevDate = new Date(now.getFullYear(), now.getMonth() - 1);
-  const prevLabel = prevDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
-  await expect(page.getByText(prevLabel, { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Period' })).toHaveText(current);
 
-  // Navigate back to current
-  await page.getByRole('button', { name: 'Next month' }).click();
-  await expect(page.getByText(currentLabel, { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Period' }).click();
+  await page.getByRole('button', { name: 'Last 12 months' }).click();
+  await expect(page.getByRole('button', { name: 'Period' })).toHaveText(last12);
+  await expect(page.getByRole('button', { name: 'Last 12 months' })).toHaveCount(0);
+
+  await createTxnWithPicker(page, {
+    account: 'Test Bank',
+    amount: '10.00',
+    description: 'May Edge',
+    date: '2024-05-31',
+    type: 'debit',
+  });
+  await createTxnWithPicker(page, {
+    account: 'Test Bank',
+    amount: '10.00',
+    description: 'June Early',
+    date: '2024-06-01',
+    type: 'debit',
+  });
+  await createTxnWithPicker(page, {
+    account: 'Test Bank',
+    amount: '25.00',
+    description: 'June Late',
+    date: '2024-06-15',
+    type: 'credit',
+  });
+  await expect(page.getByRole('cell', { name: 'June Early' })).toHaveCount(0);
+  await expect(page.getByRole('cell', { name: 'May Edge' })).toHaveCount(0);
+
+  await pickMonthSpan(page, 2024, 6, 2024, 6);
+  await expect(page.getByRole('button', { name: 'Period' })).toHaveText('Jun 2024');
+  await expect(page.getByRole('cell', { name: 'June Early' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'June Late' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'May Edge' })).toHaveCount(0);
+  await expect(page.getByRole('columnheader', { name: 'Balance' })).toHaveCount(0);
+  await expect(page.locator('tbody tr').nth(0)).toContainText('June Late');
+  await expect(page.locator('tbody tr').nth(1)).toContainText('June Early');
+
+  await page.getByLabel('Account filter').selectOption({ label: 'Test Bank' });
+  await expect(page.getByRole('button', { name: 'Period' })).toHaveText('Jun 2024');
+  await expect(page.getByRole('columnheader', { name: 'Balance' })).toBeVisible();
+  await expect(page.locator('tbody tr').nth(0)).toContainText('June Early');
+  await expect(page.locator('tbody tr').nth(1)).toContainText('June Late');
+  await expect(page.getByRole('cell', { name: '980.00' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: '1,005.00' })).toBeVisible();
+
+  await pickMonthSpan(page, 2020, 1, 2020, 1);
+  await expect(page.getByText('No transactions for Jan 2020.')).toBeVisible();
+});
+
+test('leaving Transactions resets the span', async ({ page }) => {
+  const now = new Date();
+  const current = shortMonth(now.getFullYear(), now.getMonth() + 1);
+  await page.getByRole('button', { name: 'Period' }).click();
+  await page.getByRole('button', { name: 'Last 12 months' }).click();
+  await expect(page.getByRole('button', { name: 'Period' })).not.toHaveText(current);
+
+  await page.getByRole('link', { name: /Accounts/i }).click();
+  await page.getByRole('heading', { name: 'Accounts' }).waitFor();
+  await page.getByRole('link', { name: 'Transactions', exact: true }).click();
+  await page.getByRole('heading', { name: 'Transactions' }).waitFor();
+  await expect(page.getByRole('button', { name: 'Period' })).toHaveText(current);
 });
 
 test('All accounts shows rows from every account with Account column', async ({ page }) => {

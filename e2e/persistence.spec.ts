@@ -57,7 +57,7 @@ test('a transaction survives a full page reload', async ({ page }) => {
   await page.getByRole('cell', { name: 'Checking' }).waitFor();
 
   // Add a transaction.
-  await page.getByRole('link', { name: /Transactions/i }).click();
+  await page.getByRole('link', { name: 'Transactions', exact: true }).click();
   await page.getByRole('heading', { name: 'Transactions' }).waitFor();
   await page.getByRole('button', { name: '+ New Transaction' }).click();
   await page.getByLabel('Account', { exact: true }).selectOption({ label: 'Checking' });
@@ -76,7 +76,7 @@ test('a transaction survives a full page reload', async ({ page }) => {
   await page.waitForFunction(() => !document.body.textContent?.includes('Loading…'), {
     timeout: 10_000,
   });
-  await page.getByRole('link', { name: /Transactions/i }).click();
+  await page.getByRole('link', { name: 'Transactions', exact: true }).click();
   await page.getByRole('heading', { name: 'Transactions' }).waitFor();
   await expect(page.getByRole('cell', { name: 'Persisted Txn' })).toBeVisible();
 });

@@ -26,3 +26,4 @@ Shipped feature write-ups were copied to GitHub issues, then removed from the tr
 | `xlsx-security-remediation` | https://github.com/juliano-pezzini/mytruetrack/issues/107 | open |
 | `transactions-account-filter` | https://github.com/juliano-pezzini/mytruetrack/issues/9 | closed |
 | `import-category-tags-date-format` | https://github.com/juliano-pezzini/mytruetrack/issues/116 and https://github.com/juliano-pezzini/mytruetrack/issues/117 | open |
+| `transaction-period-filter` | https://github.com/juliano-pezzini/mytruetrack/issues/144 | open |

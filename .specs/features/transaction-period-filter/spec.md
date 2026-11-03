@@ -119,7 +119,7 @@ The Transactions period control moves one calendar month per click. Reaching a w
 
 | Requirement ID | Story | Task | Status |
 | --- | --- | --- | --- |
-| PERIOD-01 | P1: Choose a month span | T3 | In Tasks |
+| PERIOD-01 | P1: Choose a month span | T3 | Verified |
 | PERIOD-02 | P1: Choose a month span | T2 | Verified |
 | PERIOD-03 | P1: Choose a month span | T2 | Verified |
 | PERIOD-04 | P1: Choose a month span | T1 | Verified |
@@ -138,14 +138,14 @@ The Transactions period control moves one calendar month per click. Reaching a w
 | PERIOD-17 | P1: Show the span in the ledger | T1 | Verified |
 | PERIOD-18 | P1: Show the span in the ledger | T1 | Verified |
 | PERIOD-19 | P1: Show the span in the ledger | T1 | Verified |
-| PERIOD-20 | P1: Show the span in the ledger | T3 | In Tasks |
-| PERIOD-21 | P1: Show the span in the ledger | T3 | In Tasks |
-| PERIOD-22 | P1: Show the span in the ledger | T3 | In Tasks |
-| PERIOD-23 | P1: Show the span in the ledger | T3 | In Tasks |
-| PERIOD-24 | P1: Show the span in the ledger | T3 | In Tasks |
-| PERIOD-25 | P1: Show the span in the ledger | T3 | In Tasks |
-| PERIOD-26 | P1: Show the span in the ledger | T3 | In Tasks |
-| PERIOD-27 | P1: Show the span in the ledger | T3 | In Tasks |
+| PERIOD-20 | P1: Show the span in the ledger | T3 | Verified |
+| PERIOD-21 | P1: Show the span in the ledger | T3 | Verified |
+| PERIOD-22 | P1: Show the span in the ledger | T3 | Verified |
+| PERIOD-23 | P1: Show the span in the ledger | T3 | Verified |
+| PERIOD-24 | P1: Show the span in the ledger | T3 | Verified |
+| PERIOD-25 | P1: Show the span in the ledger | T3 | Verified |
+| PERIOD-26 | P1: Show the span in the ledger | T3 | Verified |
+| PERIOD-27 | P1: Show the span in the ledger | T3 | Verified |
 
 **Coverage:** 27 total, 27 mapped to tasks, 0 unmapped
 

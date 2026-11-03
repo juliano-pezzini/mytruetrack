@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/transaction-period-filter/design.md`
-**Status**: In Progress
+**Status**: Done
 
 ---
 
@@ -143,12 +143,14 @@ T1 -> T2 -> T3
 
 **Done when**:
 
-- [ ] Opening the page selects the current local month. The balance date is `dayBeforeSpan`. The empty copy is `No transactions for {label}.`
-- [ ] Previous month and Next month buttons are gone. Changing account keeps the span. Leaving the page and returning resets to the current month
-- [ ] One account stays oldest-first with the running balance. All accounts stays newest-first with no balance column
-- [ ] `e2e/transactions.spec.ts` covers the current-month label, Last 12 months, a row inside the span and a row outside it, the empty copy, reset on return, and the removed arrows
-- [ ] Gate check passes: `npm test && npm run test:e2e`
-- [ ] Test count: the transactions e2e file passes with the stepper test replaced, and no other e2e test is deleted
+- [x] Opening the page selects the current local month. The balance date is `dayBeforeSpan`. The empty copy is `No transactions for {label}.`
+- [x] Previous month and Next month buttons are gone. Changing account keeps the span. Leaving the page and returning resets to the current month
+- [x] One account stays oldest-first with the running balance. All accounts stays newest-first with no balance column
+- [x] `e2e/transactions.spec.ts` covers the current-month label, Last 12 months, a row inside the span and a row outside it, the empty copy, reset on return, and the removed arrows
+- [x] Gate check passes: `npm test && npm run test:e2e`
+- [x] Test count: the transactions e2e file passes with the stepper test replaced, and no other e2e test is deleted
+
+**Status**: Complete
 
 **Tests**: e2e
 **Gate**: full

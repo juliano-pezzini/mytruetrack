@@ -12,7 +12,7 @@ async function createAccountAndTransactions(page: import('@playwright/test').Pag
   await page.getByRole('cell', { name: 'Dashboard Bank' }).waitFor();
 
   // Add transactions
-  await page.getByRole('link', { name: /Transactions/i }).click();
+  await page.getByRole('link', { name: 'Transactions', exact: true }).click();
   await page.getByRole('heading', { name: 'Transactions' }).waitFor();
 
   const now = new Date();
@@ -62,6 +62,15 @@ test('dashboard shows monthly income and expenses', async ({ page }) => {
   await expect(page.getByText('Expenses', { exact: true }).last()).toBeVisible();
   await expect(page.getByText('+1000.00').first()).toBeVisible();
   await expect(page.getByText('−200.00').first()).toBeVisible();
+});
+
+test('account card opens that account’s transactions', async ({ page }) => {
+  await page.getByRole('link', { name: 'Transactions for Dashboard Bank' }).click();
+  await expect(page).toHaveURL(/#\/transactions\?account=/);
+  await expect(page.getByRole('heading', { name: 'Transactions' })).toBeVisible();
+  await expect(page.getByLabel('Account filter').locator('option:checked')).toHaveText(
+    'Dashboard Bank',
+  );
 });
 
 test('dashboard shows recent transactions list', async ({ page }) => {

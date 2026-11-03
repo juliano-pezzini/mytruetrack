@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAccounts } from '../hooks/useAccounts.ts';
 import { useTransactions } from '../hooks/useTransactions.ts';
 import { useCategories } from '../hooks/useCategories.ts';
@@ -24,10 +25,21 @@ function monthRange(year: number, month: number) {
 
 /** null = All accounts filter */
 export function TransactionsPage() {
-  const { accounts } = useAccounts();
+  const { accounts, loading: accountsLoading } = useAccounts();
   const { categories } = useCategories();
-  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const accountParam = searchParams.get('account');
+  const accountParamIsKnown =
+    accountParam !== null && accounts.some((account) => account.id === accountParam);
+  const selectedAccountId = accountParamIsKnown ? accountParam : null;
   const [period, setPeriod] = useState(getCurrentMonth);
+
+  useEffect(() => {
+    if (accountsLoading || accountParam === null || accountParamIsKnown) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete('account');
+    setSearchParams(next, { replace: true });
+  }, [accountsLoading, accountParam, accountParamIsKnown, searchParams, setSearchParams]);
   const range = useMemo(() => monthRange(period.year, period.month), [period.year, period.month]);
 
   const allAccountsMode = selectedAccountId === null;
@@ -100,7 +112,10 @@ export function TransactionsPage() {
       setShowForm(false);
       setEditingId(null);
     }
-    setSelectedAccountId(next);
+    const params = new URLSearchParams(searchParams);
+    if (next === null) params.delete('account');
+    else params.set('account', next);
+    setSearchParams(params, { replace: true });
   }
 
   function handleCreate(params: CreateTransactionParams) {

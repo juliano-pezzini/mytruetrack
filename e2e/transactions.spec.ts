@@ -44,7 +44,7 @@ async function createTxnWithPicker(
 test.beforeEach(async ({ page }) => {
   await setupLocalOnly(page);
   await createAccount(page, 'Test Bank');
-  await page.getByRole('link', { name: /Transactions/i }).click();
+  await page.getByRole('link', { name: 'Transactions', exact: true }).click();
   await page.getByRole('heading', { name: 'Transactions' }).waitFor();
 });
 
@@ -150,7 +150,7 @@ test('month navigation changes displayed period', async ({ page }) => {
 
 test('All accounts shows rows from every account with Account column', async ({ page }) => {
   await createAccount(page, 'Second Bank', '500.00');
-  await page.getByRole('link', { name: /Transactions/i }).click();
+  await page.getByRole('link', { name: 'Transactions', exact: true }).click();
   await page.getByRole('heading', { name: 'Transactions' }).waitFor();
 
   await createTxnWithPicker(page, {
@@ -188,7 +188,7 @@ test('All accounts shows rows from every account with Account column', async ({ 
 
 test('create from All accounts uses account picker', async ({ page }) => {
   await createAccount(page, 'Picker Bank', '200.00');
-  await page.getByRole('link', { name: /Transactions/i }).click();
+  await page.getByRole('link', { name: 'Transactions', exact: true }).click();
   await page.getByRole('heading', { name: 'Transactions' }).waitFor();
 
   await expect(page.getByLabel('Account filter')).toHaveValue('');
@@ -239,7 +239,7 @@ test.describe('no accounts yet', () => {
   });
 
   test('shows create-account guidance without All accounts option', async ({ page }) => {
-    await page.getByRole('link', { name: /Transactions/i }).click();
+    await page.getByRole('link', { name: 'Transactions', exact: true }).click();
     await page.getByRole('heading', { name: 'Transactions' }).waitFor();
     await expect(page.getByText('Create an account first to add transactions.')).toBeVisible();
     await expect(

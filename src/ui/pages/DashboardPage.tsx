@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAccounts } from '../hooks/useAccounts.ts';
 import { useAccountBalance } from '../hooks/useAccountBalance.ts';
 import { useDatabase } from '../hooks/useDatabase.ts';
@@ -70,6 +71,13 @@ function AccountCard({
         <p className="text-sm font-medium text-mtt-fg mt-0.5">{account.name}</p>
       </div>
       <div className="flex flex-wrap justify-end gap-3 pt-1 border-t border-mtt-border">
+        <Link
+          to={`/transactions?account=${encodeURIComponent(account.id)}`}
+          className="text-xs text-mtt-accent hover:text-mtt-accent/80 font-medium transition-colors"
+          aria-label={`Transactions for ${account.name}`}
+        >
+          Transactions
+        </Link>
         <button
           type="button"
           onClick={() => onImport(account)}

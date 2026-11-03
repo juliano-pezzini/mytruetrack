@@ -23,7 +23,7 @@ const securityHeaders = {
 function extensionZipPlugin(): Plugin {
   let extensionDir = join(process.cwd(), 'extension');
 
-  const load = (): Uint8Array => createExtensionZip(extensionDir);
+  const load = (): Promise<Uint8Array> => createExtensionZip(extensionDir);
 
   return {
     name: 'mytruetrack-extension-zip',
@@ -40,19 +40,22 @@ function extensionZipPlugin(): Plugin {
           next();
           return;
         }
-        const body = load();
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'application/zip');
-        res.setHeader('Content-Length', String(body.byteLength));
-        res.setHeader('Content-Disposition', `attachment; filename="${EXTENSION_ZIP_NAME}"`);
-        res.end(body);
+        void load()
+          .then((body) => {
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/zip');
+            res.setHeader('Content-Length', String(body.byteLength));
+            res.setHeader('Content-Disposition', `attachment; filename="${EXTENSION_ZIP_NAME}"`);
+            res.end(body);
+          })
+          .catch(next);
       });
     },
-    generateBundle() {
+    async generateBundle() {
       this.emitFile({
         type: 'asset',
         fileName: EXTENSION_ZIP_NAME,
-        source: load(),
+        source: await load(),
       });
     },
   };

@@ -1,12 +1,31 @@
 # State
 
-**Last Updated:** 2026-10-14
+**Last Updated:** 2026-10-15
 **Current Work:** Mercado Pago import (issue #123) — PR #124. Planning artifacts archived to
 the issue; feature folder removed from the tree (see `spec-archive.md`).
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-013: Packaged companion extension with a pinned id (2026-10-15)
+
+**Decision:** The downloadable companion extension is `manifest.json` plus a bundled
+`background.js`. The manifest `key` pins extension id `gigomgilaibloafmnplkochommokandh`,
+and the PWA connects with that id. The worker accepts the same origins as
+`externally_connectable`: localhost and `https://*.github.io`. A Mercado Pago import
+whose port closes before a terminal message shows the existing extension-unavailable error.
+
+**Reason:** Edge cannot execute the TypeScript service worker, and the placeholder id
+never addressed an installed extension. A GitHub Pages origin was disconnected with no
+message, so the dialog stayed on Importing.
+
+**Trade-off:** The matching private key stays in gitignored `extension/extension.pem`.
+Replacing that key changes the id, and each installed copy must be loaded again.
+
+**Impact:** `scripts/extension-zip.ts`, `extension/manifest.json`,
+`src/sync/import-extension-id.ts`, `src/sync/investpass-bridge.ts`,
+`extension/src/background.ts`, Mercado Pago and InvestPass import entry points.
 
 ### AD-012: Shared `account_import_logs` + companion-extension statement imports (2026-10-13)
 

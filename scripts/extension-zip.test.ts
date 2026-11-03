@@ -2,13 +2,12 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { createExtensionZip, listExtensionFiles, zipFiles } from './extension-zip.ts';
+import { createExtensionZip, zipFiles } from './extension-zip.ts';
 
 describe('extension zip', () => {
-  it('packs the extension directory so unzip restores every file', () => {
+  it('packs a loadable manifest and a bundled background.js', async () => {
     const extensionDir = join(process.cwd(), 'extension');
-    const expected = listExtensionFiles(extensionDir);
-    const zip = createExtensionZip(extensionDir);
+    const zip = await createExtensionZip(extensionDir);
 
     const dir = mkdtempSync(join(tmpdir(), 'mtt-ext-zip-'));
     const zipPath = join(dir, 'mytruetrack-import.zip');
@@ -19,15 +18,18 @@ describe('extension zip', () => {
         new Uint8Array(written.buffer, written.byteOffset, written.byteLength),
       );
 
-      expect([...unpacked.keys()].sort()).toEqual(expected.map((entry) => entry.name).sort());
-      for (const entry of expected) {
-        const got = unpacked.get(entry.name);
-        expect(got, entry.name).toBeDefined();
-        expect(sameBytes(got ?? new Uint8Array(), entry.data)).toBe(true);
-      }
+      expect([...unpacked.keys()].sort()).toEqual(['background.js', 'manifest.json']);
 
-      const manifest = new TextDecoder().decode(unpacked.get('manifest.json'));
-      expect(manifest).toContain('"name": "mytruetrack Import"');
+      const manifest = JSON.parse(new TextDecoder().decode(unpacked.get('manifest.json'))) as {
+        name: string;
+        background: { service_worker: string };
+      };
+      expect(manifest.name).toBe('mytruetrack Import');
+      expect(manifest.background.service_worker).toBe('background.js');
+
+      const worker = new TextDecoder().decode(unpacked.get('background.js'));
+      expect(worker).toContain('https://www.mercadopago.com.br/');
+      expect(worker).not.toMatch(/from\s+['"]\.?\//);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

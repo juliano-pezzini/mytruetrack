@@ -36,18 +36,31 @@ function wrapper({ children }: { children: ReactNode }) {
   return createElement(DatabaseContext.Provider, { value: fakeDb }, children);
 }
 
-function createMockPort(): { port: InvestPassPort; respond: (msg: BridgeMessage) => void } {
+function createMockPort(): {
+  port: InvestPassPort;
+  respond: (msg: BridgeMessage) => void;
+  dropConnection: () => void;
+} {
   let handler: ((msg: BridgeMessage) => void) | null = null;
+  let onDisconnect: (() => void) | null = null;
   return {
     port: {
       send: vi.fn(),
       onMessage: vi.fn((cb: (msg: BridgeMessage) => void) => {
         handler = cb;
       }),
-      disconnect: vi.fn(),
+      onDisconnect: vi.fn((cb: () => void) => {
+        onDisconnect = cb;
+      }),
+      disconnect: vi.fn(() => {
+        onDisconnect?.();
+      }),
     },
     respond(msg: BridgeMessage) {
       handler?.(msg);
+    },
+    dropConnection() {
+      onDisconnect?.();
     },
   };
 }
@@ -101,6 +114,7 @@ describe('useMercadoPagoImport', () => {
       imported: 2,
       skipped: 0,
       errorCount: 1,
+      errors: ['currency_id must be BRL'],
     });
 
     const { result } = renderHook(() => useMercadoPagoImport(EXTENSION_ID), { wrapper });
@@ -128,7 +142,27 @@ describe('useMercadoPagoImport', () => {
       imported: 2,
       skipped: 0,
       errorCount: 1,
+      errors: ['currency_id must be BRL'],
     });
+  });
+
+  it('reports the extension unavailable when the port drops before a payload', async () => {
+    const mock = createMockPort();
+    mockConnect.mockReturnValue(mock.port);
+    mock.port.send = vi.fn(() => {
+      mock.dropConnection();
+    });
+
+    const { result } = renderHook(() => useMercadoPagoImport(EXTENSION_ID), { wrapper });
+
+    await act(async () => {
+      await result.current.startImport(ACCOUNT_ID, '2026-01-01', '2026-01-31');
+    });
+
+    expect(result.current.status).toBe('error');
+    expect(result.current.error).toBe(EXTENSION_UNAVAILABLE_MESSAGE);
+    expect(mockProcess).not.toHaveBeenCalled();
+    expect(mockNotifyChange).not.toHaveBeenCalled();
   });
 
   it('page ERROR writes nothing', async () => {
@@ -211,6 +245,7 @@ describe('useMercadoPagoImport', () => {
       imported: 0,
       skipped: 0,
       errorCount: 0,
+      errors: [],
     });
 
     await act(async () => {

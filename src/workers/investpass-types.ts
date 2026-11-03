@@ -7,6 +7,9 @@
 import { z } from 'zod';
 import type { ImportResult } from './types.ts';
 
+/** zod >= 4.6.6 rejects this bound before it walks elements. */
+export const MAX_INVESTPASS_TRANSACTIONS = 100_000;
+
 export const InvestPassTransactionSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
@@ -31,7 +34,7 @@ export const InvestPassTransactionSchema = z.object({
 
 export const ImportPayloadSchema = z.object({
   type: z.literal('IMPORT_PAYLOAD'),
-  transactions: z.array(InvestPassTransactionSchema),
+  transactions: z.array(InvestPassTransactionSchema).max(MAX_INVESTPASS_TRANSACTIONS),
 });
 
 export type InvestPassTransaction = z.infer<typeof InvestPassTransactionSchema>;

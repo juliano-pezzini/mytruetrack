@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { flattenBinnaclePages, mapBinnacleItem } from './mercado-pago-mapper.ts';
+import {
+  BinnaclePageSchema,
+  MAX_BINNACLE_GROUPS,
+  flattenBinnaclePages,
+  mapBinnacleItem,
+} from './mercado-pago-mapper.ts';
 import { fromCents } from '../domain/money.ts';
 
 /** Synthetic movement mirroring PoC shape (no personal data). */
@@ -207,6 +212,29 @@ describe('flattenBinnaclePages', () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]!.externalId).toBe('OkMovementId00001');
     expect(errors).toHaveLength(2);
+  });
+
+  it('rejects a page whose group list exceeds the bound', () => {
+    const page = {
+      total: 0,
+      pages: 1,
+      groups: Array.from({ length: MAX_BINNACLE_GROUPS + 1 }, () => ({})),
+    };
+    const parsed = BinnaclePageSchema.safeParse(page);
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) {
+      expect(parsed.error.issues).toHaveLength(1);
+      expect(parsed.error.issues[0]).toMatchObject({ code: 'too_big' });
+    }
+
+    const { rows, errors } = flattenBinnaclePages([page]);
+    expect(rows).toHaveLength(0);
+    expect(errors).toEqual([
+      {
+        index: 0,
+        message: expect.stringMatching(/^Invalid binnacle page envelope \(groups: /),
+      },
+    ]);
   });
 
   it('merges items across multiple pages', () => {

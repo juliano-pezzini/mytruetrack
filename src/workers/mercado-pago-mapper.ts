@@ -10,6 +10,9 @@ import { z } from 'zod';
 import { fromCents } from '../domain/money.ts';
 import type { ImportError, ParsedTransaction } from './types.ts';
 
+/** zod >= 4.6.6 rejects this bound before it walks elements. */
+export const MAX_BINNACLE_GROUPS = 100_000;
+
 const AmountSchema = z.object({
   currency_id: z.string().optional(),
   fraction: z.string().optional(),
@@ -37,7 +40,7 @@ const DayGroupSchema = z
 export const BinnaclePageSchema = z.object({
   total: z.number(),
   pages: z.number(),
-  groups: z.array(DayGroupSchema),
+  groups: z.array(DayGroupSchema).max(MAX_BINNACLE_GROUPS),
 });
 
 export type MapBinnacleItemResult = ParsedTransaction | { readonly error: string };

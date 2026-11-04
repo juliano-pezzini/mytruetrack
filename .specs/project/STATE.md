@@ -1,7 +1,7 @@
 # State
 
-**Last Updated:** 2026-10-15
-**Current Work:** Mercado Pago import (issue #123) — PR #124. Planning artifacts archived to
+**Last Updated:** 2026-11-03
+**Current Work:** Transaction period filter (issue #144) — PR #146. Planning artifacts archived to
 the issue; feature folder removed from the tree (see `spec-archive.md`).
 
 ---

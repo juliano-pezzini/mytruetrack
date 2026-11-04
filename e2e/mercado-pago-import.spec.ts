@@ -71,8 +71,8 @@ test('missing companion extension explains how to install it', async ({ page }) 
   expect(bytes.subarray(0, 2).toString()).toBe('PK');
   const listing = bytes.toString('latin1');
   expect(listing).toContain('manifest.json');
-  expect(listing).toContain('src/background.ts');
-  expect(listing).toContain('src/mercado-pago-api.ts');
+  expect(listing).toContain('background.js');
+  expect(listing).toContain('"service_worker": "background.js"');
 
   await expect(page.getByText('No Mercado Pago imports yet.')).toBeVisible();
 });

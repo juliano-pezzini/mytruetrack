@@ -10,6 +10,7 @@ export type AccountImportLog = Readonly<{
   importedCount: number;
   skippedCount: number;
   errorCount: number;
+  errorMessages: readonly string[];
 }>;
 
 export type CreateAccountImportLogParams = {
@@ -22,7 +23,19 @@ export type CreateAccountImportLogParams = {
   importedCount: number;
   skippedCount: number;
   errorCount: number;
+  errorMessages?: readonly string[];
 };
+
+function parseErrorMessages(value: unknown): readonly string[] {
+  if (typeof value !== 'string' || value === '') return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((item): item is string => typeof item === 'string');
+  } catch {
+    return [];
+  }
+}
 
 function rowToLog(row: Row): AccountImportLog {
   return {
@@ -35,6 +48,7 @@ function rowToLog(row: Row): AccountImportLog {
     importedCount: row.imported_count as number,
     skippedCount: row.skipped_count as number,
     errorCount: row.error_count as number,
+    errorMessages: parseErrorMessages(row.error_messages),
   };
 }
 
@@ -58,11 +72,12 @@ export function createAccountImportLogRepository(db: Database): AccountImportLog
         importedCount: params.importedCount,
         skippedCount: params.skippedCount,
         errorCount: params.errorCount,
+        errorMessages: params.errorMessages ?? [],
       };
       await db.exec(
         `INSERT INTO account_import_logs
-          (id, account_id, source, period_start, period_end, imported_at, imported_count, skipped_count, error_count)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          (id, account_id, source, period_start, period_end, imported_at, imported_count, skipped_count, error_count, error_messages)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           log.id,
           log.accountId,
@@ -73,6 +88,7 @@ export function createAccountImportLogRepository(db: Database): AccountImportLog
           log.importedCount,
           log.skippedCount,
           log.errorCount,
+          JSON.stringify(log.errorMessages),
         ],
       );
       return log;

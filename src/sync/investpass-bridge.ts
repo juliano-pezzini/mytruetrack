@@ -11,6 +11,7 @@ import type { InvestPassImportResult } from '../workers/investpass-types.ts';
 type ChromePort = {
   postMessage(message: unknown): void;
   onMessage: { addListener(cb: (message: BridgeMessage) => void): void };
+  onDisconnect: { addListener(cb: () => void): void };
   disconnect(): void;
 };
 
@@ -42,6 +43,8 @@ export type InvestPassPort = {
   send(message: BridgeMessage): void;
   /** Register a handler for incoming messages. */
   onMessage(handler: (message: BridgeMessage) => void): void;
+  /** Fires when the extension closes the port, including when it already closed. */
+  onDisconnect(handler: () => void): void;
   /** Disconnect the port. */
   disconnect(): void;
 };
@@ -63,12 +66,27 @@ export function connectToExtension(extensionId: string): InvestPassPort | null {
     return null;
   }
 
+  const disconnectHandlers: Array<() => void> = [];
+  let disconnected = false;
+  port.onDisconnect.addListener(() => {
+    disconnected = true;
+    const pending = disconnectHandlers.splice(0);
+    for (const handler of pending) handler();
+  });
+
   return {
     send(message: BridgeMessage) {
       port.postMessage(message);
     },
     onMessage(handler: (message: BridgeMessage) => void) {
       port.onMessage.addListener(handler);
+    },
+    onDisconnect(handler: () => void) {
+      if (disconnected) {
+        handler();
+        return;
+      }
+      disconnectHandlers.push(handler);
     },
     disconnect() {
       port.disconnect();

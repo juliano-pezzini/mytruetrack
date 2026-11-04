@@ -11,7 +11,7 @@ function movement(overrides: Record<string, unknown> = {}) {
     movement_id: 'AbCdEfGhIjKlMnOp1',
     datetime: '2026-01-10T12:00:00.000-03:00',
     title: 'PIX in',
-    amount: { currency_id: 'BRL', fraction: '10.00', cents: '1000' },
+    amount: { currency_id: 'BRL', fraction: '10', cents: '00' },
     ...overrides,
   };
 }
@@ -46,11 +46,11 @@ describe('processMercadoPagoImport', () => {
         movement({
           movement_id: 'DebitMoveId000002',
           title: 'Out',
-          amount: { currency_id: 'BRL', fraction: '-5.00', cents: '-500' },
+          amount: { currency_id: 'BRL', fraction: '-5', cents: '00' },
         }),
         movement({
           movement_id: 'BadCurrencyId0001',
-          amount: { currency_id: 'USD', fraction: '1', cents: '100' },
+          amount: { currency_id: 'USD', fraction: '1', cents: '00' },
         }),
       ]),
     ];
@@ -66,6 +66,7 @@ describe('processMercadoPagoImport', () => {
     expect(result.imported).toBe(2);
     expect(result.skipped).toBe(0);
     expect(result.errorCount).toBe(1);
+    expect(result.errors).toEqual(['currency_id must be BRL']);
 
     const logs = await createAccountImportLogRepository(db).listByAccount('acc-1', 'mercado_pago');
     expect(logs).toHaveLength(1);
@@ -77,6 +78,7 @@ describe('processMercadoPagoImport', () => {
       importedCount: 2,
       skippedCount: 0,
       errorCount: 1,
+      errorMessages: ['currency_id must be BRL'],
     });
 
     const txns = await db.execO(
@@ -85,6 +87,51 @@ describe('processMercadoPagoImport', () => {
     );
     expect(txns).toHaveLength(2);
     expect(txns.every((r) => r.import_run_id === result.logId)).toBe(true);
+    expect(txns.find((r) => r.external_id === 'DebitMoveId000002')?.type).toBe('debit');
+  });
+
+  it('skips movements outside the selected period and keeps the inclusive bounds', async () => {
+    const pages = [
+      pageWithItems([
+        movement({
+          movement_id: 'BeforePeriodId0001',
+          datetime: '2026-01-09T12:00:00.000-03:00',
+          title: 'Before',
+        }),
+        movement({ movement_id: 'OnStartId00000001', title: 'Start day' }),
+        movement({
+          movement_id: 'OnEndId0000000001',
+          datetime: '2026-01-12T23:00:00.000-03:00',
+          title: 'End day',
+        }),
+        movement({
+          movement_id: 'AfterPeriodId00001',
+          datetime: '2026-01-13T00:30:00.000-03:00',
+          title: 'After',
+        }),
+      ]),
+    ];
+
+    const result = await processMercadoPagoImport(
+      db,
+      'acc-1',
+      { start: '2026-01-10', end: '2026-01-12' },
+      pages,
+      { todaySaoPaulo: '2026-02-01', importedAt: '2026-02-01T12:00:00.000Z' },
+    );
+
+    expect(result.imported).toBe(2);
+    expect(result.skipped).toBe(2);
+    expect(result.errorCount).toBe(0);
+
+    const logs = await createAccountImportLogRepository(db).listByAccount('acc-1', 'mercado_pago');
+    expect(logs[0]).toMatchObject({ importedCount: 2, skippedCount: 2, errorCount: 0 });
+
+    const txns = await db.execO(
+      'SELECT external_id FROM transactions WHERE account_id = ? ORDER BY external_id',
+      ['acc-1'],
+    );
+    expect(txns.map((row) => row.external_id)).toEqual(['OnEndId0000000001', 'OnStartId00000001']);
   });
 
   it('writes a log row when zero transactions are inserted', async () => {
@@ -172,7 +219,7 @@ describe('processMercadoPagoImport', () => {
     const second = await processMercadoPagoImport(
       db,
       'acc-1',
-      { start: '2026-01-15', end: '2026-01-31' },
+      { start: '2026-01-10', end: '2026-01-31' },
       [pageWithItems([movement({ movement_id: 'DupMoveId00000001', title: 'Once' })])],
       { todaySaoPaulo: '2026-01-31', importedAt: '2026-01-31T00:00:00.000Z' },
     );
@@ -197,7 +244,7 @@ describe('processMercadoPagoImport', () => {
         pageWithItems([
           movement({
             movement_id: 'AmtMoveId00000001',
-            amount: { currency_id: 'BRL', fraction: '15.75', cents: '1575' },
+            amount: { currency_id: 'BRL', fraction: '15', cents: '75' },
           }),
         ]),
       ],
@@ -251,7 +298,7 @@ describe('processMercadoPagoImport', () => {
     const second = await processMercadoPagoImport(
       db,
       'acc-1',
-      { start: '2026-01-15', end: '2026-01-31' },
+      { start: '2026-01-10', end: '2026-01-31' },
       pages,
       { todaySaoPaulo: '2026-01-31', importedAt: '2026-01-31T00:00:00.000Z' },
     );

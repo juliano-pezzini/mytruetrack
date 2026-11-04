@@ -12,7 +12,12 @@ const mockDeleteAccountImportRun = vi.fn();
 
 const mpImport = vi.hoisted(() => ({
   status: 'idle' as string,
-  summary: null as null,
+  summary: null as null | {
+    imported: number;
+    skipped: number;
+    errorCount: number;
+    errors: readonly string[];
+  },
   error: null as string | null,
   startImport: vi.fn(),
   cancel: vi.fn(),
@@ -54,6 +59,7 @@ const SAMPLE_LOG: AccountImportLog = {
   importedCount: 3,
   skippedCount: 1,
   errorCount: 2,
+  errorMessages: ['currency_id must be BRL', 'currency_id must be BRL'],
 };
 
 describe('MercadoPagoImportModal', () => {
@@ -88,7 +94,48 @@ describe('MercadoPagoImportModal', () => {
     expect(within(list).getByText(/3 imported/)).toBeTruthy();
     expect(within(list).getByText(/1 skipped/)).toBeTruthy();
     expect(within(list).getByText(/2 errors/)).toBeTruthy();
+    expect(within(list).getByText('currency_id must be BRL (2)')).toBeTruthy();
     expect(list.textContent).toMatch(/2026/);
+  });
+
+  it('shows the fetch stage while the extension is working', async () => {
+    mpImport.status = 'fetching';
+
+    render(
+      createElement(MercadoPagoImportModal, {
+        accountId: 'acc-mp',
+        accountName: 'MP Wallet',
+        onClose: vi.fn(),
+      }),
+      { wrapper },
+    );
+
+    const progress = await screen.findByTestId('mp-import-progress');
+    expect(progress.textContent).toMatch(/Fetching Mercado Pago activity/);
+    expect(progress.querySelector('[role="progressbar"]')).toBeTruthy();
+  });
+
+  it('lists row errors when the import finishes with failures', async () => {
+    mpImport.status = 'done';
+    mpImport.summary = {
+      imported: 0,
+      skipped: 0,
+      errorCount: 2,
+      errors: ['Invalid movement item (movement_id: Required; keys: id, title)'],
+    };
+
+    render(
+      createElement(MercadoPagoImportModal, {
+        accountId: 'acc-mp',
+        accountName: 'MP Wallet',
+        onClose: vi.fn(),
+      }),
+      { wrapper },
+    );
+
+    const summary = await screen.findByTestId('mp-import-summary');
+    expect(summary.textContent).toMatch(/Import finished with errors/);
+    expect(summary.textContent).toMatch(/movement_id/);
   });
 
   it('asks for a normal confirm without typed DELETE; dismiss leaves the log', async () => {

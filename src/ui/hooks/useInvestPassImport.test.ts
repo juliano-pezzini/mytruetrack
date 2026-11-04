@@ -64,6 +64,7 @@ function createMockPort(): { port: InvestPassPort; respond: (msg: BridgeMessage)
       onMessage: vi.fn((cb: (msg: BridgeMessage) => void) => {
         handler = cb;
       }),
+      onDisconnect: vi.fn(),
       disconnect: vi.fn(),
     },
     respond(msg: BridgeMessage) {

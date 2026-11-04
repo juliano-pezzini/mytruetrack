@@ -176,7 +176,7 @@ test('a CSV category and tags are classified in the preview and imported', async
   await page.getByRole('button', { name: 'Close' }).click();
   await expect(page.getByRole('heading', { name: /Import Statement/i })).toHaveCount(0);
 
-  await page.getByRole('link', { name: /Transactions/i }).click();
+  await page.getByRole('link', { name: 'Transactions', exact: true }).click();
   await page.getByRole('heading', { name: 'Transactions' }).waitFor();
   await expect(page.getByRole('cell', { name: 'Groceries' })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Market', exact: true })).toBeVisible();
